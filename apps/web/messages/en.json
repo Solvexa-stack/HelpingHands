@@ -1,0 +1,111 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About Us",
+    "projects": "Projects",
+    "news": "News",
+    "blogs": "Blog",
+    "events": "Events",
+    "contact": "Contact Us",
+    "login": "Sign In",
+    "register": "Sign Up",
+    "dashboard": "My Dashboard",
+    "logout": "Sign Out"
+  },
+  "home": {
+    "hero": {
+      "title": "Make a Difference Today",
+      "subtitle": "Join thousands of donors supporting life-changing projects around the world.",
+      "cta": "Explore Projects",
+      "ctaSecondary": "Learn More"
+    },
+    "stats": {
+      "projects": "Active Projects",
+      "donors": "Donors",
+      "collected": "Total Raised",
+      "completed": "Projects Completed"
+    },
+    "featuredProjects": "Featured Projects",
+    "latestNews": "Latest News",
+    "upcomingEvents": "Upcoming Events",
+    "viewAll": "View All"
+  },
+  "projects": {
+    "title": "Our Projects",
+    "subtitle": "Browse and support impactful projects making a real difference",
+    "search": "Search projects...",
+    "filters": {
+      "all": "All Categories",
+      "agricultural": "Agricultural",
+      "industrial": "Industrial",
+      "trading": "Trading",
+      "completed": "Completed",
+      "inProgress": "In Progress"
+    },
+    "progress": "Progress",
+    "target": "Target",
+    "collected": "Collected",
+    "location": "Location",
+    "donate": "Donate Now",
+    "noProjects": "No projects found"
+  },
+  "donate": {
+    "title": "Make a Donation",
+    "amount": "Donation Amount",
+    "amountPlaceholder": "Enter amount",
+    "submit": "Create Donation Request",
+    "qrTitle": "Your Donation QR Code",
+    "qrInstructions": "Download this QR code and send it to your relative who will visit the office to complete the payment.",
+    "download": "Download QR Code",
+    "donationCreated": "Donation request created successfully!"
+  },
+  "auth": {
+    "login": "Sign In",
+    "register": "Create Account",
+    "email": "Email Address",
+    "password": "Password",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "representation": "Account Type",
+    "personal": "Personal",
+    "company": "Company",
+    "organization": "Organization",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginSuccess": "Welcome back!",
+    "registerSuccess": "Account created successfully!"
+  },
+  "dashboard": {
+    "title": "My Dashboard",
+    "profile": "My Profile",
+    "donations": "My Donations",
+    "settings": "Settings",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
+    "noDonations": "You haven't made any donations yet.",
+    "explorProjects": "Explore Projects"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Try Again",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "noResults": "No results found",
+    "readMore": "Read More"
+  }
+}

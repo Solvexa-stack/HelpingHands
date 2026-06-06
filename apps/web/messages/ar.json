@@ -1,0 +1,111 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "about": "من نحن",
+    "projects": "المشاريع",
+    "news": "الأخبار",
+    "blogs": "المدونة",
+    "events": "الفعاليات",
+    "contact": "اتصل بنا",
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "dashboard": "لوحة التحكم",
+    "logout": "تسجيل الخروج"
+  },
+  "home": {
+    "hero": {
+      "title": "أحدث فارقاً اليوم",
+      "subtitle": "انضم إلى آلاف المانحين الداعمين لمشاريع تغير الحياة حول العالم",
+      "cta": "استكشف المشاريع",
+      "ctaSecondary": "اعرف أكثر"
+    },
+    "stats": {
+      "projects": "مشاريع نشطة",
+      "donors": "متبرع",
+      "collected": "إجمالي المبالغ",
+      "completed": "مشاريع مكتملة"
+    },
+    "featuredProjects": "المشاريع المميزة",
+    "latestNews": "آخر الأخبار",
+    "upcomingEvents": "الفعاليات القادمة",
+    "viewAll": "عرض الكل"
+  },
+  "projects": {
+    "title": "مشاريعنا",
+    "subtitle": "تصفح وادعم مشاريع مؤثرة تُحدث فرقاً حقيقياً",
+    "search": "ابحث عن مشروع...",
+    "filters": {
+      "all": "جميع الفئات",
+      "agricultural": "زراعي",
+      "industrial": "صناعي",
+      "trading": "تجاري",
+      "completed": "مكتمل",
+      "inProgress": "قيد الإنجاز"
+    },
+    "progress": "التقدم",
+    "target": "الهدف",
+    "collected": "المجموع",
+    "location": "الموقع",
+    "donate": "تبرع الآن",
+    "noProjects": "لا توجد مشاريع"
+  },
+  "donate": {
+    "title": "قدم تبرعك",
+    "amount": "مبلغ التبرع",
+    "amountPlaceholder": "أدخل المبلغ",
+    "submit": "إنشاء طلب تبرع",
+    "qrTitle": "رمز QR للتبرع",
+    "qrInstructions": "قم بتنزيل رمز QR هذا وأرسله إلى قريبك الذي سيزور المكتب لإتمام الدفع",
+    "download": "تحميل رمز QR",
+    "donationCreated": "تم إنشاء طلب التبرع بنجاح!"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "firstName": "الاسم الأول",
+    "lastName": "الاسم الأخير",
+    "representation": "نوع الحساب",
+    "personal": "شخصي",
+    "company": "شركة",
+    "organization": "مؤسسة",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "noAccount": "ليس لديك حساب؟",
+    "hasAccount": "لديك حساب بالفعل؟",
+    "loginSuccess": "مرحباً بعودتك!",
+    "registerSuccess": "تم إنشاء الحساب بنجاح!"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "profile": "ملفي الشخصي",
+    "donations": "تبرعاتي",
+    "settings": "الإعدادات",
+    "status": {
+      "pending": "معلق",
+      "approved": "مقبول",
+      "rejected": "مرفوض",
+      "cancelled": "ملغي"
+    },
+    "noDonations": "لم تقم بأي تبرعات بعد",
+    "explorProjects": "استكشف المشاريع"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "error": "حدث خطأ ما",
+    "retry": "حاول مجدداً",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "view": "عرض",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "search": "بحث",
+    "filter": "تصفية",
+    "sort": "ترتيب",
+    "noResults": "لا توجد نتائج",
+    "readMore": "اقرأ المزيد"
+  }
+}

@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --brand: #1e3a5f;
+    --brand-light: #2563eb;
+  }
+
+  [dir="rtl"] {
+    font-family: var(--font-cairo), Arial, sans-serif;
+  }
+
+  * {
+    @apply border-gray-200;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg
+           hover:bg-primary-700 active:bg-primary-800 transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 border-2 border-primary-600 text-primary-600 font-semibold rounded-lg
+           hover:bg-primary-50 transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden;
+  }
+
+  .input {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+           placeholder:text-gray-400 transition-colors duration-200;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .progress-bar {
+    @apply w-full bg-gray-200 rounded-full overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full bg-primary-600 rounded-full transition-all duration-700 ease-out;
+  }
+}

@@ -1,0 +1,100 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+  LayoutDashboard, FolderKanban, Heart, Users, UserCheck,
+  FileText, Newspaper, CalendarDays, Info, Globe, Heart as HeartIcon,
+  ChevronRight,
+} from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import { cn } from '@/lib/utils';
+
+const navItems = [
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['administrator', 'employee', 'financial_officer'] },
+  { href: '/donations', icon: Heart, label: 'Donations', roles: ['administrator', 'employee', 'financial_officer'] },
+  { href: '/projects', icon: FolderKanban, label: 'Projects', roles: ['administrator', 'employee', 'financial_officer'] },
+  { href: '/participants', icon: Users, label: 'Participants', roles: ['administrator', 'employee'] },
+  { href: '/employees', icon: UserCheck, label: 'Employees', roles: ['administrator'] },
+  { label: 'separator' },
+  { href: '/content/blogs', icon: FileText, label: 'Blogs', roles: ['administrator', 'employee'] },
+  { href: '/content/news', icon: Newspaper, label: 'News', roles: ['administrator', 'employee'] },
+  { href: '/content/events', icon: CalendarDays, label: 'Events', roles: ['administrator', 'employee'] },
+  { href: '/content/about', icon: Info, label: 'About Us', roles: ['administrator', 'employee'] },
+  { label: 'separator' },
+  { href: '/languages', icon: Globe, label: 'Languages', roles: ['administrator'] },
+];
+
+export function Sidebar() {
+  const pathname = usePathname();
+  const { user } = useAuth();
+  const role = user?.admin?.role || '';
+
+  const visible = navItems.filter((item) => {
+    if (item.label === 'separator') return true;
+    return item.roles?.includes(role);
+  });
+
+  return (
+    <aside className="w-64 bg-sidebar flex flex-col h-full">
+      {/* Logo */}
+      <div className="px-6 py-5 border-b border-white/10">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+            <HeartIcon className="w-4 h-4 text-white fill-white" />
+          </div>
+          <div>
+            <p className="text-white font-bold text-sm">HelpingHands</p>
+            <p className="text-blue-400 text-xs">Admin Panel</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-0.5">
+        {visible.map((item, i) => {
+          if (item.label === 'separator') {
+            return <div key={i} className="my-2 border-t border-white/10" />;
+          }
+
+          const Icon = item.icon!;
+          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href!));
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href!}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group',
+                isActive
+                  ? 'bg-primary-600 text-white'
+                  : 'text-blue-200 hover:bg-sidebar-hover hover:text-white',
+              )}
+            >
+              <Icon className="w-4 h-4 flex-shrink-0" />
+              <span className="flex-1">{item.label}</span>
+              {isActive && <ChevronRight className="w-3.5 h-3.5 opacity-60" />}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* User info */}
+      {user && (
+        <div className="px-4 py-4 border-t border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-primary-700 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {user.admin?.firstName?.[0]}{user.admin?.lastName?.[0]}
+            </div>
+            <div className="min-w-0">
+              <p className="text-white text-sm font-medium truncate">
+                {user.admin?.firstName} {user.admin?.lastName}
+              </p>
+              <p className="text-blue-400 text-xs capitalize">{role.replace('_', ' ')}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </aside>
+  );
+}

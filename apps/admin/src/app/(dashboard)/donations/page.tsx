@@ -1,0 +1,179 @@
+'use client';
+
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Search, ScanQrCode, CheckCircle, XCircle, Filter } from 'lucide-react';
+import { donationsApi } from '@/lib/api';
+import { formatCurrency, formatDate, getTranslation, STATUS_COLORS, cn } from '@/lib/utils';
+import { useToast } from '@/components/ui/toaster';
+import { QrScannerModal } from '@/components/donations/qr-scanner-modal';
+import { DonationStatusModal } from '@/components/donations/donation-status-modal';
+
+const statuses = ['', 'pending', 'approved', 'rejected', 'cancelled'];
+
+export default function DonationsPage() {
+  const { success, error: toastError } = useToast();
+  const qc = useQueryClient();
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
+  const [page, setPage] = useState(1);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [statusModal, setStatusModal] = useState<{ donation: any } | null>(null);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['donations', status, search, page],
+    queryFn: () => donationsApi.list({ status: status || undefined, search: search || undefined, page, limit: 20 }),
+  });
+
+  const donations = data?.data || [];
+  const meta = data?.meta || {};
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, status, notes }: any) => donationsApi.updateStatus(id, { status, notes }),
+    onSuccess: () => {
+      success('Donation status updated');
+      qc.invalidateQueries({ queryKey: ['donations'] });
+      qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      setStatusModal(null);
+    },
+    onError: (err: any) => toastError(err?.response?.data?.message || 'Update failed'),
+  });
+
+  return (
+    <div className="space-y-5">
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Search donations..."
+            className="input pl-9"
+          />
+        </div>
+
+        {/* Status filter */}
+        <select
+          value={status}
+          onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+          className="input w-40"
+        >
+          <option value="">All Statuses</option>
+          {statuses.filter(Boolean).map((s) => (
+            <option key={s} value={s} className="capitalize">{s}</option>
+          ))}
+        </select>
+
+        {/* QR Scanner */}
+        <button onClick={() => setScanOpen(true)} className="btn-primary btn-md gap-2">
+          <ScanQrCode className="w-4 h-4" />
+          Scan QR
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="table-header">ID</th>
+                <th className="table-header">Participant</th>
+                <th className="table-header">Project</th>
+                <th className="table-header">Amount</th>
+                <th className="table-header">Status</th>
+                <th className="table-header">Date</th>
+                <th className="table-header">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="table-cell text-center py-12 text-gray-400">Loading...</td>
+                </tr>
+              ) : donations.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="table-cell text-center py-12 text-gray-400">No donations found</td>
+                </tr>
+              ) : (
+                donations.map((d: any) => {
+                  const projectName = getTranslation(d.project?.block?.translations || [])?.name;
+                  return (
+                    <tr key={d.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="table-cell font-medium">#{d.id}</td>
+                      <td className="table-cell">
+                        <div>
+                          <p className="font-medium">{d.participant?.firstName} {d.participant?.lastName}</p>
+                          <p className="text-xs text-gray-400">{d.participant?.user?.email}</p>
+                        </div>
+                      </td>
+                      <td className="table-cell max-w-48">
+                        <p className="truncate">{projectName || '—'}</p>
+                      </td>
+                      <td className="table-cell font-semibold">{formatCurrency(Number(d.amount))}</td>
+                      <td className="table-cell">
+                        <span className={cn('badge', STATUS_COLORS[d.status])}>{d.status}</span>
+                      </td>
+                      <td className="table-cell text-gray-400">{formatDate(d.createdAt)}</td>
+                      <td className="table-cell">
+                        {d.status === 'pending' && (
+                          <div className="flex gap-1.5">
+                            <button
+                              onClick={() => setStatusModal({ donation: d })}
+                              className="btn btn-sm bg-primary-50 text-primary-600 hover:bg-primary-100"
+                              title="Update Status"
+                            >
+                              <CheckCircle className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {meta?.totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+            <p className="text-sm text-gray-500">{meta.total} total</p>
+            <div className="flex gap-1">
+              {Array.from({ length: meta.totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={cn('w-8 h-8 rounded-lg text-sm font-medium transition-colors', p === page ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100')}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modals */}
+      {scanOpen && (
+        <QrScannerModal
+          onClose={() => setScanOpen(false)}
+          onFound={(donation) => { setScanOpen(false); setStatusModal({ donation }); }}
+        />
+      )}
+
+      {statusModal && (
+        <DonationStatusModal
+          donation={statusModal.donation}
+          onClose={() => setStatusModal(null)}
+          onSubmit={(status, notes) => updateMutation.mutate({ id: statusModal.donation.id, status, notes })}
+          loading={updateMutation.isPending}
+        />
+      )}
+    </div>
+  );
+}
