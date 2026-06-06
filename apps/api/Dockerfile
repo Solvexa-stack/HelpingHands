@@ -3,7 +3,7 @@ RUN npm install -g pnpm@9.4.0
 WORKDIR /app
 
 FROM base AS deps
-COPY package.json pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/database/package.json ./packages/database/
 RUN pnpm install --frozen-lockfile

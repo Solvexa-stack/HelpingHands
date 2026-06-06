@@ -33,8 +33,8 @@ services:
 
   api:
     build:
-      context: ./apps/api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/api/Dockerfile
     container_name: helping_hands_api
     restart: unless-stopped
     env_file: .env
@@ -50,8 +50,8 @@ services:
 
   web:
     build:
-      context: ./apps/web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/web/Dockerfile
     container_name: helping_hands_web
     restart: unless-stopped
     env_file: .env
@@ -62,8 +62,8 @@ services:
 
   admin:
     build:
-      context: ./apps/admin
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/admin/Dockerfile
     container_name: helping_hands_admin
     restart: unless-stopped
     env_file: .env
