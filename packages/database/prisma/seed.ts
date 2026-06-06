@@ -115,35 +115,47 @@ async function main() {
   console.log('✅ Created participant account (participant@example.com / Participant@123)');
 
   // ─── Sample Project ───────────────────────────────────────────────────────────
-  const block = await prisma.block.create({
-    data: {
-      category: BlockCategory.project,
-      isActive: true,
-      translations: {
-        create: [
-          {
-            languageCode: 'en',
-            name: 'Community Water Well Project',
-            slug: 'community-water-well-project',
-            brief: 'Providing clean water access to rural communities',
-            description:
-              'This project aims to drill and install a solar-powered water well serving over 500 families in the remote region, ensuring year-round access to clean, safe drinking water.',
-          },
-          {
-            languageCode: 'ar',
-            name: 'مشروع بئر مياه المجتمع',
-            slug: 'mashrou3-bi2r-miyah-almojtama3',
-            brief: 'توفير مياه نظيفة للمجتمعات الريفية',
-            description:
-              'يهدف هذا المشروع إلى حفر وتركيب بئر مياه يعمل بالطاقة الشمسية لخدمة أكثر من 500 أسرة في المنطقة النائية.',
-          },
-        ],
-      },
-    },
+  const existingProjectBlock = await prisma.blockTranslation.findFirst({
+    where: { slug: 'community-water-well-project' },
+    select: { blockId: true },
   });
 
-  await prisma.project.create({
-    data: {
+  let block: { id: number };
+  if (existingProjectBlock) {
+    block = { id: existingProjectBlock.blockId };
+  } else {
+    block = await prisma.block.create({
+      data: {
+        category: BlockCategory.project,
+        isActive: true,
+        translations: {
+          create: [
+            {
+              languageCode: 'en',
+              name: 'Community Water Well Project',
+              slug: 'community-water-well-project',
+              brief: 'Providing clean water access to rural communities',
+              description:
+                'This project aims to drill and install a solar-powered water well serving over 500 families in the remote region, ensuring year-round access to clean, safe drinking water.',
+            },
+            {
+              languageCode: 'ar',
+              name: 'مشروع بئر مياه المجتمع',
+              slug: 'mashrou3-bi2r-miyah-almojtama3',
+              brief: 'توفير مياه نظيفة للمجتمعات الريفية',
+              description:
+                'يهدف هذا المشروع إلى حفر وتركيب بئر مياه يعمل بالطاقة الشمسية لخدمة أكثر من 500 أسرة في المنطقة النائية.',
+            },
+          ],
+        },
+      },
+    });
+  }
+
+  await prisma.project.upsert({
+    where: { blockId: block.id },
+    update: {},
+    create: {
       blockId: block.id,
       location: 'Rural District, South Region',
       value: 50000.0,
@@ -157,33 +169,39 @@ async function main() {
   console.log('✅ Created sample project');
 
   // ─── About Us Block ────────────────────────────────────────────────────────────
-  await prisma.block.create({
-    data: {
-      category: BlockCategory.about_us,
-      isActive: true,
-      orderId: 0,
-      translations: {
-        create: [
-          {
-            languageCode: 'en',
-            name: 'Our Mission',
-            slug: 'our-mission',
-            brief: 'Building bridges between compassion and action',
-            description:
-              'HelpingHands is a community-driven platform connecting generous donors with impactful projects worldwide. We believe in transparent, direct impact where every contribution is tracked and verified.',
-          },
-          {
-            languageCode: 'ar',
-            name: 'مهمتنا',
-            slug: 'our-mission-ar',
-            brief: 'بناء جسور بين الرحمة والعمل',
-            description:
-              'هيلبينج هاندز هي منصة مجتمعية تربط المانحين الكرماء بالمشاريع المؤثرة في جميع أنحاء العالم.',
-          },
-        ],
-      },
-    },
+  const existingAboutBlock = await prisma.blockTranslation.findFirst({
+    where: { slug: 'our-mission' },
   });
+
+  if (!existingAboutBlock) {
+    await prisma.block.create({
+      data: {
+        category: BlockCategory.about_us,
+        isActive: true,
+        orderId: 0,
+        translations: {
+          create: [
+            {
+              languageCode: 'en',
+              name: 'Our Mission',
+              slug: 'our-mission',
+              brief: 'Building bridges between compassion and action',
+              description:
+                'HelpingHands is a community-driven platform connecting generous donors with impactful projects worldwide. We believe in transparent, direct impact where every contribution is tracked and verified.',
+            },
+            {
+              languageCode: 'ar',
+              name: 'مهمتنا',
+              slug: 'our-mission-ar',
+              brief: 'بناء جسور بين الرحمة والعمل',
+              description:
+                'هيلبينج هاندز هي منصة مجتمعية تربط المانحين الكرماء بالمشاريع المؤثرة في جميع أنحاء العالم.',
+            },
+          ],
+        },
+      },
+    });
+  }
   console.log('✅ Created about us content');
 
   console.log('\n✨ Database seeded successfully!');
