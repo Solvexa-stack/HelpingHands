@@ -141,8 +141,7 @@ model Admin {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
 
-  user             User?
-  assignedProjects Project[]        @relation("FinancialOfficerProjects")
+  assignedProjects  Project[]         @relation("FinancialOfficerProjects")
   approvedDonations ProjectDonation[] @relation("ApprovedBy")
 
   @@map("admins")
@@ -158,7 +157,6 @@ model Participant {
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")
 
-  user      User?
   donations ProjectDonation[]
 
   @@map("participants")
@@ -180,11 +178,10 @@ model User {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  admin       Admin?       @relation(fields: [referenceId], references: [id], map: "users_admin_fk")
-  participant Participant? @relation(fields: [referenceId], references: [id], map: "users_participant_fk")
   refreshTokens RefreshToken[]
 
   @@unique([referenceId, referenceType])
+  @@index([referenceId, referenceType])
   @@index([referenceType])
   @@map("users")
 }

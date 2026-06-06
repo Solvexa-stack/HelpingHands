@@ -18,7 +18,6 @@ import {
   ResetPasswordDto,
   ChangePasswordDto,
 } from './dto/auth.dto';
-import { AdminRole } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -32,10 +31,6 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
-      include: {
-        admin: true,
-        participant: true,
-      },
     });
 
     if (!user || !user.password) {
@@ -51,11 +46,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const role = user.referenceType === 'admin' ? user.admin?.role : 'participant';
+    const { admin, participant } = await this.resolveReference(user.referenceId, user.referenceType);
+    const role = user.referenceType === 'admin' ? admin?.role : 'participant';
     const tokens = await this.generateTokens(user.id, user.email, role!, user.referenceType, user.referenceId);
 
     return {
-      user: this.sanitizeUser(user),
+      user: this.sanitizeUser({ ...user, admin, participant }),
       ...tokens,
     };
   }
@@ -83,7 +79,6 @@ export class AuthService {
         isActive: true,
         joiningDate: new Date(),
       },
-      include: { participant: true },
     });
 
     const tokens = await this.generateTokens(user.id, user.email, 'participant', 'participant', participant.id);
@@ -91,7 +86,7 @@ export class AuthService {
     await this.emailService.sendWelcomeEmail(user.email, `${participant.firstName} ${participant.lastName}`);
 
     return {
-      user: this.sanitizeUser(user),
+      user: this.sanitizeUser({ ...user, admin: null, participant }),
       ...tokens,
     };
   }
@@ -99,7 +94,7 @@ export class AuthService {
   async refreshTokens(userId: number, refreshToken: string) {
     const stored = await this.prisma.refreshToken.findFirst({
       where: { userId, token: refreshToken, expiresAt: { gt: new Date() } },
-      include: { user: { include: { admin: true, participant: true } } },
+      include: { user: true },
     });
 
     if (!stored) throw new UnauthorizedException('Refresh token invalid or expired');
@@ -107,7 +102,8 @@ export class AuthService {
     await this.prisma.refreshToken.delete({ where: { id: stored.id } });
 
     const user = stored.user;
-    const role = user.referenceType === 'admin' ? user.admin?.role : 'participant';
+    const { admin } = await this.resolveReference(user.referenceId, user.referenceType);
+    const role = user.referenceType === 'admin' ? admin?.role : 'participant';
     return this.generateTokens(user.id, user.email, role!, user.referenceType, user.referenceId);
   }
 
@@ -168,12 +164,20 @@ export class AuthService {
   }
 
   async getProfile(userId: number) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { admin: true, participant: true },
-    });
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
-    return this.sanitizeUser(user);
+
+    const { admin, participant } = await this.resolveReference(user.referenceId, user.referenceType);
+    return this.sanitizeUser({ ...user, admin, participant });
+  }
+
+  private async resolveReference(referenceId: number, referenceType: string) {
+    if (referenceType === 'admin') {
+      const admin = await this.prisma.admin.findUnique({ where: { id: referenceId } });
+      return { admin, participant: null };
+    }
+    const participant = await this.prisma.participant.findUnique({ where: { id: referenceId } });
+    return { admin: null, participant };
   }
 
   private async generateTokens(
@@ -204,15 +208,15 @@ export class AuthService {
       data: { userId, token: refreshToken, expiresAt },
     });
 
-    // Clean up old tokens (keep last 5)
-    const tokens = await this.prisma.refreshToken.findMany({
+    // Keep last 5 refresh tokens per user
+    const old = await this.prisma.refreshToken.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       skip: 5,
     });
-    if (tokens.length) {
+    if (old.length) {
       await this.prisma.refreshToken.deleteMany({
-        where: { id: { in: tokens.map((t) => t.id) } },
+        where: { id: { in: old.map((t) => t.id) } },
       });
     }
 
