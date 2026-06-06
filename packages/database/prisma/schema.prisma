@@ -1,0 +1,266 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Direction {
+  ltr
+  rtl
+}
+
+enum BlockCategory {
+  project
+  blog
+  news
+  event
+  about_us
+}
+
+enum FileType {
+  image
+  video
+  pdf
+}
+
+enum AdminRole {
+  administrator
+  employee
+  financial_officer
+}
+
+enum Representation {
+  personal
+  company
+  organization
+}
+
+enum ProjectCategory {
+  agricultural
+  industrial
+  trading
+}
+
+enum DonationStatus {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+// ─── Languages ────────────────────────────────────────────────────────────────
+
+model Language {
+  id        Int     @id @default(autoincrement())
+  name      String  @db.VarChar(100)
+  code      String  @unique @db.VarChar(10)
+  flagCode  String? @map("flag_code") @db.VarChar(10)
+  direction Direction @default(ltr)
+  order     Int     @default(0) @map("order_id")
+  isActive  Boolean @default(true) @map("is_active")
+
+  blockTranslations BlockTranslation[]
+
+  @@map("languages")
+}
+
+// ─── Blocks (Content) ────────────────────────────────────────────────────────
+
+model Block {
+  id             Int           @id @default(autoincrement())
+  category       BlockCategory
+  imageUrl       String?       @map("image_url") @db.Text
+  fileUrl        String?       @map("file_url") @db.Text
+  classification String?       @db.VarChar(255)
+  orderId        Int           @default(0) @map("order_id")
+  startDate      DateTime?     @map("start_date")
+  endDate        DateTime?     @map("end_date")
+  isActive       Boolean       @default(true) @map("is_active")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  translations BlockTranslation[]
+  files        File[]
+  project      Project?
+
+  @@map("blocks")
+}
+
+model BlockTranslation {
+  id           Int      @id @default(autoincrement())
+  blockId      Int      @map("block_id")
+  languageCode String   @map("language_code") @db.VarChar(10)
+  name         String   @db.VarChar(500)
+  slug         String   @unique @db.VarChar(500)
+  brief        String   @db.Text
+  description  String   @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  block    Block    @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  language Language @relation(fields: [languageCode], references: [code], onDelete: Cascade)
+
+  @@unique([blockId, languageCode])
+  @@map("block_translations")
+}
+
+// ─── Files (Polymorphic) ─────────────────────────────────────────────────────
+
+model File {
+  id            Int      @id @default(autoincrement())
+  referenceId   Int      @map("reference_id")
+  referenceType String   @map("reference_type") @db.VarChar(50)
+  name          String?  @db.VarChar(255)
+  url           String   @db.Text
+  orderId       Int      @default(0) @map("order_id")
+  isActive      Boolean  @default(true) @map("is_active")
+  isCover       Boolean  @default(false) @map("is_cover")
+  fileType      FileType @map("file_type")
+  description   String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  block Block? @relation(fields: [referenceId], references: [id], map: "files_block_fk")
+
+  @@index([referenceId, referenceType])
+  @@map("files")
+}
+
+// ─── Admins ───────────────────────────────────────────────────────────────────
+
+model Admin {
+  id        Int       @id @default(autoincrement())
+  firstName String    @map("first_name") @db.VarChar(100)
+  lastName  String    @map("last_name") @db.VarChar(100)
+  role      AdminRole @default(employee)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  user             User?
+  assignedProjects Project[]        @relation("FinancialOfficerProjects")
+  approvedDonations ProjectDonation[] @relation("ApprovedBy")
+
+  @@map("admins")
+}
+
+// ─── Participants ─────────────────────────────────────────────────────────────
+
+model Participant {
+  id             Int            @id @default(autoincrement())
+  firstName      String         @map("first_name") @db.VarChar(100)
+  lastName       String         @map("last_name") @db.VarChar(100)
+  representation Representation @default(personal)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  user      User?
+  donations ProjectDonation[]
+
+  @@map("participants")
+}
+
+// ─── Users (Auth - Polymorphic) ───────────────────────────────────────────────
+
+model User {
+  id              Int       @id @default(autoincrement())
+  referenceId     Int       @map("reference_id")
+  referenceType   String    @map("reference_type") @db.VarChar(50)
+  email           String    @unique @db.VarChar(255)
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  password        String?   @db.Text
+  avatar          String?   @db.Text
+  isActive        Boolean   @default(true) @map("is_active")
+  rememberToken   String?   @map("remember_token") @db.Text
+  joiningDate     DateTime? @map("joining_date")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  admin       Admin?       @relation(fields: [referenceId], references: [id], map: "users_admin_fk")
+  participant Participant? @relation(fields: [referenceId], references: [id], map: "users_participant_fk")
+  refreshTokens RefreshToken[]
+
+  @@unique([referenceId, referenceType])
+  @@index([referenceType])
+  @@map("users")
+}
+
+// ─── Refresh Tokens ───────────────────────────────────────────────────────────
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  token     String   @unique @db.Text
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ─── Projects ─────────────────────────────────────────────────────────────────
+
+model Project {
+  id                  Int             @id @default(autoincrement())
+  blockId             Int             @unique @map("block_id")
+  location            String?         @db.VarChar(255)
+  dateOfCompletion    DateTime?       @map("date_of_completion")
+  value               Decimal         @db.Decimal(15, 2)
+  progression         Decimal         @default(0) @db.Decimal(5, 2)
+  isCompleted         Boolean         @default(false) @map("is_completed")
+  category            ProjectCategory
+  expectedStartDate   DateTime?       @map("expected_start_date")
+  financialOfficerId  Int?            @map("financial_officer_id")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  block            Block             @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  financialOfficer Admin?            @relation("FinancialOfficerProjects", fields: [financialOfficerId], references: [id])
+  donations        ProjectDonation[]
+
+  @@map("projects")
+}
+
+// ─── Donations ────────────────────────────────────────────────────────────────
+
+model ProjectDonation {
+  id            Int            @id @default(autoincrement())
+  projectId     Int            @map("project_id")
+  participantId Int            @map("participant_id")
+  amount        Decimal        @db.Decimal(15, 2)
+  status        DonationStatus @default(pending)
+  qrToken       String         @unique @map("qr_token") @db.VarChar(255)
+  approvedBy    Int?           @map("approved_by")
+  approvedAt    DateTime?      @map("approved_at")
+  notes         String?        @db.Text
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  approver    Admin?      @relation("ApprovedBy", fields: [approvedBy], references: [id])
+
+  @@index([projectId])
+  @@index([participantId])
+  @@index([status])
+  @@map("project_donations")
+}
+
+// ─── Password Reset Tokens ────────────────────────────────────────────────────
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  email     String   @db.VarChar(255)
+  token     String   @unique @db.VarChar(255)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email])
+  @@map("password_reset_tokens")
+}
