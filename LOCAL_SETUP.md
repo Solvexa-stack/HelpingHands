@@ -81,6 +81,26 @@ pnpm dev
 
 ---
 
+## Troubleshooting
+
+**API won't start / port 4000 not listening**
+The API must be started manually (turbo's `pnpm dev` starts admin + web; start API separately):
+```bash
+cd apps/api
+rm -f tsconfig.tsbuildinfo          # clear stale incremental cache if needed
+npx tsc --project tsconfig.json     # compile
+node dist/main.js                   # start
+```
+
+**`DATABASE_URL` not found when running migrations**
+Prisma reads `.env` from the package directory, not the repo root. The file at
+`packages/database/.env` must exist. If missing:
+```bash
+echo 'DATABASE_URL="postgresql://postgres:password@localhost:5432/helping_hands?schema=public"' > packages/database/.env
+```
+
+---
+
 ## Useful Commands
 
 ```bash
