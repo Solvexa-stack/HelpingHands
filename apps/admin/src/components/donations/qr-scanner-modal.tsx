@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ScanQrCode, X, Search } from 'lucide-react';
+import { ScanBarcode, X, Search } from 'lucide-react';
 import { donationsApi } from '@/lib/api';
 import { formatCurrency, getTranslation, STATUS_COLORS } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -41,7 +41,7 @@ export function QrScannerModal({ onClose, onFound }: Props) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <ScanQrCode className="w-5 h-5 text-primary-600" />
+            <ScanBarcode className="w-5 h-5 text-primary-600" />
             <h2 className="font-semibold text-gray-900">QR Code Verification</h2>
           </div>
           <button onClick={onClose} className="btn-ghost btn-sm p-1.5 rounded-lg">

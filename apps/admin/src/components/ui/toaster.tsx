@@ -20,7 +20,7 @@ export function useToast() {
   return ctx;
 }
 
-export function Toaster() {
+export function Toaster({ children }: { children?: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const dismiss = useCallback((id: string) => {
@@ -45,6 +45,7 @@ export function Toaster() {
 
   return (
     <ToastContext.Provider value={{ toast, success, error }}>
+      {children}
       <div className="fixed bottom-4 right-4 z-50 space-y-2">
         {toasts.map(({ id, type, message }) => {
           const Icon = icons[type];

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, ScanQrCode, CheckCircle, XCircle, Filter } from 'lucide-react';
+import { Search, ScanBarcode, CheckCircle, XCircle, Filter } from 'lucide-react';
 import { donationsApi } from '@/lib/api';
 import { formatCurrency, formatDate, getTranslation, STATUS_COLORS, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toaster';
@@ -69,7 +69,7 @@ export default function DonationsPage() {
 
         {/* QR Scanner */}
         <button onClick={() => setScanOpen(true)} className="btn-primary btn-md gap-2">
-          <ScanQrCode className="w-4 h-4" />
+          <ScanBarcode className="w-4 h-4" />
           Scan QR
         </button>
       </div>
