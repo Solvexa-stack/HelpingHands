@@ -31,6 +31,9 @@ async function bootstrap() {
     origin: [
       configService.get('app.webUrl', 'http://localhost:3000'),
       configService.get('app.adminUrl', 'http://localhost:3001'),
+      'http://localhost:3000',
+      'http://localhost:3002',
+      'http://localhost:3001',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

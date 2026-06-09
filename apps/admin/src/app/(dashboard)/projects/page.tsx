@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Plus, Search, Pencil, Trash2, CheckCircle } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Eye } from 'lucide-react';
 import { projectsApi } from '@/lib/api';
 import { formatCurrency, formatDate, getTranslation, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toaster';
@@ -89,6 +89,9 @@ export default function ProjectsPage() {
                     </td>
                     <td className="table-cell">
                       <div className="flex gap-1.5">
+                        <Link href={`/projects/${p.id}`} className="btn-ghost btn-sm p-1.5 rounded-lg text-gray-500">
+                          <Eye className="w-3.5 h-3.5" />
+                        </Link>
                         <Link href={`/projects/${p.id}/edit`} className="btn-ghost btn-sm p-1.5 rounded-lg text-gray-500">
                           <Pencil className="w-3.5 h-3.5" />
                         </Link>

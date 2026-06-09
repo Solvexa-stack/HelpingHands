@@ -7,6 +7,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { blocksApi } from '@/lib/api';
 import { useToast } from '@/components/ui/toaster';
+import { ImageUpload } from '@/components/ui/image-upload';
 
 const LANGS = [
   { code: 'en', label: 'English' },
@@ -156,9 +157,13 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
         <h2 className="font-semibold text-gray-900">Settings</h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className="label">Image URL</label>
-            <input className="input" value={meta.imageUrl}
-              onChange={(e) => setMeta({ ...meta, imageUrl: e.target.value })} placeholder="https://..." />
+            <label className="label">Image</label>
+            <ImageUpload
+              value={meta.imageUrl}
+              onChange={(url) => setMeta({ ...meta, imageUrl: url })}
+              referenceId={editId}
+              referenceType="block"
+            />
           </div>
           {showDates && (
             <>

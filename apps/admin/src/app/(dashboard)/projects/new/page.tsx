@@ -7,6 +7,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { blocksApi, projectsApi, adminsApi } from '@/lib/api';
 import { useToast } from '@/components/ui/toaster';
+import { ImageUpload } from '@/components/ui/image-upload';
 
 const LANGS = [
   { code: 'en', label: 'English' },
@@ -38,6 +39,7 @@ export default function NewProjectPage() {
     expectedStartDate: '',
     dateOfCompletion: '',
     financialOfficerId: '',
+    imageUrl: '',
   });
 
   const { data: officers } = useQuery({
@@ -49,6 +51,7 @@ export default function NewProjectPage() {
     mutationFn: async () => {
       const block = await blocksApi.create({
         category: 'project',
+        imageUrl: project.imageUrl || undefined,
         translations: LANGS.map((l) => ({ languageCode: l.code, ...translations[l.code] })).filter((t) => t.name),
       });
       return projectsApi.create({
@@ -81,6 +84,10 @@ export default function NewProjectPage() {
 
       <div className="card p-6 space-y-6">
         <h2 className="font-semibold text-gray-900">Content & Translations</h2>
+        <div>
+          <label className="label">Cover Image</label>
+          <ImageUpload value={project.imageUrl} onChange={(url) => setProject({ ...project, imageUrl: url })} referenceType="block" />
+        </div>
 
         {/* Lang tabs */}
         <div className="flex gap-1 border-b border-gray-200">

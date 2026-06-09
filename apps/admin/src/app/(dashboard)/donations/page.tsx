@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, ScanBarcode, CheckCircle, XCircle, Filter } from 'lucide-react';
+import { Search, ScanBarcode, CheckCircle, QrCode } from 'lucide-react';
 import { donationsApi } from '@/lib/api';
 import { formatCurrency, formatDate, getTranslation, STATUS_COLORS, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toaster';
@@ -10,6 +10,21 @@ import { QrScannerModal } from '@/components/donations/qr-scanner-modal';
 import { DonationStatusModal } from '@/components/donations/donation-status-modal';
 
 const statuses = ['', 'pending', 'approved', 'rejected', 'cancelled'];
+const API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:4000/api';
+
+function downloadQr(token: string) {
+  const link = document.createElement('a');
+  link.href = `${API_URL}/v1/donations/${token}/qr/download`;
+  link.download = `qr-${token}.png`;
+  const accessToken = localStorage.getItem('admin_access_token') || '';
+  fetch(link.href, { headers: { Authorization: `Bearer ${accessToken}` } })
+    .then((r) => r.blob())
+    .then((blob) => {
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+}
 
 export default function DonationsPage() {
   const { success, error: toastError } = useToast();
@@ -119,17 +134,26 @@ export default function DonationsPage() {
                       </td>
                       <td className="table-cell text-gray-400">{formatDate(d.createdAt)}</td>
                       <td className="table-cell">
-                        {d.status === 'pending' && (
-                          <div className="flex gap-1.5">
+                        <div className="flex gap-1.5">
+                          {d.status === 'pending' && (
                             <button
                               onClick={() => setStatusModal({ donation: d })}
-                              className="btn btn-sm bg-primary-50 text-primary-600 hover:bg-primary-100"
+                              className="btn btn-sm bg-primary-50 text-primary-600 hover:bg-primary-100 p-1.5 rounded-lg"
                               title="Update Status"
                             >
                               <CheckCircle className="w-3.5 h-3.5" />
                             </button>
-                          </div>
-                        )}
+                          )}
+                          {d.qrToken && (
+                            <button
+                              onClick={() => downloadQr(d.qrToken)}
+                              className="btn btn-sm bg-gray-100 text-gray-600 hover:bg-gray-200 p-1.5 rounded-lg"
+                              title="Download QR Code"
+                            >
+                              <QrCode className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
