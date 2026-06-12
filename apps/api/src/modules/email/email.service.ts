@@ -117,6 +117,44 @@ export class EmailService {
     await this.send(to, 'Donation Status Update — HelpingHands', html);
   }
 
+  async sendContactEmail(name: string, from: string, subject: string, message: string) {
+    const adminEmail = this.config.get('mail.from') || this.config.get('mail.user');
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: #2563eb; padding: 24px; text-align: center;">
+          <h1 style="color: white; margin: 0;">HelpingHands</h1>
+        </div>
+        <div style="padding: 32px; background: #f9fafb;">
+          <h2 style="color: #1f2937;">New Contact Message</h2>
+          <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+            <tr style="background:#e5e7eb;"><td style="padding:10px;font-weight:bold;">From</td><td style="padding:10px;">${name} &lt;${from}&gt;</td></tr>
+            <tr><td style="padding:10px;font-weight:bold;">Subject</td><td style="padding:10px;">${subject}</td></tr>
+          </table>
+          <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:16px;margin-top:8px;">
+            <p style="color:#374151;line-height:1.7;white-space:pre-wrap;">${message}</p>
+          </div>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">Reply directly to ${from}</p>
+        </div>
+      </div>`;
+    await this.send(adminEmail, `Contact: ${subject}`, html);
+
+    // Auto-reply to sender
+    const ack = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: #2563eb; padding: 24px; text-align: center;">
+          <h1 style="color: white; margin: 0;">HelpingHands</h1>
+        </div>
+        <div style="padding: 32px; background: #f9fafb;">
+          <h2 style="color: #1f2937;">We received your message!</h2>
+          <p style="color: #4b5563; line-height: 1.6;">
+            Hi <strong>${name}</strong>,<br/><br/>
+            Thank you for reaching out. We'll get back to you within 24 hours.
+          </p>
+        </div>
+      </div>`;
+    await this.send(from, 'We received your message — HelpingHands', ack);
+  }
+
   async sendPasswordResetEmail(to: string, token: string) {
     const resetUrl = `${this.config.get('app.webUrl')}/auth/reset-password?token=${token}`;
     const html = `

@@ -29,16 +29,18 @@ export default function DashboardPage() {
     queryFn: dashboardApi.recentProjects,
   });
 
-  const { data: chartData } = useQuery({
+  const { data: chartData, isLoading: chartLoading } = useQuery({
     queryKey: ['donations-chart'],
     queryFn: () => dashboardApi.donationsByMonth(),
   });
 
-  const chartFormatted = chartData?.map((d: any) => ({
+  const chartFormatted = (chartData ?? []).map((d: any) => ({
     month: MONTHS[d.month - 1],
-    amount: d.amount,
+    amount: Number(d.amount),
     count: d.count,
-  })) || [];
+  }));
+
+  const hasChartData = chartFormatted.some((d: any) => d.amount > 0 || d.count > 0);
 
   const statCards = [
     { icon: FolderKanban, label: 'Total Projects', value: stats?.totalProjects ?? '—', color: 'text-blue-600 bg-blue-50', href: '/projects' },
@@ -73,24 +75,31 @@ export default function DashboardPage() {
         {/* Chart */}
         <div className="card p-6 lg:col-span-2">
           <h2 className="font-semibold text-gray-900 mb-4">Monthly Donations (This Year)</h2>
-          {chartFormatted.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={chartFormatted}>
-                <defs>
-                  <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`} />
-                <Tooltip formatter={(v: number) => [formatCurrency(v), 'Amount']} />
-                <Area type="monotone" dataKey="amount" stroke="#2563eb" strokeWidth={2} fill="url(#colorAmount)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          {chartLoading ? (
+            <div className="h-48 flex items-center justify-center text-gray-300">Loading…</div>
           ) : (
-            <div className="h-48 flex items-center justify-center text-gray-300">No data yet</div>
+            <div className="relative">
+              <ResponsiveContainer width="100%" height={220}>
+                <AreaChart data={chartFormatted}>
+                  <defs>
+                    <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`} />
+                  <Tooltip formatter={(v: number) => [formatCurrency(v), 'Amount']} />
+                  <Area type="monotone" dataKey="amount" stroke="#2563eb" strokeWidth={2} fill="url(#colorAmount)" />
+                </AreaChart>
+              </ResponsiveContainer>
+              {!hasChartData && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <p className="text-sm text-gray-400 bg-white/80 px-3 py-1.5 rounded-lg">No approved donations this year yet</p>
+                </div>
+              )}
+            </div>
           )}
         </div>
 

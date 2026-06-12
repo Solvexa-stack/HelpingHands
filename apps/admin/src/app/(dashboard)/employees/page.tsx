@@ -7,6 +7,7 @@ import { adminsApi } from '@/lib/api';
 import { formatDate, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toaster';
 import { CreateAdminModal } from '@/components/admins/create-admin-modal';
+import { EditAdminModal } from '@/components/admins/edit-admin-modal';
 
 const ROLE_COLORS: Record<string, string> = {
   administrator: 'bg-purple-100 text-purple-700',
@@ -19,6 +20,7 @@ export default function EmployeesPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
+  const [editAdmin, setEditAdmin] = useState<any>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admins', search],
@@ -37,6 +39,12 @@ export default function EmployeesPage() {
     mutationFn: (data: any) => adminsApi.create(data),
     onSuccess: () => { success('Account created!'); qc.invalidateQueries({ queryKey: ['admins'] }); setCreateOpen(false); },
     onError: (err: any) => toastError(err?.response?.data?.message || 'Create failed'),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => adminsApi.update(id, data),
+    onSuccess: () => { success('Member updated!'); qc.invalidateQueries({ queryKey: ['admins'] }); setEditAdmin(null); },
+    onError: (err: any) => toastError(err?.response?.data?.message || 'Update failed'),
   });
 
   return (
@@ -92,14 +100,22 @@ export default function EmployeesPage() {
                     </span>
                   </td>
                   <td className="table-cell">
-                    {a.role !== 'administrator' && (
+                    <div className="flex gap-1.5">
                       <button
-                        onClick={() => toggleMutation.mutate(a.id)}
-                        className={cn('btn btn-sm p-1.5 rounded-lg', a.user?.isActive ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100')}
+                        onClick={() => setEditAdmin(a)}
+                        className="btn-ghost btn-sm p-1.5 rounded-lg text-gray-500 hover:text-primary-600"
                       >
-                        {a.user?.isActive ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
+                        <Pencil className="w-3.5 h-3.5" />
                       </button>
-                    )}
+                      {a.role !== 'administrator' && (
+                        <button
+                          onClick={() => toggleMutation.mutate(a.id)}
+                          className={cn('btn btn-sm p-1.5 rounded-lg', a.user?.isActive ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100')}
+                        >
+                          {a.user?.isActive ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -113,6 +129,15 @@ export default function EmployeesPage() {
           onClose={() => setCreateOpen(false)}
           onSubmit={(data) => createMutation.mutate(data)}
           loading={createMutation.isPending}
+        />
+      )}
+
+      {editAdmin && (
+        <EditAdminModal
+          admin={editAdmin}
+          onClose={() => setEditAdmin(null)}
+          onSubmit={(id, data) => updateMutation.mutate({ id, data })}
+          loading={updateMutation.isPending}
         />
       )}
     </div>

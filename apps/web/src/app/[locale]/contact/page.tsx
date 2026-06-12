@@ -1,16 +1,27 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Loader2 } from 'lucide-react';
+import { contactApi } from '@/lib/api';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In production, send to API
-    setSubmitted(true);
+    setLoading(true);
+    setError('');
+    try {
+      await contactApi.submit(form);
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Failed to send message. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,6 +61,7 @@ export default function ContactPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Message Sent!</h3>
                 <p className="text-gray-500">Thank you for reaching out. We'll get back to you within 24 hours.</p>
+                <p className="text-sm text-gray-400 mt-2">A confirmation has been sent to {form.email}.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -75,8 +87,14 @@ export default function ContactPage() {
                   <textarea required rows={5} className="input resize-none" value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Tell us more..." />
                 </div>
-                <button type="submit" className="btn-primary gap-2">
-                  <Send className="w-4 h-4" /> Send Message
+
+                {error && (
+                  <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+                )}
+
+                <button type="submit" disabled={loading} className="btn-primary gap-2">
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {loading ? 'Sending...' : 'Send Message'}
                 </button>
               </form>
             )}

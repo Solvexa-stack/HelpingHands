@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { blocksApi } from '@/lib/api';
 import { useToast } from '@/components/ui/toaster';
 import { ImageUpload } from '@/components/ui/image-upload';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 
 const LANGS = [
   { code: 'en', label: 'English' },
@@ -145,8 +146,11 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
             </div>
             <div>
               <label className="label">Description *</label>
-              <textarea className="input resize-none" rows={6} value={translations[l.code].description}
-                onChange={(e) => setTrans(l.code, 'description', e.target.value)} placeholder="Full content..." />
+              <RichTextEditor
+                value={translations[l.code].description}
+                onChange={(val) => setTrans(l.code, 'description', val)}
+                placeholder="Full content..."
+              />
             </div>
           </div>
         ))}

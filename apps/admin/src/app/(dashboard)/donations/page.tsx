@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, ScanBarcode, CheckCircle, QrCode } from 'lucide-react';
+import { Search, ScanBarcode, CheckCircle, QrCode, Download } from 'lucide-react';
 import { donationsApi } from '@/lib/api';
 import { formatCurrency, formatDate, getTranslation, STATUS_COLORS, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toaster';
@@ -11,6 +11,32 @@ import { DonationStatusModal } from '@/components/donations/donation-status-moda
 
 const statuses = ['', 'pending', 'approved', 'rejected', 'cancelled'];
 const API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:4000/api';
+
+function exportCsv(donations: any[]) {
+  const headers = ['ID', 'Participant', 'Email', 'Project', 'Amount', 'Status', 'Date', 'Approved At'];
+  const rows = donations.map((d) => [
+    d.id,
+    `${d.participant?.firstName || ''} ${d.participant?.lastName || ''}`.trim(),
+    d.participant?.user?.email || '',
+    getTranslation(d.project?.block?.translations || [])?.name || '',
+    Number(d.amount).toFixed(2),
+    d.status,
+    d.createdAt ? new Date(d.createdAt).toISOString().split('T')[0] : '',
+    d.approvedAt ? new Date(d.approvedAt).toISOString().split('T')[0] : '',
+  ]);
+
+  const csv = [headers, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `donations-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 function downloadQr(token: string) {
   const link = document.createElement('a');
@@ -34,6 +60,17 @@ export default function DonationsPage() {
   const [page, setPage] = useState(1);
   const [scanOpen, setScanOpen] = useState(false);
   const [statusModal, setStatusModal] = useState<{ donation: any } | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const result = await donationsApi.list({ status: status || undefined, search: search || undefined, limit: 10000 });
+      exportCsv(result?.data || []);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ['donations', status, search, page],
@@ -81,6 +118,12 @@ export default function DonationsPage() {
             <option key={s} value={s} className="capitalize">{s}</option>
           ))}
         </select>
+
+        {/* Export CSV */}
+        <button onClick={handleExport} disabled={exporting} className="btn-secondary btn-md gap-2">
+          <Download className="w-4 h-4" />
+          {exporting ? 'Exporting…' : 'Export CSV'}
+        </button>
 
         {/* QR Scanner */}
         <button onClick={() => setScanOpen(true)} className="btn-primary btn-md gap-2">

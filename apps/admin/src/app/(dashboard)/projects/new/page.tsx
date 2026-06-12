@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { blocksApi, projectsApi, adminsApi } from '@/lib/api';
 import { useToast } from '@/components/ui/toaster';
 import { ImageUpload } from '@/components/ui/image-upload';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 
 const LANGS = [
   { code: 'en', label: 'English' },
@@ -120,8 +121,11 @@ export default function NewProjectPage() {
             </div>
             <div>
               <label className="label">Description *</label>
-              <textarea className="input resize-none" rows={5} value={translations[l.code].description}
-                onChange={(e) => setTrans(l.code, 'description', e.target.value)} placeholder="Full project description..." />
+              <RichTextEditor
+                value={translations[l.code].description}
+                onChange={(val) => setTrans(l.code, 'description', val)}
+                placeholder="Full project description..."
+              />
             </div>
           </div>
         ))}

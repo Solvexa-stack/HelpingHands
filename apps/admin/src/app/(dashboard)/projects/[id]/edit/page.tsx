@@ -7,6 +7,8 @@ import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { blocksApi, projectsApi, adminsApi } from '@/lib/api';
 import { useToast } from '@/components/ui/toaster';
+import { ImageGallery } from '@/components/ui/image-gallery';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 
 const LANGS = [
   { code: 'en', label: 'English' },
@@ -143,12 +145,22 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
             </div>
             <div>
               <label className="label">Description *</label>
-              <textarea className="input resize-none" rows={5} value={translations[l.code].description}
-                onChange={(e) => setTrans(l.code, 'description', e.target.value)} />
+              <RichTextEditor
+                value={translations[l.code].description}
+                onChange={(val) => setTrans(l.code, 'description', val)}
+              />
             </div>
           </div>
         ))}
       </div>
+
+      {blockId && (
+        <div className="card p-6 space-y-4">
+          <h2 className="font-semibold text-gray-900">Image Gallery</h2>
+          <p className="text-sm text-gray-400">The first image or the one marked as cover will be shown as the project thumbnail. Hover an image to set cover or delete.</p>
+          <ImageGallery referenceId={blockId} referenceType="block" />
+        </div>
+      )}
 
       <div className="card p-6 space-y-4">
         <h2 className="font-semibold text-gray-900">Project Details</h2>

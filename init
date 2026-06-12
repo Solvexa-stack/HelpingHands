@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+set -e
+
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+cd "$ROOT"
+
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+step() { echo -e "\n${GREEN}==>${NC} $1"; }
+warn() { echo -e "${YELLOW}WARN:${NC} $1"; }
+die()  { echo -e "${RED}ERROR:${NC} $1"; exit 1; }
+
+# ── 1. Check prerequisites ─────────────────────────────────────────────────────
+step "Checking prerequisites..."
+
+command -v node  >/dev/null 2>&1 || die "Node.js is not installed. Install it from https://nodejs.org"
+command -v pnpm  >/dev/null 2>&1 || { warn "pnpm not found — installing..."; npm install -g pnpm; }
+command -v docker>/dev/null 2>&1 || die "Docker is not installed. Install it from https://docker.com"
+
+docker info >/dev/null 2>&1 || die "Docker daemon is not running. Please start Docker Desktop."
+
+echo "  node  $(node -v)"
+echo "  pnpm  $(pnpm -v)"
+echo "  docker $(docker -v | awk '{print $3}' | tr -d ',')"
+
+# ── 2. Install dependencies ────────────────────────────────────────────────────
+step "Installing dependencies..."
+pnpm install
+
+# ── 3. Environment files ───────────────────────────────────────────────────────
+step "Setting up environment files..."
+
+if [ ! -f "$ROOT/.env" ]; then
+  cp "$ROOT/.env.example" "$ROOT/.env"
+  echo "  Created .env from .env.example"
+else
+  echo "  .env already exists — skipping"
+fi
+
+DB_ENV="$ROOT/packages/database/.env"
+if [ ! -f "$DB_ENV" ]; then
+  echo 'DATABASE_URL="postgresql://postgres:password@localhost:5432/helping_hands?schema=public"' > "$DB_ENV"
+  echo "  Created packages/database/.env"
+else
+  echo "  packages/database/.env already exists — skipping"
+fi
+
+WEB_ENV="$ROOT/apps/web/.env.local"
+if [ ! -f "$WEB_ENV" ]; then
+  cat > "$WEB_ENV" <<'EOF'
+NEXT_PUBLIC_API_URL=http://localhost:4000/api
+NEXT_PUBLIC_APP_URL=http://localhost:3002
+EOF
+  echo "  Created apps/web/.env.local"
+else
+  echo "  apps/web/.env.local already exists — skipping"
+fi
+
+ADMIN_ENV="$ROOT/apps/admin/.env.local"
+if [ ! -f "$ADMIN_ENV" ]; then
+  echo 'NEXT_PUBLIC_ADMIN_API_URL=http://localhost:4000/api' > "$ADMIN_ENV"
+  echo "  Created apps/admin/.env.local"
+else
+  echo "  apps/admin/.env.local already exists — skipping"
+fi
+
+# ── 4. Start Postgres ──────────────────────────────────────────────────────────
+step "Starting PostgreSQL..."
+docker compose up postgres -d
+echo "  Waiting for Postgres to be ready..."
+for i in $(seq 1 15); do
+  docker compose exec -T postgres pg_isready -U postgres >/dev/null 2>&1 && break
+  sleep 1
+done
+docker compose exec -T postgres pg_isready -U postgres >/dev/null 2>&1 || die "Postgres did not become ready in time."
+echo "  Postgres is ready."
+
+# ── 5. Run migrations ──────────────────────────────────────────────────────────
+step "Running database migrations..."
+pnpm --filter @helping-hands/database db:migrate:dev --name init 2>/dev/null || \
+  pnpm --filter @helping-hands/database db:migrate:deploy
+echo "  Migrations applied."
+
+# ── 6. Seed ───────────────────────────────────────────────────────────────────
+step "Seeding the database..."
+pnpm --filter @helping-hands/database db:seed
+echo "  Database seeded."
+
+# ── Done ──────────────────────────────────────────────────────────────────────
+echo ""
+echo -e "${GREEN}✓ Setup complete!${NC}"
+echo ""
+echo "  Start all apps:  pnpm dev"
+echo ""
+echo "  App URLs:"
+echo "    API   → http://localhost:4000"
+echo "    Web   → http://localhost:3002"
+echo "    Admin → http://localhost:3001"
+echo ""
+echo "  Test accounts:"
+echo "    admin@helpinghands.org   / Admin@123456"
+echo "    employee@helpinghands.org / Employee@123"
+echo "    officer@helpinghands.org  / Officer@123"
+echo "    participant@example.com   / Participant@123"
+echo ""

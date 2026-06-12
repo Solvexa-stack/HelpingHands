@@ -3,22 +3,27 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Plus, Pencil, Trash2, ToggleRight, ToggleLeft } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, ToggleRight, ToggleLeft } from 'lucide-react';
 import { blocksApi } from '@/lib/api';
 import { formatDate, getTranslation, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toaster';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
+const LIMIT = 15;
+
 export default function EventsPage() {
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['blocks-event'],
-    queryFn: () => blocksApi.list({ category: 'event', activeOnly: false }),
+    queryKey: ['blocks-event', search, page],
+    queryFn: () => blocksApi.list({ category: 'event', search: search || undefined, activeOnly: false, page, limit: LIMIT }),
   });
   const blocks = (data as any)?.data || [];
+  const meta = (data as any)?.meta || {};
 
   const toggleMutation = useMutation({
     mutationFn: (id: number) => blocksApi.toggleActive(id),
@@ -34,11 +39,21 @@ export default function EventsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex justify-end">
+      <div className="flex gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="input pl-9"
+            placeholder="Search events..."
+          />
+        </div>
         <Link href="/content/events/new" className="btn-primary btn-md gap-2">
           <Plus className="w-4 h-4" /> New Event
         </Link>
       </div>
+
       <div className="card overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
@@ -56,7 +71,7 @@ export default function EventsPage() {
               : blocks.map((b: any) => {
                 const t = getTranslation(b.translations || []);
                 return (
-                  <tr key={b.id} className="hover:bg-gray-50">
+                  <tr key={b.id} className="hover:bg-gray-50 transition-colors">
                     <td className="table-cell font-medium max-w-48 truncate">{t?.name || 'Untitled'}</td>
                     <td className="table-cell text-gray-400">{b.startDate ? formatDate(b.startDate) : '—'}</td>
                     <td className="table-cell text-gray-400">{b.endDate ? formatDate(b.endDate) : '—'}</td>
@@ -75,7 +90,22 @@ export default function EventsPage() {
               })}
           </tbody>
         </table>
+
+        {meta?.totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+            <p className="text-sm text-gray-500">{meta.total} total</p>
+            <div className="flex gap-1">
+              {Array.from({ length: meta.totalPages }, (_, i) => i + 1).map((pg) => (
+                <button key={pg} onClick={() => setPage(pg)}
+                  className={cn('w-8 h-8 rounded-lg text-sm', pg === page ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100')}>
+                  {pg}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
       {deleteId && <ConfirmDialog title="Delete Event" message="Delete this event?" onConfirm={() => deleteMutation.mutate(deleteId)} onCancel={() => setDeleteId(null)} loading={deleteMutation.isPending} danger />}
     </div>
   );

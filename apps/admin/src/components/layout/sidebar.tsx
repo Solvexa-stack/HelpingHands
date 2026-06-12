@@ -8,32 +8,36 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
+import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['administrator', 'employee', 'financial_officer'] },
-  { href: '/donations', icon: Heart, label: 'Donations', roles: ['administrator', 'employee', 'financial_officer'] },
-  { href: '/projects', icon: FolderKanban, label: 'Projects', roles: ['administrator', 'employee', 'financial_officer'] },
-  { href: '/participants', icon: Users, label: 'Participants', roles: ['administrator', 'employee'] },
-  { href: '/employees', icon: UserCheck, label: 'Employees', roles: ['administrator'] },
+  { href: '/dashboard', icon: LayoutDashboard, tKey: 'nav.dashboard', roles: ['administrator', 'employee', 'financial_officer'] },
+  { href: '/donations', icon: Heart, tKey: 'nav.donations', roles: ['administrator', 'employee', 'financial_officer'] },
+  { href: '/projects', icon: FolderKanban, tKey: 'nav.projects', roles: ['administrator', 'employee', 'financial_officer'] },
+  { href: '/participants', icon: Users, tKey: 'nav.participants', roles: ['administrator', 'employee'] },
+  { href: '/employees', icon: UserCheck, tKey: 'nav.employees', roles: ['administrator'] },
   { label: 'separator' },
-  { href: '/content/blogs', icon: FileText, label: 'Blogs', roles: ['administrator', 'employee'] },
-  { href: '/content/news', icon: Newspaper, label: 'News', roles: ['administrator', 'employee'] },
-  { href: '/content/events', icon: CalendarDays, label: 'Events', roles: ['administrator', 'employee'] },
-  { href: '/content/about', icon: Info, label: 'About Us', roles: ['administrator', 'employee'] },
+  { href: '/content/blogs', icon: FileText, tKey: 'nav.blogs', roles: ['administrator', 'employee'] },
+  { href: '/content/news', icon: Newspaper, tKey: 'nav.news', roles: ['administrator', 'employee'] },
+  { href: '/content/events', icon: CalendarDays, tKey: 'nav.events', roles: ['administrator', 'employee'] },
+  { href: '/content/about', icon: Info, tKey: 'nav.about', roles: ['administrator', 'employee'] },
   { label: 'separator' },
-  { href: '/languages', icon: Globe, label: 'Languages', roles: ['administrator'] },
+  { href: '/languages', icon: Globe, tKey: 'nav.languages', roles: ['administrator'] },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const role = user?.admin?.role || '';
 
   const visible = navItems.filter((item) => {
     if (item.label === 'separator') return true;
     return item.roles?.includes(role);
   });
+
+  const label = (item: any) => item.tKey ? t(item.tKey) : item.label;
 
   return (
     <aside className="w-64 bg-sidebar flex flex-col h-full">
@@ -72,7 +76,7 @@ export function Sidebar() {
               )}
             >
               <Icon className="w-4 h-4 flex-shrink-0" />
-              <span className="flex-1">{item.label}</span>
+              <span className="flex-1">{label(item)}</span>
               {isActive && <ChevronRight className="w-3.5 h-3.5 opacity-60" />}
             </Link>
           );

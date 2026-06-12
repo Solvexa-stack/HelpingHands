@@ -114,6 +114,12 @@ export const languagesApi = {
   list: () => api.get('/languages').then((r) => r.data.data),
 };
 
+// ─── Contact ──────────────────────────────────────────────────────────────────
+export const contactApi = {
+  submit: (data: { name: string; email: string; subject: string; message: string }) =>
+    api.post('/contact', data).then((r) => r.data),
+};
+
 // ─── Participants ─────────────────────────────────────────────────────────────
 export const participantsApi = {
   get: (id: number) => api.get(`/participants/${id}`).then((r) => r.data.data),
