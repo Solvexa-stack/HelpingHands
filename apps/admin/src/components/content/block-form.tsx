@@ -90,7 +90,7 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
         classification: meta.classification || undefined,
         orderId: Number(meta.orderId) || 0,
         isActive: meta.isActive,
-        translations: LANGS.map((l) => ({ languageCode: l.code, ...translations[l.code] })).filter((t) => t.name),
+        translations: LANGS.map((l) => ({ languageCode: l.code, ...translations[l.code] })).filter((t) => t.name && t.slug),
       };
       return editId ? blocksApi.update(editId, payload) : blocksApi.create(payload);
     },
@@ -99,10 +99,14 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
   });
 
   const setTrans = (lang: string, field: string, value: string) => {
-    setTranslations((prev) => ({
-      ...prev,
-      [lang]: { ...prev[lang], [field]: value, ...(field === 'name' && lang === 'en' ? { slug: slugify(value) } : {}) },
-    }));
+    setTranslations((prev) => {
+      const updated = { ...prev[lang], [field]: value };
+      if (field === 'name') {
+        const base = lang === 'en' ? slugify(value) : (prev.en.slug || slugify(value));
+        updated.slug = lang === 'en' ? slugify(value) : (base ? `${base}-${lang}` : '');
+      }
+      return { ...prev, [lang]: updated };
+    });
   };
 
   if (!ready) return <div className="flex items-center justify-center py-20 text-gray-400">Loading...</div>;

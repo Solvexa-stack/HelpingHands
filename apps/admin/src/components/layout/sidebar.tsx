@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, FolderKanban, Heart, Users, UserCheck,
   FileText, Newspaper, CalendarDays, Info, Globe, Heart as HeartIcon,
-  ChevronRight,
+  ChevronRight, FlaskConical,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useLanguage } from '@/contexts/language-context';
@@ -15,6 +15,7 @@ const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, tKey: 'nav.dashboard', roles: ['administrator', 'employee', 'financial_officer'] },
   { href: '/donations', icon: Heart, tKey: 'nav.donations', roles: ['administrator', 'employee', 'financial_officer'] },
   { href: '/projects', icon: FolderKanban, tKey: 'nav.projects', roles: ['administrator', 'employee', 'financial_officer'] },
+  { href: '/studies', icon: FlaskConical, tKey: 'nav.studies', roles: ['administrator', 'employee', 'financial_officer'] },
   { href: '/participants', icon: Users, tKey: 'nav.participants', roles: ['administrator', 'employee'] },
   { href: '/employees', icon: UserCheck, tKey: 'nav.employees', roles: ['administrator'] },
   { label: 'separator' },
@@ -37,7 +38,7 @@ export function Sidebar() {
     return item.roles?.includes(role);
   });
 
-  const label = (item: any) => item.tKey ? t(item.tKey) : item.label;
+  const label = (item: any) => item.tKey ? t(item.tKey) : (item.label || '');
 
   return (
     <aside className="w-64 bg-sidebar flex flex-col h-full">
@@ -49,7 +50,7 @@ export function Sidebar() {
           </div>
           <div>
             <p className="text-white font-bold text-sm">HelpingHands</p>
-            <p className="text-blue-400 text-xs">Admin Panel</p>
+            <p className="text-blue-400 text-xs">{t('sidebar.adminPanel')}</p>
           </div>
         </div>
       </div>
@@ -94,7 +95,7 @@ export function Sidebar() {
               <p className="text-white text-sm font-medium truncate">
                 {user.admin?.firstName} {user.admin?.lastName}
               </p>
-              <p className="text-blue-400 text-xs capitalize">{role.replace('_', ' ')}</p>
+              <p className="text-blue-400 text-xs">{t(`roles.${role}`) || role.replace('_', ' ')}</p>
             </div>
           </div>
         </div>

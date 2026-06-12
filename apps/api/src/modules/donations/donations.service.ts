@@ -8,6 +8,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { QrService } from '../qr/qr.service';
 import { EmailService } from '../email/email.service';
 import { ProjectsService } from '../projects/projects.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateDonationDto, UpdateDonationStatusDto, DonationQueryDto } from './dto/donation.dto';
 import { AdminRole, DonationStatus } from '@prisma/client';
 import { paginate, paginatedResponse } from '../../common/dto/pagination.dto';
@@ -19,6 +20,7 @@ export class DonationsService {
     private qrService: QrService,
     private emailService: EmailService,
     private projectsService: ProjectsService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async findAll(query: DonationQueryDto, role?: string, adminId?: number, participantId?: number) {
@@ -181,6 +183,13 @@ export class DonationsService {
     // Update project progress after approval/rejection
     if (dto.status === DonationStatus.approved || dto.status === DonationStatus.rejected) {
       await this.projectsService.recalculateProgress(donation.projectId);
+    }
+
+    // Fire in-app notification + queue email for cash donation approval
+    if (dto.status === DonationStatus.approved) {
+      this.notificationsService
+        .notify({ type: 'donation_cash_approved', donationId: updated.id })
+        .catch(() => null);
     }
 
     // Send email notifications

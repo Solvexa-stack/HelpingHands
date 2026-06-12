@@ -53,6 +53,50 @@ enum DonationStatus {
   cancelled
 }
 
+enum StudyStatus {
+  draft
+  in_review
+  published
+  voting_open
+  voting_closed
+  approved
+  rejected
+}
+
+enum SectionStatus {
+  pending
+  in_progress
+  completed
+  needs_revision
+}
+
+enum VoteChoice {
+  for
+  against
+  abstain
+}
+
+enum ProjectType {
+  agricultural
+  industrial
+  infrastructure
+  energy
+  housing
+  trading
+}
+
+enum PaymentProvider {
+  stripe
+  paypal
+}
+
+enum PaymentStatus {
+  pending
+  completed
+  failed
+  refunded
+}
+
 // ─── Languages ────────────────────────────────────────────────────────────────
 
 model Language {
@@ -144,6 +188,9 @@ model Admin {
   user              User?
   assignedProjects  Project[]         @relation("FinancialOfficerProjects")
   approvedDonations ProjectDonation[] @relation("ApprovedBy")
+  createdStudies    ProjectStudy[]    @relation("StudyCreatedBy")
+  approvedStudies   ProjectStudy[]    @relation("StudyApprovedBy")
+  assignedSections  StudySection[]    @relation("SectionAssignedTo")
 
   @@map("admins")
 }
@@ -158,8 +205,9 @@ model Participant {
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")
 
-  user      User?
-  donations ProjectDonation[]
+  user            User?
+  donations       ProjectDonation[]
+  onlineDonations OnlineDonation[]
 
   @@map("participants")
 }
@@ -186,6 +234,8 @@ model User {
   admin         Admin?        @relation(fields: [adminId], references: [id])
   participant   Participant?  @relation(fields: [participantId], references: [id])
   refreshTokens RefreshToken[]
+  studyVotes    StudyVote[]
+  notifications Notification[]
 
   @@unique([referenceId, referenceType])
   @@index([referenceId, referenceType])
@@ -221,12 +271,15 @@ model Project {
   category            ProjectCategory
   expectedStartDate   DateTime?       @map("expected_start_date")
   financialOfficerId  Int?            @map("financial_officer_id")
+  studyStatus         StudyStatus?    @map("study_status")
   createdAt           DateTime        @default(now()) @map("created_at")
   updatedAt           DateTime        @updatedAt @map("updated_at")
 
   block            Block             @relation(fields: [blockId], references: [id], onDelete: Cascade)
   financialOfficer Admin?            @relation("FinancialOfficerProjects", fields: [financialOfficerId], references: [id])
   donations        ProjectDonation[]
+  study            ProjectStudy?
+  onlineDonations  OnlineDonation[]
 
   @@map("projects")
 }
@@ -267,4 +320,153 @@ model PasswordResetToken {
 
   @@index([email])
   @@map("password_reset_tokens")
+}
+
+// ─── Study System ─────────────────────────────────────────────────────────────
+
+model StudyDepartmentTemplate {
+  id          Int         @id @default(autoincrement())
+  projectType ProjectType @map("project_type")
+  name        String      @db.VarChar(255)
+  description String?     @db.Text
+  isRequired  Boolean     @default(true) @map("is_required")
+  order       Int
+  isActive    Boolean     @default(true) @map("is_active")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@map("study_department_templates")
+}
+
+model ProjectStudy {
+  id              Int           @id @default(autoincrement())
+  projectId       Int           @unique @map("project_id")
+  project         Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status          StudyStatus   @default(draft)
+  summary         String?       @db.Text
+  publishedAt     DateTime?     @map("published_at")
+  votingStartsAt  DateTime?     @map("voting_starts_at")
+  votingEndsAt    DateTime?     @map("voting_ends_at")
+  approvedById    Int?          @map("approved_by_id")
+  approvedBy      Admin?        @relation("StudyApprovedBy", fields: [approvedById], references: [id])
+  approvedAt      DateTime?     @map("approved_at")
+  rejectionReason String?       @map("rejection_reason") @db.Text
+  reminderSentAt  DateTime?     @map("reminder_sent_at")
+  createdById     Int           @map("created_by_id")
+  createdBy       Admin         @relation("StudyCreatedBy", fields: [createdById], references: [id])
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  sections StudySection[]
+  votes    StudyVote[]
+
+  @@map("project_studies")
+}
+
+model StudySection {
+  id            Int           @id @default(autoincrement())
+  studyId       Int           @map("study_id")
+  study         ProjectStudy  @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  name          String        @db.VarChar(255)
+  description   String?       @db.Text
+  content       String?       @db.Text
+  status        SectionStatus @default(pending)
+  order         Int
+  isRequired    Boolean       @default(true) @map("is_required")
+  assignedTo    Int?          @map("assigned_to")
+  assignedAdmin Admin?        @relation("SectionAssignedTo", fields: [assignedTo], references: [id])
+  completedAt   DateTime?     @map("completed_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  files StudySectionFile[]
+
+  @@index([studyId])
+  @@map("study_sections")
+}
+
+model StudySectionFile {
+  id        Int          @id @default(autoincrement())
+  sectionId Int          @map("section_id")
+  section   StudySection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  name      String       @db.VarChar(255)
+  url       String       @db.Text
+  fileType  FileType     @map("file_type")
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@index([sectionId])
+  @@map("study_section_files")
+}
+
+model StudyVote {
+  id        Int          @id @default(autoincrement())
+  studyId   Int          @map("study_id")
+  study     ProjectStudy @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  userId    Int          @map("user_id")
+  user      User         @relation(fields: [userId], references: [id])
+  choice    VoteChoice
+  comment   String?      @db.Text
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@unique([studyId, userId])
+  @@map("study_votes")
+}
+
+// ─── Online Donations (Stripe / PayPal) ──────────────────────────────────────
+
+model OnlineDonation {
+  id                Int             @id @default(autoincrement())
+  projectId         Int             @map("project_id")
+  project           Project         @relation(fields: [projectId], references: [id])
+  participantId     Int?            @map("participant_id")
+  participant       Participant?    @relation(fields: [participantId], references: [id])
+  amount            Decimal         @db.Decimal(15, 2)
+  currency          String          @default("USD") @db.VarChar(10)
+  provider          PaymentProvider
+  providerSessionId String          @unique @map("provider_session_id") @db.VarChar(500)
+  providerPaymentId String?         @map("provider_payment_id") @db.VarChar(500)
+  status            PaymentStatus   @default(pending)
+  metadata          Json?
+  paidAt            DateTime?       @map("paid_at")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@index([projectId])
+  @@index([participantId])
+  @@index([status])
+  @@map("online_donations")
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id            Int       @id @default(autoincrement())
+  userId        Int       @map("user_id")
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          String    @db.VarChar(100)
+  title         String    @db.VarChar(500)
+  body          String    @db.Text
+  isRead        Boolean   @default(false) @map("is_read")
+  readAt        DateTime? @map("read_at")
+  referenceId   Int?      @map("reference_id")
+  referenceType String?   @map("reference_type") @db.VarChar(50)
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// ─── Webhook Logs ─────────────────────────────────────────────────────────────
+
+model WebhookLog {
+  id          Int       @id @default(autoincrement())
+  provider    String    @db.VarChar(50)
+  eventType   String    @map("event_type") @db.VarChar(255)
+  payload     Json
+  processedAt DateTime? @map("processed_at")
+  error       String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("webhook_logs")
 }

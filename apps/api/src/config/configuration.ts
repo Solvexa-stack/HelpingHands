@@ -25,4 +25,22 @@ export default () => ({
     pass: process.env.SMTP_PASS,
     from: process.env.MAIL_FROM || 'HelpingHands <noreply@helpinghands.org>',
   },
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY || '',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
+  },
+  paypal: {
+    clientId: process.env.PAYPAL_CLIENT_ID || '',
+    clientSecret: process.env.PAYPAL_CLIENT_SECRET || '',
+    mode: process.env.PAYPAL_MODE || 'sandbox',
+  },
+  payment: {
+    successUrl: process.env.PAYMENT_SUCCESS_URL || 'http://localhost:3000/en/donations/success',
+    cancelUrl: process.env.PAYMENT_CANCEL_URL || 'http://localhost:3000/en/donations/cancel',
+  },
+  redis: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+  },
 });

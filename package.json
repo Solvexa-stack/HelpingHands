@@ -15,7 +15,10 @@
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
     "db:seed": "turbo run db:seed",
-    "db:studio": "pnpm --filter @helping-hands/database studio"
+    "db:studio": "pnpm --filter @helping-hands/database studio",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "test:coverage": "turbo test:coverage"
   },
   "devDependencies": {
     "prettier": "^3.2.5",

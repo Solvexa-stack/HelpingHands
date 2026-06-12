@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Voting Reminder</title></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;background:#ffffff;">
+    <div style="background:#d97706;padding:24px;text-align:center;">
+      <h1 style="color:#ffffff;margin:0;font-size:24px;">HelpingHands</h1>
+    </div>
+    <div style="padding:32px;">
+      <h2 style="color:#1f2937;margin-top:0;">⏰ Voting Closes Soon!</h2>
+      <p style="color:#4b5563;line-height:1.6;">Dear <strong>{{participantName}}</strong>,</p>
+      <p style="color:#4b5563;line-height:1.6;">
+        This is a reminder that voting for <strong>{{projectName}}</strong> closes in
+        <strong>{{hoursRemaining}} hours</strong>. You haven't voted yet — don't miss your chance!
+      </p>
+      <div style="background:#fffbeb;border-left:4px solid #d97706;padding:16px;margin:16px 0;border-radius:4px;">
+        <p style="margin:0;color:#92400e;font-weight:bold;">Only {{hoursRemaining}} hours left to vote!</p>
+      </div>
+      <a href="{{voteUrl}}"
+         style="display:inline-block;background:#d97706;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;margin-top:8px;font-weight:bold;">
+        Vote Now
+      </a>
+      <p style="color:#9ca3af;font-size:12px;margin-top:32px;">
+        You are receiving this reminder because you haven't voted yet for this project.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

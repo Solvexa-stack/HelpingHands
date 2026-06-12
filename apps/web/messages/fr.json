@@ -90,6 +90,58 @@
     "noDonations": "Vous n'avez pas encore fait de don.",
     "explorProjects": "Explorer les projets"
   },
+  "study": {
+    "underReview": "Ce projet est actuellement en cours d'examen. Les dons ouvriront après approbation.",
+    "voteOpen": "Le vote communautaire est ouvert !",
+    "readStudy": "Lire l'étude et voter",
+    "votingClosed": "Le vote est terminé. En attente d'approbation finale.",
+    "approved": "Étude approuvée — les dons sont ouverts",
+    "rejected": "Ce projet n'a pas été approuvé pour le moment.",
+    "sections": "Sections de l'étude",
+    "summary": "Résumé exécutif",
+    "results": "Résultats du vote",
+    "noVotes": "Aucun vote enregistré pour l'instant.",
+    "vote": {
+      "for": "Pour",
+      "against": "Contre",
+      "abstain": "Abstention",
+      "submit": "Soumettre mon vote",
+      "change": "Modifier mon vote",
+      "yourVote": "Votre vote",
+      "loginToVote": "Connectez-vous pour voter",
+      "optionalComment": "Commentaire facultatif",
+      "howDoYouVote": "Comment votez-vous sur cette étude ?",
+      "votingNotOpen": "Le vote n'est pas encore ouvert.",
+      "votingOpensOn": "Le vote ouvre le",
+      "votingClosed": "Le vote est clôturé.",
+      "submitted": "Votre vote a été soumis.",
+      "changed": "Votre vote a été mis à jour."
+    }
+  },
+  "payment": {
+    "donateOnline": "Donner en ligne",
+    "donateCash": "Donner en espèces",
+    "selectProvider": "Choisir un mode de paiement",
+    "stripe": "Carte de crédit / débit",
+    "paypal": "PayPal",
+    "amount": "Montant",
+    "currency": "Devise",
+    "processing": "Redirection vers le paiement...",
+    "success": {
+      "title": "Merci pour votre don !",
+      "confirmed": "Votre don a été confirmé.",
+      "transactionId": "ID de transaction",
+      "emailSent": "Un e-mail de confirmation a été envoyé.",
+      "viewDonations": "Voir vos dons",
+      "backToProjects": "Retour aux projets"
+    },
+    "cancel": {
+      "title": "Paiement annulé",
+      "message": "Votre don n'a pas été traité. Vous pouvez réessayer à tout moment.",
+      "tryAgain": "Réessayer",
+      "backToProject": "Retour au projet"
+    }
+  },
   "common": {
     "loading": "Chargement...",
     "error": "Une erreur s'est produite",

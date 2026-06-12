@@ -160,14 +160,21 @@ export class ProjectsService {
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project) return;
 
-    const result = await this.prisma.projectDonation.aggregate({
-      where: { projectId, status: 'approved' },
-      _sum: { amount: true },
-    });
+    const [cashResult, onlineResult] = await Promise.all([
+      this.prisma.projectDonation.aggregate({
+        where: { projectId, status: 'approved' },
+        _sum: { amount: true },
+      }),
+      this.prisma.onlineDonation.aggregate({
+        where: { projectId, status: 'completed' },
+        _sum: { amount: true },
+      }),
+    ]);
 
-    const collected = Number(result._sum.amount || 0);
+    const collected =
+      Number(cashResult._sum.amount ?? 0) + Number(onlineResult._sum.amount ?? 0);
     const value = Number(project.value);
-    const progression = Math.min((collected / value) * 100, 100);
+    const progression = value > 0 ? Math.min((collected / value) * 100, 100) : 0;
     const isCompleted = collected >= value;
 
     await this.prisma.project.update({

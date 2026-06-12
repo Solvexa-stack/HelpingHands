@@ -125,3 +125,43 @@ export const participantsApi = {
   get: (id: number) => api.get(`/participants/${id}`).then((r) => r.data.data),
   update: (id: number, data: any) => api.put(`/participants/${id}`, data).then((r) => r.data.data),
 };
+
+// ─── Study ────────────────────────────────────────────────────────────────────
+export const studyApi = {
+  getByProject: (projectId: number) =>
+    api.get(`/study/project/${projectId}`).then((r) => r.data.data),
+};
+
+// ─── Voting ───────────────────────────────────────────────────────────────────
+export const votingApi = {
+  getResults: (studyId: number) =>
+    api.get(`/voting/${studyId}/results`).then((r) => r.data.data),
+  getMyVotes: () =>
+    api.get('/voting/my-votes').then((r) => r.data.data),
+  castVote: (data: { studyId: number; choice: 'for' | 'against' | 'abstain'; comment?: string }) =>
+    api.post('/voting/cast', data).then((r) => r.data.data),
+  changeVote: (studyId: number, data: { choice: 'for' | 'against' | 'abstain'; comment?: string }) =>
+    api.patch(`/voting/${studyId}/change`, data).then((r) => r.data.data),
+};
+
+// ─── Payments ─────────────────────────────────────────────────────────────────
+export const paymentsApi = {
+  createCheckout: (projectId: number, amount: number, provider: 'stripe' | 'paypal', currency = 'USD') =>
+    api.post('/payments/checkout', { projectId, amount, provider, currency }).then((r) => r.data.data),
+  getDonationStatus: (id: number) =>
+    api.get(`/payments/donations/${id}/status`).then((r) => r.data.data),
+  listDonations: (params?: Record<string, any>) =>
+    api.get('/payments/donations', { params }).then((r) => r.data.data),
+};
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+export const notificationsApi = {
+  getUnreadCount: () =>
+    api.get('/notifications/unread-count').then((r) => r.data.data),
+  getMyNotifications: (page = 1) =>
+    api.get('/notifications', { params: { page } }).then((r) => r.data.data),
+  markRead: (id: number) =>
+    api.patch(`/notifications/${id}/read`).then((r) => r.data.data),
+  markAllRead: () =>
+    api.patch('/notifications/read-all').then((r) => r.data.data),
+};

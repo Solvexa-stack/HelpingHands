@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AdminRole, DonationStatus } from '@prisma/client';
+import { AdminRole, DonationStatus, StudyStatus } from '@prisma/client';
 
 @Injectable()
 export class DashboardService {
@@ -26,6 +26,8 @@ export class DashboardService {
       totalEmployees,
       totalFinancialOfficers,
       totalCollected,
+      pendingVotes,
+      studiesByStatusGroups,
     ] = await Promise.all([
       this.prisma.project.count({ where: projectWhere }),
       this.prisma.project.count({ where: { ...projectWhere, isCompleted: true } }),
@@ -40,7 +42,16 @@ export class DashboardService {
         where: { ...donationWhere, status: DonationStatus.approved },
         _sum: { amount: true },
       }),
+      this.prisma.projectStudy.count({ where: { status: StudyStatus.voting_open } }),
+      this.prisma.projectStudy.groupBy({
+        by: ['status'],
+        _count: { status: true },
+      }),
     ]);
+
+    const studiesByStatus = Object.fromEntries(
+      studiesByStatusGroups.map((g) => [g.status, g._count.status]),
+    );
 
     const projectCompletionRate =
       totalProjects > 0 ? Math.round((completedProjects / totalProjects) * 100) : 0;
@@ -54,6 +65,8 @@ export class DashboardService {
       approvedDonations,
       rejectedDonations,
       totalCollected: Number(totalCollected._sum.amount || 0),
+      pendingVotes,
+      studiesByStatus,
       ...(role === AdminRole.administrator && {
         totalParticipants,
         totalEmployees,

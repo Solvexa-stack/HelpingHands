@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
+import { BullModule } from '@nestjs/bull';
 import configuration from './config/configuration';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -14,6 +16,10 @@ import { DonationsModule } from './modules/donations/donations.module';
 import { EmailModule } from './modules/email/email.module';
 import { QrModule } from './modules/qr/qr.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { StudyModule } from './modules/study/study.module';
+import { VotingModule } from './modules/voting/voting.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -26,6 +32,17 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
       { name: 'short', ttl: 1000, limit: 20 },
       { name: 'long', ttl: 60000, limit: 200 },
     ]),
+    ScheduleModule.forRoot(),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (config: ConfigService) => ({
+        redis: {
+          host: config.get('redis.host', 'localhost'),
+          port: config.get<number>('redis.port', 6379),
+        },
+      }),
+      inject: [ConfigService],
+    }),
     PrismaModule,
     AuthModule,
     AdminsModule,
@@ -38,6 +55,10 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     EmailModule,
     QrModule,
     DashboardModule,
+    StudyModule,
+    VotingModule,
+    PaymentsModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

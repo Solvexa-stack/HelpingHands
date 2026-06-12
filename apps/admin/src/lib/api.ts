@@ -113,6 +113,44 @@ export const languagesApi = {
   toggle: (code: string) => api.patch(`/languages/${code}/toggle`).then((r) => r.data.data),
 };
 
+// ─── Studies ─────────────────────────────────────────────────────────────────
+export const studiesApi = {
+  list: (params?: any) => api.get('/study', { params }).then((r) => r.data.data),
+  get: (id: number) => api.get(`/study/${id}`).then((r) => r.data.data),
+  create: (projectId: number) => api.post('/study', { projectId }).then((r) => r.data.data),
+  changeStatus: (id: number, status: string, rejectionReason?: string, extraData?: Record<string, any>) =>
+    api.patch(`/study/${id}/status`, { status, rejectionReason, ...extraData }).then((r) => r.data.data),
+  updateSection: (sectionId: number, data: { content?: string; status?: string; assignedTo?: number }) =>
+    api.patch(`/study/sections/${sectionId}`, data).then((r) => r.data.data),
+  uploadSectionFiles: (sectionId: number, formData: FormData) =>
+    api
+      .post(`/study/sections/${sectionId}/files`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data.data),
+  deleteSectionFile: (fileId: number) => api.delete(`/study/sections/files/${fileId}`),
+};
+
+// ─── Voting ───────────────────────────────────────────────────────────────────
+export const votingApi = {
+  getResults: (studyId: number) =>
+    api.get(`/voting/${studyId}/results`).then((r) => r.data.data),
+  listVotes: (studyId: number, filters?: { choice?: string; page?: number }) =>
+    api.get(`/voting/${studyId}/votes`, { params: filters }).then((r) => r.data.data),
+};
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+export const notificationsApi = {
+  getUnreadCount: () =>
+    api.get('/notifications/unread-count').then((r) => r.data.data),
+  getMyNotifications: (page = 1) =>
+    api.get('/notifications', { params: { page } }).then((r) => r.data.data),
+  markRead: (id: number) =>
+    api.patch(`/notifications/${id}/read`).then((r) => r.data.data),
+  markAllRead: () =>
+    api.patch('/notifications/read-all').then((r) => r.data.data),
+};
+
 // ─── Files ────────────────────────────────────────────────────────────────────
 export const filesApi = {
   upload: (formData: FormData) =>

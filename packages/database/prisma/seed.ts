@@ -1,4 +1,4 @@
-import { PrismaClient, AdminRole, BlockCategory, ProjectCategory, Representation } from '@prisma/client';
+import { PrismaClient, AdminRole, BlockCategory, ProjectCategory, Representation, ProjectType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -203,6 +203,83 @@ async function main() {
     });
   }
   console.log('✅ Created about us content');
+
+  // ─── Study Department Templates ───────────────────────────────────────────────
+  const sharedSections = [
+    { name: 'Financial Overview', description: 'Overall budget breakdown and funding sources', order: 100 },
+    { name: 'Legal Compliance', description: 'Regulatory requirements and permits needed', order: 101 },
+    { name: 'Social Impact Assessment', description: 'Expected social benefits and affected communities', order: 102 },
+    { name: 'Project Timeline', description: 'Milestones, phases, and delivery schedule', order: 103 },
+  ];
+
+  const templatesByType: Array<{ projectType: ProjectType; name: string; description?: string; order: number }> = [
+    // Agricultural
+    { projectType: ProjectType.agricultural, name: 'Soil Study', description: 'Analysis of soil quality, composition, and suitability for farming', order: 1 },
+    { projectType: ProjectType.agricultural, name: 'Water Access', description: 'Availability of irrigation and water sources', order: 2 },
+    { projectType: ProjectType.agricultural, name: 'Crop Planning', description: 'Recommended crops based on climate and market demand', order: 3 },
+    { projectType: ProjectType.agricultural, name: 'Climate & Season', description: 'Seasonal patterns and climate risk factors', order: 4 },
+    { projectType: ProjectType.agricultural, name: 'Financial Estimate', description: 'Input costs, expected yield, and profit projections', order: 5 },
+    { projectType: ProjectType.agricultural, name: 'Legal & Land', description: 'Land ownership, usage rights, and agricultural regulations', order: 6 },
+    { projectType: ProjectType.agricultural, name: 'Community Impact', description: 'Effect on local farmers and food security', order: 7 },
+    ...sharedSections.map(s => ({ projectType: ProjectType.agricultural, ...s })),
+
+    // Industrial
+    { projectType: ProjectType.industrial, name: 'Technical Design', description: 'Engineering specifications and facility layout', order: 1 },
+    { projectType: ProjectType.industrial, name: 'Environmental Study', description: 'Pollution impact and environmental mitigation plan', order: 2 },
+    { projectType: ProjectType.industrial, name: 'Safety & Risk', description: 'Occupational hazards and risk management protocols', order: 3 },
+    { projectType: ProjectType.industrial, name: 'Supply Chain', description: 'Raw material sourcing and logistics plan', order: 4 },
+    { projectType: ProjectType.industrial, name: 'Budget & ROI', description: 'Capital expenditure and return on investment analysis', order: 5 },
+    { projectType: ProjectType.industrial, name: 'Legal Permits', description: 'Industry-specific licenses and zoning approvals', order: 6 },
+    { projectType: ProjectType.industrial, name: 'Job Creation Report', description: 'Number of jobs created and workforce training needs', order: 7 },
+    ...sharedSections.map(s => ({ projectType: ProjectType.industrial, ...s })),
+
+    // Infrastructure
+    { projectType: ProjectType.infrastructure, name: 'Engineering Study', description: 'Structural and civil engineering assessment', order: 1 },
+    { projectType: ProjectType.infrastructure, name: 'Ground Survey', description: 'Topographic and geotechnical survey results', order: 2 },
+    { projectType: ProjectType.infrastructure, name: 'Disaster Resilience', description: 'Earthquake, flood, and extreme weather resistance', order: 3 },
+    { projectType: ProjectType.infrastructure, name: 'Maintenance Plan', description: 'Long-term upkeep schedule and associated costs', order: 4 },
+    { projectType: ProjectType.infrastructure, name: 'Cost & Funding', description: 'Construction budget and funding breakdown', order: 5 },
+    { projectType: ProjectType.infrastructure, name: 'Affected Population', description: 'Number and demographics of beneficiaries', order: 6 },
+    { projectType: ProjectType.infrastructure, name: 'Reconstruction Priority', description: 'Urgency scoring and prioritization rationale', order: 7 },
+    ...sharedSections.map(s => ({ projectType: ProjectType.infrastructure, ...s })),
+
+    // Energy
+    { projectType: ProjectType.energy, name: 'Power Demand Study', description: 'Current and projected energy demand in the area', order: 1 },
+    { projectType: ProjectType.energy, name: 'Technology Choice', description: 'Evaluation of solar, wind, hydro, or other sources', order: 2 },
+    { projectType: ProjectType.energy, name: 'Grid Connection', description: 'Integration plan with existing power infrastructure', order: 3 },
+    { projectType: ProjectType.energy, name: 'Storage & Distribution', description: 'Battery storage and power distribution architecture', order: 4 },
+    { projectType: ProjectType.energy, name: 'Environmental Assessment', description: 'Ecological impact of the energy installation', order: 5 },
+    { projectType: ProjectType.energy, name: 'Cost per kWh', description: 'Levelized cost of energy and pricing model', order: 6 },
+    { projectType: ProjectType.energy, name: 'Operator Training', description: 'Training plan for local staff to operate and maintain the system', order: 7 },
+    ...sharedSections.map(s => ({ projectType: ProjectType.energy, ...s })),
+
+    // Housing
+    { projectType: ProjectType.housing, name: 'Structural Design', description: 'Architectural plans and structural engineering details', order: 1 },
+    { projectType: ProjectType.housing, name: 'Land Ownership', description: 'Verification of land title and usage rights', order: 2 },
+    { projectType: ProjectType.housing, name: 'Beneficiary List', description: 'Identified families and eligibility criteria', order: 3 },
+    { projectType: ProjectType.housing, name: 'Material Supply', description: 'Building materials sourcing and supply chain plan', order: 4 },
+    { projectType: ProjectType.housing, name: 'Sanitation Plan', description: 'Water, sewage, and waste management systems', order: 5 },
+    { projectType: ProjectType.housing, name: 'Budget per Unit', description: 'Cost breakdown per housing unit', order: 6 },
+    { projectType: ProjectType.housing, name: 'Displacement Impact', description: 'Assessment of families displaced or relocated', order: 7 },
+    ...sharedSections.map(s => ({ projectType: ProjectType.housing, ...s })),
+  ];
+
+  const existingTemplateCount = await prisma.studyDepartmentTemplate.count();
+  if (existingTemplateCount === 0) {
+    const templateResult = await prisma.studyDepartmentTemplate.createMany({
+      data: templatesByType.map(t => ({
+        projectType: t.projectType,
+        name: t.name,
+        description: t.description ?? null,
+        isRequired: true,
+        order: t.order,
+        isActive: true,
+      })),
+    });
+    console.log(`✅ Created ${templateResult.count} study department templates`);
+  } else {
+    console.log(`✅ Study department templates already seeded (${existingTemplateCount} found)`);
+  }
 
   console.log('\n✨ Database seeded successfully!');
   console.log('\nTest accounts:');

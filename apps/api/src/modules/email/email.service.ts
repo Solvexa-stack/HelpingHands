@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class EmailService {
@@ -153,6 +155,113 @@ export class EmailService {
         </div>
       </div>`;
     await this.send(from, 'We received your message — HelpingHands', ack);
+  }
+
+  private renderTemplate(templateName: string, vars: Record<string, string>): string {
+    const templatePath = path.join(__dirname, 'templates', templateName);
+    let html = fs.readFileSync(templatePath, 'utf-8');
+    for (const [key, value] of Object.entries(vars)) {
+      html = html.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value ?? '');
+    }
+    // Remove any unfilled {{...}} blocks (e.g. {{#if ...}} helpers)
+    html = html.replace(/\{\{[^}]*\}\}/g, '');
+    return html;
+  }
+
+  async sendStudyPublishedEmail(
+    to: string,
+    participantName: string,
+    projectName: string,
+    studyUrl: string,
+    votingStartsAt?: string,
+  ) {
+    const html = this.renderTemplate('study-published.html', {
+      participantName,
+      projectName,
+      studyUrl,
+      votingStartsAt: votingStartsAt ?? '',
+    });
+    await this.send(to, `Study Published: ${projectName} — HelpingHands`, html);
+  }
+
+  async sendVotingOpenEmail(
+    to: string,
+    participantName: string,
+    projectName: string,
+    voteUrl: string,
+    votingEndsAt: string,
+  ) {
+    const html = this.renderTemplate('voting-open.html', {
+      participantName,
+      projectName,
+      voteUrl,
+      votingEndsAt,
+    });
+    await this.send(to, `Voting is now open: ${projectName} — HelpingHands`, html);
+  }
+
+  async sendVotingReminderEmail(
+    to: string,
+    participantName: string,
+    projectName: string,
+    voteUrl: string,
+    hoursRemaining: string,
+  ) {
+    const html = this.renderTemplate('voting-reminder.html', {
+      participantName,
+      projectName,
+      voteUrl,
+      hoursRemaining,
+    });
+    await this.send(to, `Reminder: Vote for ${projectName} closes soon — HelpingHands`, html);
+  }
+
+  async sendStudyApprovedEmail(
+    to: string,
+    participantName: string,
+    projectName: string,
+    donateUrl: string,
+  ) {
+    const html = this.renderTemplate('study-approved.html', {
+      participantName,
+      projectName,
+      donateUrl,
+    });
+    await this.send(to, `Study Approved: ${projectName} is now open for donations — HelpingHands`, html);
+  }
+
+  async sendOnlineDonationConfirmedEmail(
+    to: string,
+    participantName: string,
+    amount: string,
+    currency: string,
+    projectName: string,
+    transactionId: string,
+    date: string,
+  ) {
+    const html = this.renderTemplate('donation-online-confirmed.html', {
+      participantName,
+      amount,
+      currency,
+      projectName,
+      transactionId,
+      date,
+    });
+    await this.send(to, `Donation Confirmed: ${projectName} — HelpingHands`, html);
+  }
+
+  async sendStudyRejectedEmail(
+    to: string,
+    adminName: string,
+    projectName: string,
+    reason: string,
+  ) {
+    const html = this.renderTemplate('study-rejected.html', {
+      adminName,
+      projectName,
+      reason,
+    });
+    await this.send(to, `Study Rejected: ${projectName} — HelpingHands`, html);
   }
 
   async sendPasswordResetEmail(to: string, token: string) {

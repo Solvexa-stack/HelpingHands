@@ -90,6 +90,58 @@
     "noDonations": "You haven't made any donations yet.",
     "explorProjects": "Explore Projects"
   },
+  "study": {
+    "underReview": "This project is currently under review. Donations open after approval.",
+    "voteOpen": "Community vote is open!",
+    "readStudy": "Read the study and vote",
+    "votingClosed": "Voting has ended. Awaiting final approval.",
+    "approved": "Study approved — donations are open",
+    "rejected": "This project was not approved at this time.",
+    "sections": "Study Sections",
+    "summary": "Executive Summary",
+    "results": "Vote Results",
+    "noVotes": "No votes cast yet.",
+    "vote": {
+      "for": "In favour",
+      "against": "Against",
+      "abstain": "Abstain",
+      "submit": "Submit my vote",
+      "change": "Change my vote",
+      "yourVote": "Your vote",
+      "loginToVote": "Login to vote",
+      "optionalComment": "Optional comment",
+      "howDoYouVote": "How do you vote on this study?",
+      "votingNotOpen": "Voting is not open yet.",
+      "votingOpensOn": "Voting opens on",
+      "votingClosed": "Voting has closed.",
+      "submitted": "Your vote has been submitted.",
+      "changed": "Your vote has been updated."
+    }
+  },
+  "payment": {
+    "donateOnline": "Donate Online",
+    "donateCash": "Donate with Cash",
+    "selectProvider": "Choose payment method",
+    "stripe": "Credit / Debit Card",
+    "paypal": "PayPal",
+    "amount": "Amount",
+    "currency": "Currency",
+    "processing": "Redirecting to payment...",
+    "success": {
+      "title": "Thank you for your donation!",
+      "confirmed": "Your donation has been confirmed.",
+      "transactionId": "Transaction ID",
+      "emailSent": "A confirmation email has been sent.",
+      "viewDonations": "View your donations",
+      "backToProjects": "Back to projects"
+    },
+    "cancel": {
+      "title": "Payment was cancelled",
+      "message": "Your donation was not processed. You can try again at any time.",
+      "tryAgain": "Try again",
+      "backToProject": "Back to project"
+    }
+  },
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong",

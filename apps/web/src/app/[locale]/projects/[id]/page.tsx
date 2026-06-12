@@ -2,10 +2,10 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
-import { MapPin, Calendar, Target, TrendingUp, CheckCircle } from 'lucide-react';
-import { projectsApi } from '@/lib/api';
+import { MapPin, Calendar, Target, CheckCircle, BookOpen } from 'lucide-react';
+import { projectsApi, studyApi } from '@/lib/api';
 import { ProgressBar } from '@/components/ui/progress-bar';
-import { DonateButton } from '@/components/donations/donate-button';
+import { ProjectDonateSidebar } from '@/components/projects/project-donate-sidebar';
 import { getTranslation, formatCurrency, formatDate } from '@/lib/utils';
 import type { Metadata } from 'next';
 
@@ -29,10 +29,20 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
     project = await projectsApi.get(Number(id), locale);
   } catch { notFound(); }
 
+  // Fetch study status for banner (best-effort — non-blocking)
+  let studyStatus: string | null = project.studyStatus ?? null;
+  if (!studyStatus) {
+    try {
+      const study = await studyApi.getByProject(Number(id));
+      studyStatus = study?.status ?? null;
+    } catch { /* no study yet */ }
+  }
+
   const translation = getTranslation(project.block?.translations || [], locale);
   const coverFile = project.block?.files?.find((f: any) => f.isCover) || project.block?.files?.[0];
   const galleryFiles = project.block?.files?.filter((f: any) => !f.isCover && f.fileType === 'image') || [];
   const progression = Number(project.progression || 0);
+  const hasStudy = !!studyStatus && ['published', 'voting_open', 'voting_closed', 'approved', 'rejected'].includes(studyStatus);
 
   return (
     <div className="min-h-screen bg-gray-50 py-10">
@@ -90,7 +100,6 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
                   )}
                 </div>
 
-                {/* Progress */}
                 <ProgressBar value={progression} size="lg" showLabel />
 
                 <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
@@ -121,6 +130,25 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
               </div>
             )}
 
+            {/* Study link */}
+            {hasStudy && (
+              <Link
+                href={`/${locale}/projects/${id}/study`}
+                className="card p-5 flex items-center justify-between hover:bg-gray-50 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 text-primary-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Project Study</p>
+                    <p className="text-sm text-gray-500">Read the detailed study report</p>
+                  </div>
+                </div>
+                <span className="text-primary-600 text-sm font-medium group-hover:underline">View Study →</span>
+              </Link>
+            )}
+
             {/* Gallery */}
             {galleryFiles.length > 0 && (
               <div className="card p-6">
@@ -138,16 +166,13 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
 
           {/* Sidebar */}
           <div className="space-y-5">
-            {/* Donate card */}
-            {!project.isCompleted && (
-              <div className="card p-6 sticky top-24">
-                <h3 className="text-lg font-bold text-gray-900 mb-1">{t('donate')}</h3>
-                <p className="text-gray-500 text-sm mb-5">Your donation will be verified and tracked via QR code.</p>
-                <DonateButton projectId={project.id} locale={locale} />
-              </div>
-            )}
+            <ProjectDonateSidebar
+              projectId={project.id}
+              locale={locale}
+              studyStatus={studyStatus}
+              isCompleted={!!project.isCompleted}
+            />
 
-            {/* Financial officer */}
             {project.financialOfficer && (
               <div className="card p-5">
                 <h3 className="text-sm font-semibold text-gray-500 mb-2 uppercase tracking-wide">Financial Officer</h3>
