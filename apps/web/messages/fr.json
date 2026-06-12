@@ -1,0 +1,111 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "about": "À propos",
+    "projects": "Projets",
+    "news": "Actualités",
+    "blogs": "Blog",
+    "events": "Événements",
+    "contact": "Contactez-nous",
+    "login": "Se connecter",
+    "register": "S'inscrire",
+    "dashboard": "Mon espace",
+    "logout": "Se déconnecter"
+  },
+  "home": {
+    "hero": {
+      "title": "Faites la différence aujourd'hui",
+      "subtitle": "Rejoignez des milliers de donateurs qui soutiennent des projets qui changent des vies à travers le monde.",
+      "cta": "Explorer les projets",
+      "ctaSecondary": "En savoir plus"
+    },
+    "stats": {
+      "projects": "Projets actifs",
+      "donors": "Donateurs",
+      "collected": "Total collecté",
+      "completed": "Projets terminés"
+    },
+    "featuredProjects": "Projets en vedette",
+    "latestNews": "Dernières actualités",
+    "upcomingEvents": "Événements à venir",
+    "viewAll": "Voir tout"
+  },
+  "projects": {
+    "title": "Nos projets",
+    "subtitle": "Parcourez et soutenez des projets impactants qui font une vraie différence",
+    "search": "Rechercher des projets...",
+    "filters": {
+      "all": "Toutes les catégories",
+      "agricultural": "Agricole",
+      "industrial": "Industriel",
+      "trading": "Commerce",
+      "completed": "Terminé",
+      "inProgress": "En cours"
+    },
+    "progress": "Progression",
+    "target": "Objectif",
+    "collected": "Collecté",
+    "location": "Lieu",
+    "donate": "Faire un don",
+    "noProjects": "Aucun projet trouvé"
+  },
+  "donate": {
+    "title": "Faire un don",
+    "amount": "Montant du don",
+    "amountPlaceholder": "Entrez le montant",
+    "submit": "Créer une demande de don",
+    "qrTitle": "Votre code QR de don",
+    "qrInstructions": "Téléchargez ce code QR et envoyez-le à votre proche qui se rendra au bureau pour finaliser le paiement.",
+    "download": "Télécharger le code QR",
+    "donationCreated": "Demande de don créée avec succès !"
+  },
+  "auth": {
+    "login": "Se connecter",
+    "register": "Créer un compte",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "firstName": "Prénom",
+    "lastName": "Nom de famille",
+    "representation": "Type de compte",
+    "personal": "Personnel",
+    "company": "Entreprise",
+    "organization": "Organisation",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Vous n'avez pas de compte ?",
+    "hasAccount": "Vous avez déjà un compte ?",
+    "loginSuccess": "Bienvenue !",
+    "registerSuccess": "Compte créé avec succès !"
+  },
+  "dashboard": {
+    "title": "Mon espace",
+    "profile": "Mon profil",
+    "donations": "Mes dons",
+    "settings": "Paramètres",
+    "status": {
+      "pending": "En attente",
+      "approved": "Approuvé",
+      "rejected": "Rejeté",
+      "cancelled": "Annulé"
+    },
+    "noDonations": "Vous n'avez pas encore fait de don.",
+    "explorProjects": "Explorer les projets"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur s'est produite",
+    "retry": "Réessayer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "view": "Voir",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "noResults": "Aucun résultat trouvé",
+    "readMore": "Lire la suite"
+  }
+}

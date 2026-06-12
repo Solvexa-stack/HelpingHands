@@ -8,8 +8,9 @@ import {
   IsOptional,
   IsString,
   Min,
+  IsBoolean,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ProjectCategory } from '@prisma/client';
 
 export class CreateProjectDto {
@@ -67,7 +68,8 @@ export class ProjectQueryDto {
 
   @ApiPropertyOptional({ description: 'Filter completed projects' })
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => value === 'true' || value === true ? true : value === 'false' || value === false ? false : undefined)
+  @IsBoolean()
   isCompleted?: boolean;
 
   @ApiPropertyOptional({ default: 1 })
