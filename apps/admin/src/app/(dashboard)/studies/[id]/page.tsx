@@ -466,7 +466,17 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
   const qc = useQueryClient();
   const { success, error: toastError } = useToast();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+
+  const secName = (sec: any) =>
+    (locale === 'ar' && sec.nameAr) ? sec.nameAr :
+    (locale === 'fr' && sec.nameFr) ? sec.nameFr :
+    sec.name;
+
+  const secDesc = (sec: any) =>
+    (locale === 'ar' && sec.descriptionAr) ? sec.descriptionAr :
+    (locale === 'fr' && sec.descriptionFr) ? sec.descriptionFr :
+    sec.description;
   const role = user?.admin?.role || '';
   const isAdmin = role === 'administrator';
   const isReadOnly = role === 'financial_officer';
@@ -669,14 +679,14 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                            <p className="font-semibold text-gray-800 dark:text-gray-100 text-sm">{sec.name}</p>
+                            <p className="font-semibold text-gray-800 dark:text-gray-100 text-sm">{secName(sec)}</p>
                             {sec.isRequired && (
                               <span className="badge bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-xs">{t('studies.required')}</span>
                             )}
                             <SectionStatusBadge status={sec.status} />
                           </div>
-                          {sec.description && (
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-1">{sec.description}</p>
+                          {secDesc(sec) && (
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-1">{secDesc(sec)}</p>
                           )}
                           {sec.content && (
                             <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">{sec.content.slice(0, 100)}{sec.content.length > 100 ? '…' : ''}</p>

@@ -30,7 +30,17 @@ export default function SectionEditPage({
   const sectionId = Number(params.sectionId);
   const qc = useQueryClient();
   const { success, error: toastError } = useToast();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+
+  const secName = (s: any) =>
+    (locale === 'ar' && s?.nameAr) ? s.nameAr :
+    (locale === 'fr' && s?.nameFr) ? s.nameFr :
+    s?.name ?? '';
+
+  const secDesc = (s: any) =>
+    (locale === 'ar' && s?.descriptionAr) ? s.descriptionAr :
+    (locale === 'fr' && s?.descriptionFr) ? s.descriptionFr :
+    s?.description ?? '';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [content, setContent] = useState('');
@@ -105,7 +115,7 @@ export default function SectionEditPage({
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <h1 className="page-title">{section.name}</h1>
+            <h1 className="page-title">{secName(section)}</h1>
             <p className="text-sm text-gray-400">
               #{section.order}{section.isRequired ? ` · ${t('studies.section.required')}` : ''}
             </p>
@@ -131,10 +141,10 @@ export default function SectionEditPage({
         <div className="card p-5 space-y-4">
           <h2 className="font-semibold text-gray-900">{t('studies.section.content')}</h2>
 
-          {section.description && (
+          {secDesc(section) && (
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-700 leading-relaxed">
               <p className="font-medium mb-1">{t('studies.section.guidance')}</p>
-              <p>{section.description}</p>
+              <p>{secDesc(section)}</p>
             </div>
           )}
 

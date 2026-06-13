@@ -78,7 +78,11 @@ export class StudyService {
         sections: {
           create: templates.map((t) => ({
             name: t.name,
+            nameAr: t.nameAr,
+            nameFr: t.nameFr,
             description: t.description,
+            descriptionAr: t.descriptionAr,
+            descriptionFr: t.descriptionFr,
             order: t.order,
             isRequired: t.isRequired,
             status: SectionStatus.pending,

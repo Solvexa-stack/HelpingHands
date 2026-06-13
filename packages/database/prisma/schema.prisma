@@ -325,15 +325,19 @@ model PasswordResetToken {
 // ─── Study System ─────────────────────────────────────────────────────────────
 
 model StudyDepartmentTemplate {
-  id          Int         @id @default(autoincrement())
-  projectType ProjectType @map("project_type")
-  name        String      @db.VarChar(255)
-  description String?     @db.Text
-  isRequired  Boolean     @default(true) @map("is_required")
-  order       Int
-  isActive    Boolean     @default(true) @map("is_active")
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
+  id            Int         @id @default(autoincrement())
+  projectType   ProjectType @map("project_type")
+  name          String      @db.VarChar(255)
+  nameAr        String?     @db.VarChar(255) @map("name_ar")
+  nameFr        String?     @db.VarChar(255) @map("name_fr")
+  description   String?     @db.Text
+  descriptionAr String?     @db.Text @map("description_ar")
+  descriptionFr String?     @db.Text @map("description_fr")
+  isRequired    Boolean     @default(true) @map("is_required")
+  order         Int
+  isActive      Boolean     @default(true) @map("is_active")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
 
   @@map("study_department_templates")
 }
@@ -368,7 +372,11 @@ model StudySection {
   studyId       Int           @map("study_id")
   study         ProjectStudy  @relation(fields: [studyId], references: [id], onDelete: Cascade)
   name          String        @db.VarChar(255)
+  nameAr        String?       @db.VarChar(255) @map("name_ar")
+  nameFr        String?       @db.VarChar(255) @map("name_fr")
   description   String?       @db.Text
+  descriptionAr String?       @db.Text @map("description_ar")
+  descriptionFr String?       @db.Text @map("description_fr")
   content       String?       @db.Text
   status        SectionStatus @default(pending)
   order         Int
