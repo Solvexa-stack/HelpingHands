@@ -10,7 +10,126 @@
     "events": "Events",
     "about": "About Us",
     "studies": "Studies",
-    "languages": "Languages"
+    "languages": "Languages",
+    "reports": "Reports"
+  },
+  "execution": {
+    "title": "Project Execution",
+    "steps": "Steps",
+    "phases": "Phases",
+    "tasks": "Tasks",
+    "addStep": "Add Step",
+    "addPhase": "Add Phase",
+    "addTask": "Add Task",
+    "editStep": "Edit Step",
+    "editPhase": "Edit Phase",
+    "editTask": "Edit Task",
+    "deleteStep": "Delete Step",
+    "deletePhase": "Delete Phase",
+    "deleteTask": "Delete Task",
+    "noSteps": "No steps yet",
+    "noPhases": "No phases yet",
+    "noTasks": "No tasks yet",
+    "status": "Status",
+    "priority": "Priority",
+    "progress": "Progress",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "assignedTo": "Assigned To",
+    "parentStep": "Parent Step",
+    "phase": "Phase",
+    "updateProgress": "Update Progress",
+    "statuses": {
+      "pending": "Pending",
+      "assigned": "Assigned",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "verified": "Verified",
+      "cancelled": "Cancelled"
+    },
+    "phaseStatuses": {
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "taskStatuses": {
+      "pending": "Pending",
+      "assigned": "Assigned",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "financial": {
+    "title": "Financial Management",
+    "budgets": "Budgets",
+    "expenses": "Expenses",
+    "transactions": "Transactions",
+    "summary": "Summary",
+    "addBudget": "Add Budget",
+    "addExpense": "Add Expense",
+    "addTransaction": "Manual Entry",
+    "editBudget": "Edit Budget",
+    "editExpense": "Edit Expense",
+    "noBudgets": "No budgets yet",
+    "noExpenses": "No expenses yet",
+    "noTransactions": "No transactions yet",
+    "estimatedAmount": "Estimated Amount",
+    "approvedAmount": "Approved Amount",
+    "actualSpent": "Actual Spent",
+    "amount": "Amount",
+    "invoiceRef": "Invoice Reference",
+    "budget": "Budget",
+    "notes": "Notes",
+    "totalIncome": "Total Income",
+    "totalExpense": "Total Expenses",
+    "balance": "Balance",
+    "approve": "Approve",
+    "reject": "Reject",
+    "transactionType": "Transaction Type",
+    "expenseStatuses": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "transactionTypes": {
+      "income": "Income",
+      "expense": "Expense",
+      "refund": "Refund",
+      "adjustment": "Adjustment"
+    }
+  },
+  "milestones": {
+    "title": "Milestones",
+    "addMilestone": "Add Milestone",
+    "editMilestone": "Edit Milestone",
+    "deleteMilestone": "Delete Milestone",
+    "noMilestones": "No milestones yet",
+    "targetDate": "Target Date",
+    "completedAt": "Completed At",
+    "status": "Status",
+    "statuses": {
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "missed": "Missed"
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Generate and download project reports",
+    "selectProject": "Select a project",
+    "pdfReports": "PDF Reports",
+    "excelReports": "Excel Reports",
+    "projectSummary": "Project Summary",
+    "financialReport": "Financial Report",
+    "progressReport": "Progress Report",
+    "donationsReport": "Donations Report",
+    "expensesReport": "Expenses Report",
+    "download": "Download",
+    "downloading": "Downloading...",
+    "noProject": "Please select a project first"
   },
   "sidebar": {
     "adminPanel": "Admin Panel"

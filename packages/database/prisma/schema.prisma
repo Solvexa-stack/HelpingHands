@@ -97,6 +97,50 @@ enum PaymentStatus {
   refunded
 }
 
+enum StepStatus {
+  pending
+  assigned
+  in_progress
+  completed
+  verified
+  cancelled
+}
+
+enum PhaseStatus {
+  pending
+  in_progress
+  completed
+  cancelled
+}
+
+enum TaskStatus {
+  pending
+  assigned
+  in_progress
+  completed
+  cancelled
+}
+
+enum MilestoneStatus {
+  pending
+  in_progress
+  completed
+  missed
+}
+
+enum ExpenseStatus {
+  pending
+  approved
+  rejected
+}
+
+enum TransactionType {
+  income
+  expense
+  refund
+  adjustment
+}
+
 // ─── Languages ────────────────────────────────────────────────────────────────
 
 model Language {
@@ -128,9 +172,23 @@ model Block {
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
-  translations BlockTranslation[]
-  files        File[]
-  project      Project?
+  translations    BlockTranslation[]
+  files           File[]
+  project         Project?
+
+  steps           ProjectStep[]      @relation("StepProject")
+  stepBlocks      ProjectStep[]      @relation("StepBlock")
+  phases          ProjectPhase[]     @relation("PhaseProject")
+  phaseBlocks     ProjectPhase[]     @relation("PhaseBlock")
+  tasks           ProjectTask[]      @relation("TaskProject")
+  taskBlocks      ProjectTask[]      @relation("TaskBlock")
+  budgets         ProjectBudget[]    @relation("BudgetProject")
+  budgetBlocks    ProjectBudget[]    @relation("BudgetBlock")
+  expenses        ProjectExpense[]   @relation("ExpenseProject")
+  expenseBlocks   ProjectExpense[]   @relation("ExpenseBlock")
+  transactions    ProjectTransaction[] @relation("TransactionProject")
+  milestones      ProjectMilestone[] @relation("MilestoneProject")
+  milestoneBlocks ProjectMilestone[] @relation("MilestoneBlock")
 
   @@map("blocks")
 }
@@ -191,6 +249,7 @@ model Admin {
   createdStudies    ProjectStudy[]    @relation("StudyCreatedBy")
   approvedStudies   ProjectStudy[]    @relation("StudyApprovedBy")
   assignedSections  StudySection[]    @relation("SectionAssignedTo")
+  assignedTasks     ProjectTask[]     @relation("TaskAssignee")
 
   @@map("admins")
 }
@@ -463,6 +522,149 @@ model Notification {
   @@index([userId])
   @@index([userId, isRead])
   @@map("notifications")
+}
+
+// ─── Project Execution ────────────────────────────────────────────────────────
+
+model ProjectStep {
+  id        Int        @id @default(autoincrement())
+  projectId Int        @map("project_id")
+  blockId   Int        @map("block_id")
+  parentId  Int?       @map("parent_id")
+  status    StepStatus @default(pending)
+  priority  Int        @default(0)
+  startDate DateTime?  @map("start_date")
+  endDate   DateTime?  @map("end_date")
+  progress  Decimal    @default(0) @db.Decimal(5, 2)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  project  Block         @relation("StepProject", fields: [projectId], references: [id])
+  block    Block         @relation("StepBlock", fields: [blockId], references: [id])
+  parent   ProjectStep?  @relation("StepChildren", fields: [parentId], references: [id])
+  children ProjectStep[] @relation("StepChildren")
+
+  @@index([projectId])
+  @@map("project_steps")
+}
+
+model ProjectPhase {
+  id        Int         @id @default(autoincrement())
+  projectId Int         @map("project_id")
+  blockId   Int         @map("block_id")
+  order     Int         @default(0)
+  status    PhaseStatus @default(pending)
+  startDate DateTime?   @map("start_date")
+  endDate   DateTime?   @map("end_date")
+  progress  Decimal     @default(0) @db.Decimal(5, 2)
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  project Block         @relation("PhaseProject", fields: [projectId], references: [id])
+  block   Block         @relation("PhaseBlock", fields: [blockId], references: [id])
+  tasks   ProjectTask[]
+
+  @@index([projectId])
+  @@map("project_phases")
+}
+
+model ProjectTask {
+  id           Int        @id @default(autoincrement())
+  projectId    Int        @map("project_id")
+  phaseId      Int?       @map("phase_id")
+  blockId      Int        @map("block_id")
+  assignedToId Int?       @map("assigned_to_id")
+  status       TaskStatus @default(pending)
+  progress     Decimal    @default(0) @db.Decimal(5, 2)
+  startDate    DateTime?  @map("start_date")
+  endDate      DateTime?  @map("end_date")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  project    Block         @relation("TaskProject", fields: [projectId], references: [id])
+  block      Block         @relation("TaskBlock", fields: [blockId], references: [id])
+  phase      ProjectPhase? @relation(fields: [phaseId], references: [id])
+  assignedTo Admin?        @relation("TaskAssignee", fields: [assignedToId], references: [id])
+
+  @@index([projectId])
+  @@index([phaseId])
+  @@map("project_tasks")
+}
+
+// ─── Project Financial ────────────────────────────────────────────────────────
+
+model ProjectBudget {
+  id              Int      @id @default(autoincrement())
+  projectId       Int      @map("project_id")
+  blockId         Int      @map("block_id")
+  estimatedAmount Decimal  @map("estimated_amount") @db.Decimal(15, 2)
+  approvedAmount  Decimal? @map("approved_amount") @db.Decimal(15, 2)
+  actualAmount    Decimal  @default(0) @map("actual_amount") @db.Decimal(15, 2)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  project  Block            @relation("BudgetProject", fields: [projectId], references: [id])
+  block    Block            @relation("BudgetBlock", fields: [blockId], references: [id])
+  expenses ProjectExpense[]
+
+  @@index([projectId])
+  @@map("project_budgets")
+}
+
+model ProjectExpense {
+  id         Int           @id @default(autoincrement())
+  projectId  Int           @map("project_id")
+  blockId    Int           @map("block_id")
+  budgetId   Int?          @map("budget_id")
+  amount     Decimal       @db.Decimal(15, 2)
+  invoiceRef String?       @map("invoice_ref") @db.VarChar(255)
+  status     ExpenseStatus @default(pending)
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  project Block          @relation("ExpenseProject", fields: [projectId], references: [id])
+  block   Block          @relation("ExpenseBlock", fields: [blockId], references: [id])
+  budget  ProjectBudget? @relation(fields: [budgetId], references: [id])
+
+  @@index([projectId])
+  @@index([budgetId])
+  @@map("project_expenses")
+}
+
+model ProjectTransaction {
+  id            Int             @id @default(autoincrement())
+  projectId     Int             @map("project_id")
+  type          TransactionType
+  amount        Decimal         @db.Decimal(15, 2)
+  referenceType String?         @map("reference_type") @db.VarChar(50)
+  referenceId   Int?            @map("reference_id")
+  notes         String?         @db.Text
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  project Block @relation("TransactionProject", fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([referenceType, referenceId])
+  @@map("project_transactions")
+}
+
+// ─── Project Milestones ───────────────────────────────────────────────────────
+
+model ProjectMilestone {
+  id          Int             @id @default(autoincrement())
+  projectId   Int             @map("project_id")
+  blockId     Int             @map("block_id")
+  targetDate  DateTime?       @map("target_date")
+  completedAt DateTime?       @map("completed_at")
+  status      MilestoneStatus @default(pending)
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  project Block @relation("MilestoneProject", fields: [projectId], references: [id])
+  block   Block @relation("MilestoneBlock", fields: [blockId], references: [id])
+
+  @@index([projectId])
+  @@map("project_milestones")
 }
 
 // ─── Webhook Logs ─────────────────────────────────────────────────────────────

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, FolderKanban, Heart, Users, UserCheck,
   FileText, Newspaper, CalendarDays, Info, Globe, Heart as HeartIcon,
-  ChevronRight, FlaskConical,
+  ChevronRight, FlaskConical, BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useLanguage } from '@/contexts/language-context';
@@ -25,6 +25,7 @@ const navItems = [
   { href: '/content/about', icon: Info, tKey: 'nav.about', roles: ['administrator', 'employee'] },
   { label: 'separator' },
   { href: '/languages', icon: Globe, tKey: 'nav.languages', roles: ['administrator'] },
+  { href: '/reports', icon: BarChart3, tKey: 'nav.reports', roles: ['administrator', 'financial_officer'] },
 ];
 
 export function Sidebar() {

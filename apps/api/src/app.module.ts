@@ -20,6 +20,10 @@ import { StudyModule } from './modules/study/study.module';
 import { VotingModule } from './modules/voting/voting.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ExecutionModule } from './modules/execution/execution.module';
+import { FinancialModule } from './modules/financial/financial.module';
+import { MilestonesModule } from './modules/milestones/milestones.module';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -59,6 +63,10 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     VotingModule,
     PaymentsModule,
     NotificationsModule,
+    ExecutionModule,
+    FinancialModule,
+    MilestonesModule,
+    ReportsModule,
   ],
 })
 export class AppModule {}

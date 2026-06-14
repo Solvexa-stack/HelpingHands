@@ -10,7 +10,126 @@
     "events": "الفعاليات",
     "about": "من نحن",
     "studies": "الدراسات",
-    "languages": "اللغات"
+    "languages": "اللغات",
+    "reports": "التقارير"
+  },
+  "execution": {
+    "title": "تنفيذ المشروع",
+    "steps": "الخطوات",
+    "phases": "المراحل",
+    "tasks": "المهام",
+    "addStep": "إضافة خطوة",
+    "addPhase": "إضافة مرحلة",
+    "addTask": "إضافة مهمة",
+    "editStep": "تعديل الخطوة",
+    "editPhase": "تعديل المرحلة",
+    "editTask": "تعديل المهمة",
+    "deleteStep": "حذف الخطوة",
+    "deletePhase": "حذف المرحلة",
+    "deleteTask": "حذف المهمة",
+    "noSteps": "لا توجد خطوات بعد",
+    "noPhases": "لا توجد مراحل بعد",
+    "noTasks": "لا توجد مهام بعد",
+    "status": "الحالة",
+    "priority": "الأولوية",
+    "progress": "التقدم",
+    "startDate": "تاريخ البدء",
+    "endDate": "تاريخ الانتهاء",
+    "assignedTo": "مسند إلى",
+    "parentStep": "الخطوة الأصل",
+    "phase": "المرحلة",
+    "updateProgress": "تحديث التقدم",
+    "statuses": {
+      "pending": "قيد الانتظار",
+      "assigned": "مسندة",
+      "in_progress": "قيد التنفيذ",
+      "completed": "مكتملة",
+      "verified": "موثقة",
+      "cancelled": "ملغاة"
+    },
+    "phaseStatuses": {
+      "pending": "قيد الانتظار",
+      "in_progress": "قيد التنفيذ",
+      "completed": "مكتملة",
+      "cancelled": "ملغاة"
+    },
+    "taskStatuses": {
+      "pending": "قيد الانتظار",
+      "assigned": "مسندة",
+      "in_progress": "قيد التنفيذ",
+      "completed": "مكتملة",
+      "cancelled": "ملغاة"
+    }
+  },
+  "financial": {
+    "title": "الإدارة المالية",
+    "budgets": "الميزانيات",
+    "expenses": "المصروفات",
+    "transactions": "المعاملات",
+    "summary": "الملخص",
+    "addBudget": "إضافة ميزانية",
+    "addExpense": "إضافة مصروف",
+    "addTransaction": "إدخال يدوي",
+    "editBudget": "تعديل الميزانية",
+    "editExpense": "تعديل المصروف",
+    "noBudgets": "لا توجد ميزانيات بعد",
+    "noExpenses": "لا توجد مصروفات بعد",
+    "noTransactions": "لا توجد معاملات بعد",
+    "estimatedAmount": "المبلغ التقديري",
+    "approvedAmount": "المبلغ المعتمد",
+    "actualSpent": "المبلغ الفعلي المنفق",
+    "amount": "المبلغ",
+    "invoiceRef": "رقم الفاتورة",
+    "budget": "الميزانية",
+    "notes": "ملاحظات",
+    "totalIncome": "إجمالي الدخل",
+    "totalExpense": "إجمالي المصروفات",
+    "balance": "الرصيد",
+    "approve": "اعتماد",
+    "reject": "رفض",
+    "transactionType": "نوع المعاملة",
+    "expenseStatuses": {
+      "pending": "قيد الانتظار",
+      "approved": "معتمدة",
+      "rejected": "مرفوضة"
+    },
+    "transactionTypes": {
+      "income": "دخل",
+      "expense": "مصروف",
+      "refund": "استرداد",
+      "adjustment": "تسوية"
+    }
+  },
+  "milestones": {
+    "title": "المعالم",
+    "addMilestone": "إضافة معلم",
+    "editMilestone": "تعديل المعلم",
+    "deleteMilestone": "حذف المعلم",
+    "noMilestones": "لا توجد معالم بعد",
+    "targetDate": "التاريخ المستهدف",
+    "completedAt": "تاريخ الإنجاز",
+    "status": "الحالة",
+    "statuses": {
+      "pending": "قيد الانتظار",
+      "in_progress": "قيد التنفيذ",
+      "completed": "مكتمل",
+      "missed": "فائت"
+    }
+  },
+  "reports": {
+    "title": "التقارير",
+    "subtitle": "إنشاء وتحميل تقارير المشروع",
+    "selectProject": "اختر مشروعاً",
+    "pdfReports": "تقارير PDF",
+    "excelReports": "تقارير Excel",
+    "projectSummary": "ملخص المشروع",
+    "financialReport": "التقرير المالي",
+    "progressReport": "تقرير التقدم",
+    "donationsReport": "تقرير التبرعات",
+    "expensesReport": "تقرير المصروفات",
+    "download": "تحميل",
+    "downloading": "جاري التحميل...",
+    "noProject": "يرجى اختيار مشروع أولاً"
   },
   "sidebar": {
     "adminPanel": "لوحة الإدارة"

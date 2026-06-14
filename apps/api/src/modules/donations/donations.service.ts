@@ -185,6 +185,22 @@ export class DonationsService {
       await this.projectsService.recalculateProgress(donation.projectId);
     }
 
+    // Create income transaction in ledger when donation is approved
+    if (dto.status === DonationStatus.approved) {
+      const project = await this.prisma.project.findUnique({ where: { id: donation.projectId } });
+      if (project) {
+        this.prisma.projectTransaction.create({
+          data: {
+            projectId: project.blockId,
+            type: 'income',
+            amount: donation.amount,
+            referenceType: 'donation',
+            referenceId: donation.id,
+          },
+        }).catch(() => null);
+      }
+    }
+
     // Fire in-app notification + queue email for cash donation approval
     if (dto.status === DonationStatus.approved) {
       this.notificationsService
