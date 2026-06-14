@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import {
   ArrowLeft, Pencil, MapPin, Calendar, DollarSign,
-  TrendingUp, Users, UserCheck, CheckCircle, Clock, XCircle,
+  TrendingUp, Users, CheckCircle, Clock, XCircle,
+  Settings2, Wallet, Flag, ChevronRight,
 } from 'lucide-react';
 import { projectsApi, donationsApi } from '@/lib/api';
 import { formatCurrency, formatDate, getTranslation, STATUS_COLORS, cn } from '@/lib/utils';
@@ -165,6 +166,27 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                   <p className="text-sm font-medium text-gray-900 capitalize">{value}</p>
                 </div>
               </div>
+            ))}
+          </div>
+
+          {/* Project Management Links */}
+          <div className="card p-5 space-y-3">
+            <h3 className="font-semibold text-gray-900">Project Management</h3>
+            {[
+              { href: `/projects/${id}/execution`, icon: Settings2, label: 'Execution', desc: 'Phases, Steps & Tasks', color: 'bg-blue-100 text-blue-600' },
+              { href: `/projects/${id}/financial`, icon: Wallet, label: 'Financial', desc: 'Budgets, Expenses & Ledger', color: 'bg-green-100 text-green-600' },
+              { href: `/projects/${id}/milestones`, icon: Flag, label: 'Milestones', desc: 'Project Timeline', color: 'bg-purple-100 text-purple-600' },
+            ].map(({ href, icon: Icon, label, desc, color }) => (
+              <Link key={href} href={href} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 border border-gray-100 hover:border-gray-200 transition-all group">
+                <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0', color)}>
+                  <Icon className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">{label}</p>
+                  <p className="text-xs text-gray-400 truncate">{desc}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 flex-shrink-0" />
+              </Link>
             ))}
           </div>
 

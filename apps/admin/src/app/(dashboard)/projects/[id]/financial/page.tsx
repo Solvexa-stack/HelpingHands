@@ -6,7 +6,8 @@ import { financialApi } from '@/lib/api';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
-import { Plus, Pencil, Trash2, Loader2, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, Pencil, Trash2, Loader2, TrendingUp, TrendingDown, DollarSign, ArrowLeft } from 'lucide-react';
 
 type Tab = 'summary' | 'budgets' | 'expenses' | 'transactions';
 
@@ -145,7 +146,12 @@ export default function FinancialPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('financial.title')}</h1>
+        <div className="flex items-center gap-3">
+          <Link href={`/projects/${projectId}`} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('financial.title')}</h1>
+        </div>
         <div className="flex gap-2">
           {canFinancial && tab === 'budgets' && (
             <button onClick={() => { setEditing(null); setForm({}); setModal('budget'); }} className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium">

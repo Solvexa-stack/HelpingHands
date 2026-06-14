@@ -164,53 +164,53 @@ export const filesApi = {
 // ─── Execution (Steps / Phases / Tasks) ───────────────────────────────────────
 export const executionApi = {
   // Steps
-  listSteps: (projectId: number) => api.get(`/projects/${projectId}/execution/steps`).then((r) => r.data),
-  createStep: (projectId: number, data: any) => api.post(`/projects/${projectId}/execution/steps`, data).then((r) => r.data),
-  updateStep: (projectId: number, id: number, data: any) => api.patch(`/projects/${projectId}/execution/steps/${id}`, data).then((r) => r.data),
-  updateStepProgress: (projectId: number, id: number, progress: number) => api.patch(`/projects/${projectId}/execution/steps/${id}/progress`, { progress }).then((r) => r.data),
+  listSteps: (projectId: number) => api.get(`/projects/${projectId}/execution/steps`).then((r) => r.data.data),
+  createStep: (projectId: number, data: any) => api.post(`/projects/${projectId}/execution/steps`, data).then((r) => r.data.data),
+  updateStep: (projectId: number, id: number, data: any) => api.patch(`/projects/${projectId}/execution/steps/${id}`, data).then((r) => r.data.data),
+  updateStepProgress: (projectId: number, id: number, progress: number) => api.patch(`/projects/${projectId}/execution/steps/${id}/progress`, { progress }).then((r) => r.data.data),
   deleteStep: (projectId: number, id: number) => api.delete(`/projects/${projectId}/execution/steps/${id}`),
 
   // Phases
-  listPhases: (projectId: number) => api.get(`/projects/${projectId}/execution/phases`).then((r) => r.data),
-  createPhase: (projectId: number, data: any) => api.post(`/projects/${projectId}/execution/phases`, data).then((r) => r.data),
-  updatePhase: (projectId: number, id: number, data: any) => api.patch(`/projects/${projectId}/execution/phases/${id}`, data).then((r) => r.data),
+  listPhases: (projectId: number) => api.get(`/projects/${projectId}/execution/phases`).then((r) => r.data.data),
+  createPhase: (projectId: number, data: any) => api.post(`/projects/${projectId}/execution/phases`, data).then((r) => r.data.data),
+  updatePhase: (projectId: number, id: number, data: any) => api.patch(`/projects/${projectId}/execution/phases/${id}`, data).then((r) => r.data.data),
   deletePhase: (projectId: number, id: number) => api.delete(`/projects/${projectId}/execution/phases/${id}`),
 
   // Tasks
-  listTasks: (projectId: number, phaseId?: number) => api.get(`/projects/${projectId}/execution/tasks`, { params: { phaseId } }).then((r) => r.data),
-  createTask: (projectId: number, data: any) => api.post(`/projects/${projectId}/execution/tasks`, data).then((r) => r.data),
-  updateTask: (projectId: number, id: number, data: any) => api.patch(`/projects/${projectId}/execution/tasks/${id}`, data).then((r) => r.data),
+  listTasks: (projectId: number, phaseId?: number) => api.get(`/projects/${projectId}/execution/tasks`, { params: { phaseId } }).then((r) => r.data.data),
+  createTask: (projectId: number, data: any) => api.post(`/projects/${projectId}/execution/tasks`, data).then((r) => r.data.data),
+  updateTask: (projectId: number, id: number, data: any) => api.patch(`/projects/${projectId}/execution/tasks/${id}`, data).then((r) => r.data.data),
   deleteTask: (projectId: number, id: number) => api.delete(`/projects/${projectId}/execution/tasks/${id}`),
 };
 
 // ─── Financial (Budgets / Expenses / Transactions) ───────────────────────────
 export const financialApi = {
   // Summary
-  getSummary: (projectId: number) => api.get(`/projects/${projectId}/financial/summary`).then((r) => r.data),
+  getSummary: (projectId: number) => api.get(`/projects/${projectId}/financial/summary`).then((r) => r.data.data),
 
   // Budgets
-  listBudgets: (projectId: number) => api.get(`/projects/${projectId}/financial/budgets`).then((r) => r.data),
-  createBudget: (projectId: number, data: any) => api.post(`/projects/${projectId}/financial/budgets`, data).then((r) => r.data),
-  updateBudget: (projectId: number, id: number, data: any) => api.patch(`/projects/${projectId}/financial/budgets/${id}`, data).then((r) => r.data),
+  listBudgets: (projectId: number) => api.get(`/projects/${projectId}/financial/budgets`).then((r) => r.data.data),
+  createBudget: (projectId: number, data: any) => api.post(`/projects/${projectId}/financial/budgets`, data).then((r) => r.data.data),
+  updateBudget: (projectId: number, id: number, data: any) => api.patch(`/projects/${projectId}/financial/budgets/${id}`, data).then((r) => r.data.data),
   deleteBudget: (projectId: number, id: number) => api.delete(`/projects/${projectId}/financial/budgets/${id}`),
 
   // Expenses
-  listExpenses: (projectId: number, params?: { budgetId?: number; status?: string }) => api.get(`/projects/${projectId}/financial/expenses`, { params }).then((r) => r.data),
-  createExpense: (projectId: number, data: any) => api.post(`/projects/${projectId}/financial/expenses`, data).then((r) => r.data),
-  updateExpense: (projectId: number, id: number, data: any) => api.patch(`/projects/${projectId}/financial/expenses/${id}`, data).then((r) => r.data),
-  updateExpenseStatus: (projectId: number, id: number, status: string) => api.patch(`/projects/${projectId}/financial/expenses/${id}/status`, { status }).then((r) => r.data),
+  listExpenses: (projectId: number, params?: { budgetId?: number; status?: string }) => api.get(`/projects/${projectId}/financial/expenses`, { params }).then((r) => r.data.data),
+  createExpense: (projectId: number, data: any) => api.post(`/projects/${projectId}/financial/expenses`, data).then((r) => r.data.data),
+  updateExpense: (projectId: number, id: number, data: any) => api.patch(`/projects/${projectId}/financial/expenses/${id}`, data).then((r) => r.data.data),
+  updateExpenseStatus: (projectId: number, id: number, status: string) => api.patch(`/projects/${projectId}/financial/expenses/${id}/status`, { status }).then((r) => r.data.data),
   deleteExpense: (projectId: number, id: number) => api.delete(`/projects/${projectId}/financial/expenses/${id}`),
 
   // Transactions
-  listTransactions: (projectId: number) => api.get(`/projects/${projectId}/financial/transactions`).then((r) => r.data),
-  createTransaction: (projectId: number, data: any) => api.post(`/projects/${projectId}/financial/transactions`, data).then((r) => r.data),
+  listTransactions: (projectId: number) => api.get(`/projects/${projectId}/financial/transactions`).then((r) => r.data.data),
+  createTransaction: (projectId: number, data: any) => api.post(`/projects/${projectId}/financial/transactions`, data).then((r) => r.data.data),
 };
 
 // ─── Milestones ───────────────────────────────────────────────────────────────
 export const milestonesApi = {
-  list: (projectId: number) => api.get(`/projects/${projectId}/milestones`).then((r) => r.data),
-  create: (projectId: number, data: any) => api.post(`/projects/${projectId}/milestones`, data).then((r) => r.data),
-  update: (projectId: number, id: number, data: any) => api.patch(`/projects/${projectId}/milestones/${id}`, data).then((r) => r.data),
+  list: (projectId: number) => api.get(`/projects/${projectId}/milestones`).then((r) => r.data.data),
+  create: (projectId: number, data: any) => api.post(`/projects/${projectId}/milestones`, data).then((r) => r.data.data),
+  update: (projectId: number, id: number, data: any) => api.patch(`/projects/${projectId}/milestones/${id}`, data).then((r) => r.data.data),
   delete: (projectId: number, id: number) => api.delete(`/projects/${projectId}/milestones/${id}`),
 };
 

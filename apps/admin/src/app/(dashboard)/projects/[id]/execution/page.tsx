@@ -6,8 +6,9 @@ import { executionApi } from '@/lib/api';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 import {
-  Plus, Pencil, Trash2, ChevronRight, ChevronDown, Loader2,
+  Plus, Pencil, Trash2, ChevronRight, ChevronDown, Loader2, ArrowLeft,
 } from 'lucide-react';
 
 type Tab = 'phases' | 'steps' | 'tasks';
@@ -233,7 +234,12 @@ export default function ExecutionPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('execution.title')}</h1>
+        <div className="flex items-center gap-3">
+          <Link href={`/projects/${projectId}`} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('execution.title')}</h1>
+        </div>
         {canEdit && (
           <button
             onClick={() => openCreate(tab === 'phases' ? 'phase' : tab === 'steps' ? 'step' : 'task')}

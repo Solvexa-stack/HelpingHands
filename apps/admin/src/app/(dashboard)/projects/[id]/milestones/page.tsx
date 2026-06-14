@@ -6,7 +6,8 @@ import { milestonesApi } from '@/lib/api';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
-import { Plus, Pencil, Trash2, Loader2, CheckCircle2, Clock, AlertCircle, Circle } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, Pencil, Trash2, Loader2, CheckCircle2, Clock, AlertCircle, Circle, ArrowLeft } from 'lucide-react';
 
 const STATUS_CONFIG: Record<string, { color: string; icon: any }> = {
   pending: { color: 'text-gray-400', icon: Circle },
@@ -108,7 +109,12 @@ export default function MilestonesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('milestones.title')}</h1>
+        <div className="flex items-center gap-3">
+          <Link href={`/projects/${projectId}`} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('milestones.title')}</h1>
+        </div>
         {canEdit && (
           <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium">
             <Plus className="w-4 h-4" />{t('milestones.addMilestone')}
