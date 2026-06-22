@@ -1,22 +1,30 @@
 # Dependencies
 node_modules/
-.pnpm-store/
+.pnp
+.pnp.js
 
-# Build outputs
-dist/
-.next/
-build/
-out/
-
-# Environment
+# Environment files
 .env
 .env.local
 .env.*.local
+apps/**/.env
+apps/**/.env.local
+packages/**/.env
 
-# Uploads
-uploads/
+# Next.js build output
+.next/
+apps/**/.next/
+out/
+
+# NestJS build output
+dist/
+apps/**/dist/
+
+# TypeScript
+*.tsbuildinfo
 
 # Logs
+logs/
 *.log
 npm-debug.log*
 pnpm-debug.log*
@@ -25,13 +33,12 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 
-# IDE
-.vscode/
-.idea/
-*.swp
+# Uploads
+uploads/
 
 # Turbo
 .turbo/
 
 # Prisma
-packages/database/prisma/migrations/*.sql.bak
+packages/database/prisma/dev.db
+packages/database/prisma/dev.db-journal
