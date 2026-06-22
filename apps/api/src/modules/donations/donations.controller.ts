@@ -50,15 +50,15 @@ export class DonationsController {
     return this.donationsService.findByToken(token);
   }
 
+  @Public()
   @Get(':token/qr')
-  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Get QR code data URL for a donation' })
   async getQr(@Param('token') token: string) {
     return this.donationsService.getQrCode(token, 'dataurl');
   }
 
+  @Public()
   @Get(':token/qr/download')
-  @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Download QR code as PNG image' })
   async downloadQr(@Param('token') token: string, @Res() res: Response) {
     const buffer = await this.donationsService.getQrCode(token, 'buffer') as Buffer;
