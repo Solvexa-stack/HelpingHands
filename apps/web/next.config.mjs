@@ -1,9 +1,14 @@
+import { fileURLToPath } from 'url';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
 
 /** @type {import('next').NextConfig} */
 const config = {
+  output: 'standalone',
+  experimental: {
+    outputFileTracingRoot: fileURLToPath(new URL('../../', import.meta.url)),
+  },
   images: {
     remotePatterns: [
       {

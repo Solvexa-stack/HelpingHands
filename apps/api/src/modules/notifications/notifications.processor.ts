@@ -28,7 +28,7 @@ export class NotificationsProcessor {
   }
 
   private webUrl() {
-    return this.config.get<string>('app.webUrl', 'http://localhost:3000');
+    return this.config.get<string>('app.webUrl', 'http://localhost:3200');
   }
 
   private async dispatch(event: NotificationEvent) {

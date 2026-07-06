@@ -30,9 +30,9 @@ async function bootstrap() {
   // CORS
   app.enableCors({
     origin: [
-      configService.get('app.webUrl', 'http://localhost:3000'),
+      configService.get('app.webUrl', 'http://localhost:3200'),
       configService.get('app.adminUrl', 'http://localhost:3001'),
-      'http://localhost:3000',
+      'http://localhost:3200',
       'http://localhost:3002',
       'http://localhost:3001',
     ],

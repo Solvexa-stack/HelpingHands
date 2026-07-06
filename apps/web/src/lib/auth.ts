@@ -6,10 +6,11 @@ export interface AuthUser {
   role: string;
   referenceType: string;
   referenceId: number;
-  admin?: { firstName: string; lastName: string; role: string };
-  participant?: { firstName: string; lastName: string; representation: string };
+  admin?: { id: number; firstName: string; lastName: string; role: string };
+  participant?: { id: number; firstName: string; lastName: string; representation: string };
   avatar?: string;
   isActive: boolean;
+  joiningDate?: string;
 }
 
 export function getStoredTokens() {

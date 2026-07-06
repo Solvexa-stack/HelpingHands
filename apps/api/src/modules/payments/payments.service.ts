@@ -44,10 +44,10 @@ export class PaymentsService {
 
     const successUrl =
       this.config.get<string>('payment.successUrl') ??
-      'http://localhost:3000/en/donations/success';
+      'http://localhost:3200/en/donations/success';
     const cancelUrl =
       this.config.get<string>('payment.cancelUrl') ??
-      'http://localhost:3000/en/donations/cancel';
+      'http://localhost:3200/en/donations/cancel';
     const projectName = project.block.translations[0]?.name ?? `Project #${project.id}`;
 
     if (dto.provider === PaymentProvider.stripe) {

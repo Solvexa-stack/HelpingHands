@@ -3,7 +3,7 @@ export default () => ({
     nodeEnv: process.env.NODE_ENV || 'development',
     port: parseInt(process.env.APP_PORT || '4000', 10),
     url: process.env.APP_URL || 'http://localhost:4000',
-    webUrl: process.env.WEB_URL || 'http://localhost:3000',
+    webUrl: process.env.WEB_URL || 'http://localhost:3200',
     adminUrl: process.env.ADMIN_URL || 'http://localhost:3001',
     uploadDir: process.env.UPLOAD_DIR || './uploads',
     maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760', 10),
@@ -36,8 +36,8 @@ export default () => ({
     mode: process.env.PAYPAL_MODE || 'sandbox',
   },
   payment: {
-    successUrl: process.env.PAYMENT_SUCCESS_URL || 'http://localhost:3000/en/donations/success',
-    cancelUrl: process.env.PAYMENT_CANCEL_URL || 'http://localhost:3000/en/donations/cancel',
+    successUrl: process.env.PAYMENT_SUCCESS_URL || 'http://localhost:3200/en/donations/success',
+    cancelUrl: process.env.PAYMENT_CANCEL_URL || 'http://localhost:3200/en/donations/cancel',
   },
   redis: {
     host: process.env.REDIS_HOST || 'localhost',

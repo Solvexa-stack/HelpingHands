@@ -16,7 +16,7 @@ export class QrService {
   }
 
   buildDonationUrl(token: string): string {
-    const appUrl = this.config.get('app.webUrl', 'http://localhost:3000');
+    const appUrl = this.config.get('app.webUrl', 'http://localhost:3200');
     return `${appUrl}/donations/${token}`;
   }
 
