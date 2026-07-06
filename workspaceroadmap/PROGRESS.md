@@ -1,5 +1,7 @@
 # Roadmap Execution Progress
 
+The executable work items for each wave live in [backlog/](backlog/) (`BACKLOG_W0` … `BACKLOG_W8`, conventions in [backlog/BACKLOG_00_OVERVIEW.md](backlog/BACKLOG_00_OVERVIEW.md)).
+
 Track realization of each wave here. A wave's status moves to ✅ only when every item in its document's **Definition of Done** is checked. Update this file in the same PR that completes the work.
 
 **Statuses:** ⬜ not started · 🔵 in progress · 🟡 in soak/verification · ✅ done
