@@ -3,6 +3,7 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { StudyStatus, VoteChoice } from '@prisma/client';
 import { VotingService } from './voting.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EventBusService } from '../../events/event-bus.service';
 
 const mockPrisma = {
   projectStudy: {
@@ -24,6 +25,10 @@ const mockPrisma = {
   $transaction: jest.fn(),
 };
 
+const mockEventBus = { publish: jest.fn() };
+
+const actor = { userId: 1, referenceType: 'participant', requestId: 'unit-test', ip: null };
+
 describe('VotingService', () => {
   let service: VotingService;
 
@@ -34,6 +39,7 @@ describe('VotingService', () => {
       providers: [
         VotingService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: EventBusService, useValue: mockEventBus },
       ],
     }).compile();
 
@@ -47,7 +53,7 @@ describe('VotingService', () => {
       mockPrisma.projectStudy.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.castVote({ studyId: 99, choice: VoteChoice.for }, 1),
+        service.castVote(actor, { studyId: 99, choice: VoteChoice.for }, 1),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -59,7 +65,7 @@ describe('VotingService', () => {
       });
 
       await expect(
-        service.castVote({ studyId: 1, choice: VoteChoice.for }, 1),
+        service.castVote(actor, { studyId: 1, choice: VoteChoice.for }, 1),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -71,7 +77,7 @@ describe('VotingService', () => {
       });
 
       await expect(
-        service.castVote({ studyId: 1, choice: VoteChoice.for }, 1),
+        service.castVote(actor, { studyId: 1, choice: VoteChoice.for }, 1),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -84,7 +90,7 @@ describe('VotingService', () => {
       mockPrisma.studyVote.findUnique.mockResolvedValue({ id: 5, choice: VoteChoice.for });
 
       await expect(
-        service.castVote({ studyId: 1, choice: VoteChoice.against }, 1),
+        service.castVote(actor, { studyId: 1, choice: VoteChoice.against }, 1),
       ).rejects.toThrow(ConflictException);
     });
 
@@ -104,7 +110,7 @@ describe('VotingService', () => {
         createdAt: new Date(),
       });
 
-      const result = await service.castVote({ studyId: 1, choice: VoteChoice.for }, 1);
+      const result = await service.castVote(actor, { studyId: 1, choice: VoteChoice.for }, 1);
 
       expect(mockPrisma.studyVote.create).toHaveBeenCalledWith(
         expect.objectContaining({

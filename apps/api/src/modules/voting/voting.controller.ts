@@ -16,6 +16,8 @@ import { ChangeVoteDto } from './dto/change-vote.dto';
 import { VoteFiltersDto } from './dto/vote-filters.dto';
 import { Roles, Public } from '../../common/decorators/roles.decorator';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
+import { CurrentActor } from '../../common/decorators/current-actor.decorator';
+import { ActorContext } from '../../events/actor-context';
 
 @ApiTags('Voting')
 @Controller({ path: 'voting', version: '1' })
@@ -25,8 +27,12 @@ export class VotingController {
   @Post('cast')
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Cast a vote on a study (any authenticated user)' })
-  castVote(@Body() dto: CastVoteDto, @CurrentUser('sub') userId: number) {
-    return this.votingService.castVote(dto, userId);
+  castVote(
+    @Body() dto: CastVoteDto,
+    @CurrentUser('sub') userId: number,
+    @CurrentActor() actor: ActorContext,
+  ) {
+    return this.votingService.castVote(actor, dto, userId);
   }
 
   @Patch(':studyId/change')

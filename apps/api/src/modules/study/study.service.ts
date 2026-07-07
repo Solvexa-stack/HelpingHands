@@ -10,6 +10,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { JwtPayload } from '../../common/decorators/current-user.decorator';
 import { paginate, paginatedResponse } from '../../common/dto/pagination.dto';
+import { ActorContext } from '../../events/actor-context';
+import { EventBusService } from '../../events/event-bus.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ChangeStudyStatusDto } from './dto/change-study-status.dto';
@@ -48,11 +50,12 @@ export class StudyService {
     private prisma: PrismaService,
     private config: ConfigService,
     private notificationsService: NotificationsService,
+    private eventBus: EventBusService,
   ) {}
 
   // ─── Create ───────────────────────────────────────────────────────────────────
 
-  async createStudy(dto: CreateStudyDto, createdById: number) {
+  async createStudy(actor: ActorContext, dto: CreateStudyDto, createdById: number) {
     const project = await this.prisma.project.findUnique({ where: { id: dto.projectId } });
     if (!project) throw new NotFoundException(`Project #${dto.projectId} not found`);
 
@@ -101,6 +104,13 @@ export class StudyService {
     await this.prisma.project.update({
       where: { id: dto.projectId },
       data: { studyStatus: StudyStatus.draft },
+    });
+
+    this.eventBus.publish({
+      event: 'study.created',
+      actor,
+      subject: { type: 'study', id: study.id },
+      data: { projectId: dto.projectId, sections: study.sections.length },
     });
 
     return { ...study, votesSummary: { for: 0, against: 0, abstain: 0, total: 0 } };
@@ -190,6 +200,7 @@ export class StudyService {
   // ─── Sections ─────────────────────────────────────────────────────────────────
 
   async updateSection(
+    actor: ActorContext,
     sectionId: number,
     dto: UpdateSectionDto,
     requestingAdminId: number,
@@ -248,6 +259,23 @@ export class StudyService {
       }
     }
 
+    if (dto.assignedTo !== undefined) {
+      this.eventBus.publish({
+        event: 'study_section.assigned',
+        actor,
+        subject: { type: 'study_section', id: sectionId },
+        data: { studyId: section.studyId, assignedTo: dto.assignedTo },
+      });
+    }
+    if (dto.status === SectionStatus.completed) {
+      this.eventBus.publish({
+        event: 'study_section.completed',
+        actor,
+        subject: { type: 'study_section', id: sectionId },
+        data: { studyId: section.studyId },
+      });
+    }
+
     return updated;
   }
 
@@ -294,6 +322,7 @@ export class StudyService {
   // ─── Status machine ───────────────────────────────────────────────────────────
 
   async changeStatus(
+    actor: ActorContext,
     studyId: number,
     dto: ChangeStudyStatusDto,
     adminId: number,
@@ -343,10 +372,44 @@ export class StudyService {
       }),
     ]);
 
+    // Emit after the transaction committed
+    this.fireStatusEvent(actor, dto, updatedStudy, study.projectId);
+
     // Fire async notifications — non-blocking
     this.fireStatusNotification(dto.status, studyId, study.projectId, adminId, dto.rejectionReason);
 
     return updatedStudy;
+  }
+
+  private fireStatusEvent(
+    actor: ActorContext,
+    dto: ChangeStudyStatusDto,
+    study: { id: number; votingStartsAt: Date | null; votingEndsAt: Date | null },
+    projectId: number,
+  ) {
+    const eventByStatus: Partial<Record<StudyStatus, string>> = {
+      [StudyStatus.published]: 'study.published',
+      [StudyStatus.approved]: 'study.approved',
+      [StudyStatus.rejected]: 'study.rejected',
+      [StudyStatus.voting_open]: 'voting.opened',
+      [StudyStatus.voting_closed]: 'voting.closed',
+    };
+    const event = eventByStatus[dto.status];
+    if (!event) return; // draft / in_review transitions are not announced
+
+    const data: Record<string, unknown> = { projectId, status: dto.status };
+    if (dto.status === StudyStatus.rejected) data.rejectionReason = dto.rejectionReason;
+    if (dto.status === StudyStatus.voting_open) {
+      data.votingStartsAt = study.votingStartsAt?.toISOString() ?? null;
+      data.votingEndsAt = study.votingEndsAt?.toISOString() ?? null;
+    }
+
+    this.eventBus.publish({
+      event,
+      actor,
+      subject: { type: 'study', id: study.id },
+      data,
+    });
   }
 
   private fireStatusNotification(

@@ -25,6 +25,8 @@ import { ChangeStudyStatusDto } from './dto/change-study-status.dto';
 import { StudyFiltersDto } from './dto/study-filters.dto';
 import { Roles, Public } from '../../common/decorators/roles.decorator';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
+import { CurrentActor } from '../../common/decorators/current-actor.decorator';
+import { ActorContext } from '../../events/actor-context';
 
 const ALLOWED_MIME = [
   'image/jpeg',
@@ -56,8 +58,12 @@ export class StudyController {
   @Roles(AdminRole.administrator, AdminRole.employee)
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Create a study for a project (auto-populates sections from templates)' })
-  create(@Body() dto: CreateStudyDto, @CurrentUser() user: JwtPayload) {
-    return this.studyService.createStudy(dto, user.referenceId);
+  create(
+    @Body() dto: CreateStudyDto,
+    @CurrentUser() user: JwtPayload,
+    @CurrentActor() actor: ActorContext,
+  ) {
+    return this.studyService.createStudy(actor, dto, user.referenceId);
   }
 
   // ── Static routes before :id ─────────────────────────────────────────────────
@@ -116,8 +122,9 @@ export class StudyController {
     @Param('sectionId', ParseIntPipe) sectionId: number,
     @Body() dto: UpdateSectionDto,
     @CurrentUser() user: JwtPayload,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.studyService.updateSection(sectionId, dto, user.referenceId, user.role);
+    return this.studyService.updateSection(actor, sectionId, dto, user.referenceId, user.role);
   }
 
   @Delete('sections/files/:fileId')
@@ -138,8 +145,9 @@ export class StudyController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ChangeStudyStatusDto,
     @CurrentUser() user: JwtPayload,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.studyService.changeStatus(id, dto, user.referenceId, user.role);
+    return this.studyService.changeStatus(actor, id, dto, user.referenceId, user.role);
   }
 
   @Delete(':id')

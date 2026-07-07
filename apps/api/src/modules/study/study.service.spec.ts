@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { StudyService } from './study.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EventBusService } from '../../events/event-bus.service';
 
 const mockPrisma = {
   project: {
@@ -36,6 +37,10 @@ const mockPrisma = {
   $transaction: jest.fn(),
 };
 
+const mockEventBus = { publish: jest.fn() };
+
+const actor = { userId: 1, referenceType: 'admin', requestId: 'unit-test', ip: null };
+
 describe('StudyService', () => {
   let service: StudyService;
 
@@ -54,6 +59,7 @@ describe('StudyService', () => {
           provide: NotificationsService,
           useValue: { notify: jest.fn().mockResolvedValue(undefined) },
         },
+        { provide: EventBusService, useValue: mockEventBus },
       ],
     }).compile();
 
@@ -65,14 +71,14 @@ describe('StudyService', () => {
   describe('createStudy', () => {
     it('throws NotFoundException when project does not exist', async () => {
       mockPrisma.project.findUnique.mockResolvedValue(null);
-      await expect(service.createStudy({ projectId: 99 }, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.createStudy(actor, { projectId: 99 }, 1)).rejects.toThrow(NotFoundException);
     });
 
     it('throws BadRequestException when project already has a study', async () => {
       mockPrisma.project.findUnique.mockResolvedValue({ id: 1, category: 'agricultural' });
       mockPrisma.projectStudy.findUnique.mockResolvedValue({ id: 5 });
 
-      await expect(service.createStudy({ projectId: 1 }, 1)).rejects.toThrow(BadRequestException);
+      await expect(service.createStudy(actor, { projectId: 1 }, 1)).rejects.toThrow(BadRequestException);
     });
 
     it('creates study with sections from templates', async () => {
@@ -95,7 +101,7 @@ describe('StudyService', () => {
       mockPrisma.projectStudy.create.mockResolvedValue(fakeStudy);
       mockPrisma.project.update.mockResolvedValue({});
 
-      const result = await service.createStudy({ projectId: 1 }, 1);
+      const result = await service.createStudy(actor, { projectId: 1 }, 1);
 
       expect(mockPrisma.projectStudy.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -118,7 +124,7 @@ describe('StudyService', () => {
         {},
       ]);
 
-      await service.changeStatus(1, { status: StudyStatus.in_review }, 1, AdminRole.employee);
+      await service.changeStatus(actor, 1, { status: StudyStatus.in_review }, 1, AdminRole.employee);
 
       expect(mockPrisma.$transaction).toHaveBeenCalled();
     });
@@ -127,7 +133,7 @@ describe('StudyService', () => {
       mockPrisma.projectStudy.findUnique.mockResolvedValue(draftStudy);
 
       await expect(
-        service.changeStatus(1, { status: StudyStatus.approved }, 1, AdminRole.administrator),
+        service.changeStatus(actor, 1, { status: StudyStatus.approved }, 1, AdminRole.administrator),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -136,7 +142,7 @@ describe('StudyService', () => {
       mockPrisma.projectStudy.findUnique.mockResolvedValue(reviewStudy);
 
       await expect(
-        service.changeStatus(
+        service.changeStatus(actor, 
           1,
           { status: StudyStatus.published },
           2,
@@ -150,7 +156,7 @@ describe('StudyService', () => {
       mockPrisma.projectStudy.findUnique.mockResolvedValue(closedStudy);
 
       await expect(
-        service.changeStatus(1, { status: StudyStatus.rejected }, 1, AdminRole.administrator),
+        service.changeStatus(actor, 1, { status: StudyStatus.rejected }, 1, AdminRole.administrator),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -176,7 +182,7 @@ describe('StudyService', () => {
       mockPrisma.projectStudy.update.mockResolvedValue({});
       mockPrisma.project.update.mockResolvedValue({});
 
-      await service.updateSection(1, { status: SectionStatus.completed }, 2, AdminRole.employee);
+      await service.updateSection(actor, 1, { status: SectionStatus.completed }, 2, AdminRole.employee);
 
       expect(mockPrisma.projectStudy.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -200,7 +206,7 @@ describe('StudyService', () => {
       });
       mockPrisma.studySection.count.mockResolvedValue(3); // 3 still pending
 
-      await service.updateSection(1, { status: SectionStatus.completed }, 2, AdminRole.employee);
+      await service.updateSection(actor, 1, { status: SectionStatus.completed }, 2, AdminRole.employee);
 
       expect(mockPrisma.projectStudy.update).not.toHaveBeenCalled();
     });
@@ -216,7 +222,7 @@ describe('StudyService', () => {
       mockPrisma.studySection.findUnique.mockResolvedValue(mockSection);
 
       await expect(
-        service.updateSection(1, { content: 'test' }, 2, AdminRole.employee),
+        service.updateSection(actor, 1, { content: 'test' }, 2, AdminRole.employee),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -233,7 +239,7 @@ describe('StudyService', () => {
       mockPrisma.studySection.count.mockResolvedValue(1);
 
       await expect(
-        service.updateSection(1, { content: 'updated' }, 1, AdminRole.administrator),
+        service.updateSection(actor, 1, { content: 'updated' }, 1, AdminRole.administrator),
       ).resolves.not.toThrow();
     });
   });

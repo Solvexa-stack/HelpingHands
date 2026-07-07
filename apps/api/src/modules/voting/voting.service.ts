@@ -8,6 +8,8 @@ import {
 import { StudyStatus, VoteChoice } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { paginate, paginatedResponse } from '../../common/dto/pagination.dto';
+import { ActorContext, systemActor } from '../../events/actor-context';
+import { EventBusService } from '../../events/event-bus.service';
 import { CastVoteDto } from './dto/cast-vote.dto';
 import { ChangeVoteDto } from './dto/change-vote.dto';
 import { VoteFiltersDto } from './dto/vote-filters.dto';
@@ -16,11 +18,14 @@ import { VoteFiltersDto } from './dto/vote-filters.dto';
 export class VotingService {
   private readonly logger = new Logger(VotingService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventBus: EventBusService,
+  ) {}
 
   // ─── Cast vote ────────────────────────────────────────────────────────────────
 
-  async castVote(dto: CastVoteDto, userId: number) {
+  async castVote(actor: ActorContext, dto: CastVoteDto, userId: number) {
     const study = await this.prisma.projectStudy.findUnique({ where: { id: dto.studyId } });
     if (!study) throw new NotFoundException(`Study #${dto.studyId} not found`);
 
@@ -36,7 +41,7 @@ export class VotingService {
     });
     if (existing) throw new ConflictException('You have already voted on this study');
 
-    return this.prisma.studyVote.create({
+    const vote = await this.prisma.studyVote.create({
       data: {
         studyId: dto.studyId,
         userId,
@@ -47,6 +52,15 @@ export class VotingService {
         user: { select: { id: true, email: true } },
       },
     });
+
+    this.eventBus.publish({
+      event: 'vote.cast',
+      actor,
+      subject: { type: 'study_vote', id: vote.id },
+      data: { studyId: dto.studyId, choice: dto.choice },
+    });
+
+    return vote;
   }
 
   // ─── Change vote ──────────────────────────────────────────────────────────────
@@ -217,6 +231,17 @@ export class VotingService {
         data: { studyStatus: StudyStatus.voting_closed },
       }),
     ]);
+
+    // Cron-triggered — no request context; one system actor per job run
+    const actor = systemActor();
+    for (const study of expired) {
+      this.eventBus.publish({
+        event: 'voting.closed',
+        actor,
+        subject: { type: 'study', id: study.id },
+        data: { projectId: study.projectId, status: StudyStatus.voting_closed, auto: true },
+      });
+    }
 
     this.logger.log(`Auto-closed ${expired.length} expired voting(s): ids=${studyIds.join(',')}`);
     return { closed: expired.length };

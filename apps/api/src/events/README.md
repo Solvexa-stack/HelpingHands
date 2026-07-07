@@ -1,8 +1,24 @@
 # Domain events (W0-E2)
 
-In-process typed event bus. Every mutation in the system will announce itself
-here (stories S3/S4 wire the emissions); the audit log (W0-E3) and later
-features subscribe instead of coupling to services.
+In-process typed event bus. Every mutation in the system announces itself
+here; the audit log (W0-E3) and later features subscribe instead of coupling
+to services.
+
+## Live events (S3 — projects, study, voting)
+
+| Event | Emitted from | Notes |
+|---|---|---|
+| `project.created` | `ProjectsService.create` | data: blockId, category, value |
+| `project.updated` | `ProjectsService.update` | data: changedFields |
+| `project.closed` | `ProjectsService.recalculateProgress` | on isCompleted false→true; actor via ALS (approver / anonymous webhook / system) |
+| `study.created` | `StudyService.createStudy` | data: projectId, sections |
+| `study.published` / `study.approved` / `study.rejected` | `StudyService.changeStatus` | rejected carries rejectionReason; draft/in_review moves are not announced |
+| `voting.opened` / `voting.closed` | `StudyService.changeStatus` | opened carries votingStartsAt/EndsAt; re-opening (deadline extension) re-emits `voting.opened` |
+| `voting.closed` (auto) | `VotingService.autoCloseExpiredVotings` | system actor, `data.auto: true`, one per closed study |
+| `study_section.assigned` / `study_section.completed` | `StudyService.updateSection` | subject: study_section; data.studyId |
+| `vote.cast` | `VotingService.castVote` | subject: study_vote; data: studyId, choice. `changeVote` is silent (not in the S3 list) |
+
+Donations/payments/execution/financial/milestones follow in W0-E2-S4.
 
 ## The envelope
 

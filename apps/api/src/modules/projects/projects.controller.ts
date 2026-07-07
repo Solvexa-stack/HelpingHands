@@ -16,6 +16,8 @@ import { ProjectsService } from './projects.service';
 import { CreateProjectDto, UpdateProjectDto, ProjectQueryDto } from './dto/project.dto';
 import { Roles, Public } from '../../common/decorators/roles.decorator';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
+import { CurrentActor } from '../../common/decorators/current-actor.decorator';
+import { ActorContext } from '../../events/actor-context';
 
 @ApiTags('Projects')
 @Controller({ path: 'projects', version: '1' })
@@ -40,16 +42,20 @@ export class ProjectsController {
   @Roles(AdminRole.administrator, AdminRole.employee)
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Create a new project' })
-  create(@Body() dto: CreateProjectDto) {
-    return this.projectsService.create(dto);
+  create(@Body() dto: CreateProjectDto, @CurrentActor() actor: ActorContext) {
+    return this.projectsService.create(actor, dto);
   }
 
   @Put(':id')
   @Roles(AdminRole.administrator, AdminRole.employee)
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Update project' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProjectDto) {
-    return this.projectsService.update(id, dto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateProjectDto,
+    @CurrentActor() actor: ActorContext,
+  ) {
+    return this.projectsService.update(actor, id, dto);
   }
 
   @Delete(':id')

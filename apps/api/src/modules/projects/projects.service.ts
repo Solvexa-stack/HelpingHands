@@ -9,10 +9,17 @@ import { CreateProjectDto, UpdateProjectDto, ProjectQueryDto } from './dto/proje
 import { AdminRole } from '@prisma/client';
 import { paginate, paginatedResponse } from '../../common/dto/pagination.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import { ActorContext } from '../../events/actor-context';
+import { ActorContextService } from '../../events/actor-context.storage';
+import { EventBusService } from '../../events/event-bus.service';
 
 @Injectable()
 export class ProjectsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventBus: EventBusService,
+    private actorContext: ActorContextService,
+  ) {}
 
   async findAll(query: ProjectQueryDto, userRole?: string, financialOfficerId?: number) {
     const { page = 1, limit = 15, category, location, search, isCompleted, lang, sortBy = 'createdAt', sortOrder = 'desc' } = query;
@@ -105,7 +112,7 @@ export class ProjectsService {
     return { ...project, collectedAmount };
   }
 
-  async create(dto: CreateProjectDto) {
+  async create(actor: ActorContext, dto: CreateProjectDto) {
     const block = await this.prisma.block.findUnique({ where: { id: dto.blockId } });
     if (!block) throw new NotFoundException(`Block #${dto.blockId} not found`);
 
@@ -119,7 +126,7 @@ export class ProjectsService {
       if (!officer) throw new NotFoundException(`Financial officer #${dto.financialOfficerId} not found`);
     }
 
-    return this.prisma.project.create({
+    const project = await this.prisma.project.create({
       data: {
         blockId: dto.blockId,
         location: dto.location,
@@ -134,16 +141,25 @@ export class ProjectsService {
         financialOfficer: { select: { id: true, firstName: true, lastName: true } },
       },
     });
+
+    this.eventBus.publish({
+      event: 'project.created',
+      actor,
+      subject: { type: 'project', id: project.id },
+      data: { blockId: project.blockId, category: project.category, value: Number(project.value) },
+    });
+
+    return project;
   }
 
-  async update(id: number, dto: UpdateProjectDto) {
+  async update(actor: ActorContext, id: number, dto: UpdateProjectDto) {
     const project = await this.prisma.project.findUnique({ where: { id } });
     if (!project) throw new NotFoundException(`Project #${id} not found`);
     if (project.isCompleted) throw new BadRequestException('Completed projects cannot be modified');
 
     const { blockId, ...updateData } = dto;
 
-    return this.prisma.project.update({
+    const updated = await this.prisma.project.update({
       where: { id },
       data: {
         ...updateData,
@@ -155,6 +171,15 @@ export class ProjectsService {
         financialOfficer: { select: { id: true, firstName: true, lastName: true } },
       },
     });
+
+    this.eventBus.publish({
+      event: 'project.updated',
+      actor,
+      subject: { type: 'project', id },
+      data: { changedFields: Object.keys(updateData) },
+    });
+
+    return updated;
   }
 
   async remove(id: number) {
@@ -188,6 +213,18 @@ export class ProjectsService {
       where: { id: projectId },
       data: { progression, isCompleted },
     });
+
+    // Funding goal reached for the first time → the project closes.
+    // Actor comes from ALS: the approving staff member in request contexts,
+    // anonymous/system for webhook- or job-triggered recalculations.
+    if (isCompleted && !project.isCompleted) {
+      this.eventBus.publish({
+        event: 'project.closed',
+        actor: this.actorContext.currentOrSystem(),
+        subject: { type: 'project', id: projectId },
+        data: { value, collected, progression },
+      });
+    }
   }
 
   async assignFinancialOfficer(projectId: number, officerId: number) {
