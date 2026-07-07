@@ -20,10 +20,42 @@ Every event is delivered as a `DomainEvent`:
 }
 ```
 
-`ActorContext` describes who acted. For work not driven by an authenticated
-request (cron jobs, webhooks, seeds) use `systemActor()`. The request
-interceptor that builds it from the JWT arrives in W0-E2-S2; Wave 1 extends
-the type with `activeOrgId`.
+`ActorContext` describes who acted. Wave 1 extends the type with
+`activeOrgId` — add fields, never repurpose them.
+
+## ActorContext: how it is built and threaded (W0-E2-S2)
+
+Request pipeline (all wired in `app.setup.ts` / `EventsModule`):
+
+1. `requestContextMiddleware` (before guards) — resolves the `requestId`
+   (inbound `X-Request-Id` honored, else generated), echoes it as the
+   `X-Request-Id` response header, and opens the AsyncLocalStorage scope.
+2. `JwtAuthGuard` validates the token and sets `request.user`.
+3. `ActorContextInterceptor` (after guards) — builds the definitive actor
+   from `request.user` (anonymous on `@Public` routes) and stores it on the
+   request and in the ALS scope.
+
+**Threading convention** (enforced by lint from W0-E2-S5):
+
+- Controllers receive the actor with `@CurrentActor()` and pass it as the
+  **first argument** of mutating service methods:
+
+  ```ts
+  @Post()
+  create(@Body() dto: CreateProjectDto, @CurrentActor() actor: ActorContext) {
+    return this.projectsService.create(actor, dto);
+  }
+  ```
+
+- Cross-cutting code (logging, event subscribers) that cannot take a
+  parameter injects `ActorContextService` and calls `.current()` /
+  `.currentOrSystem()`.
+- Work with no request at all — cron jobs, queue processors, webhooks,
+  seeds — uses `systemActor()` (fresh `requestId` per job run).
+
+The `requestId` correlates everything: the `X-Request-Id` response header,
+unhandled-error log lines (`HttpExceptionFilter`), and every event
+envelope's `requestId` field.
 
 ## Emitting
 

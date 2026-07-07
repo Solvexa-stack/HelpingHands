@@ -1,10 +1,15 @@
 import { Global, Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ActorContextInterceptor } from './actor-context.interceptor';
+import { ActorContextService } from './actor-context.storage';
 import { EventBusService } from './event-bus.service';
 
 /**
- * Domain event infrastructure (W0-E2-S1). Global so services can inject
- * EventBusService without importing this module everywhere.
+ * Domain event infrastructure (W0-E2-S1/S2). Global so services can inject
+ * EventBusService / ActorContextService without importing this module
+ * everywhere. The ActorContext request pipeline is completed by
+ * requestContextMiddleware, registered in app.setup.ts.
  */
 @Global()
 @Module({
@@ -18,7 +23,11 @@ import { EventBusService } from './event-bus.service';
       verboseMemoryLeak: true,
     }),
   ],
-  providers: [EventBusService],
-  exports: [EventBusService],
+  providers: [
+    EventBusService,
+    ActorContextService,
+    { provide: APP_INTERCEPTOR, useClass: ActorContextInterceptor },
+  ],
+  exports: [EventBusService, ActorContextService],
 })
 export class EventsModule {}

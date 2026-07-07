@@ -26,3 +26,13 @@ export function systemActor(requestId?: string): ActorContext {
     ip: null,
   };
 }
+
+/** Actor for unauthenticated (public-route) requests — still correlated by requestId. */
+export function anonymousActor(requestId: string, ip: string | null = null): ActorContext {
+  return {
+    userId: null,
+    referenceType: 'anonymous',
+    requestId,
+    ip,
+  };
+}
