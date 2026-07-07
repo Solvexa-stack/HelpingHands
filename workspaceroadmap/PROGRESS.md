@@ -8,7 +8,7 @@ Track realization of each wave here. A wave's status moves to ✅ only when ever
 
 | Wave | Document | Status | Started | Completed | Notes |
 |---|---|---|---|---|---|
-| 0 — Foundations | [11_WAVE_0_FOUNDATIONS.md](11_WAVE_0_FOUNDATIONS.md) | ⬜ | | | Regression suite first, then audit/soft-delete/events |
+| 0 — Foundations | [11_WAVE_0_FOUNDATIONS.md](11_WAVE_0_FOUNDATIONS.md) | 🔵 | 2026-07-07 | | W0-E1-S1 (e2e harness) ✅ · W0-E1-S2 (frozen lifecycle spec) ✅ — 45 e2e tests green; next: S3 donation flows |
 | 1 — Identity & Multi-Tenancy | [12_WAVE_1_IDENTITY_MULTI_TENANCY.md](12_WAVE_1_IDENTITY_MULTI_TENANCY.md) | ⬜ | | | Blocked until Wave 0 DoD |
 | 2 — Organizations | [13_WAVE_2_ORGANIZATIONS.md](13_WAVE_2_ORGANIZATIONS.md) | ⬜ | | | May overlap with Waves 3/4 |
 | 3 — Governance Board | [14_WAVE_3_GOVERNANCE_BOARD.md](14_WAVE_3_GOVERNANCE_BOARD.md) | ⬜ | | | May overlap with Waves 2/4 |

@@ -173,6 +173,17 @@ pnpm format
 
 ---
 
+### E2E Tests (API)
+
+Requires Postgres and Redis running (`docker compose up postgres redis -d`). Tests run against a dedicated `helping_hands_test` database — never the dev one — created and migrated automatically. Override the target with `TEST_DATABASE_URL` if needed.
+
+```bash
+# From repo root (or apps/api)
+pnpm test:e2e
+```
+
+The suite lives in `apps/api/test/`. It seeds the four test accounts per run, resets the test DB between suites, and covers the frozen lifecycle (project → study → vote → approve/reject) that all roadmap waves must preserve (see `workspaceroadmap/backlog/BACKLOG_W0_FOUNDATIONS.md`, Epic W0-E1).
+
 ---
 
 ## DOCKER (Full Stack in Containers)
