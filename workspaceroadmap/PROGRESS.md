@@ -8,7 +8,7 @@ Track realization of each wave here. A wave's status moves to ✅ only when ever
 
 | Wave | Document | Status | Started | Completed | Notes |
 |---|---|---|---|---|---|
-| 0 — Foundations | [11_WAVE_0_FOUNDATIONS.md](11_WAVE_0_FOUNDATIONS.md) | 🔵 | 2026-07-07 | | W0-E1-S1 (e2e harness) ✅ · W0-E1-S2 (frozen lifecycle spec) ✅ — 45 e2e tests green; next: S3 donation flows |
+| 0 — Foundations | [11_WAVE_0_FOUNDATIONS.md](11_WAVE_0_FOUNDATIONS.md) | 🔵 | 2026-07-07 | | W0-E1: S1 harness ✅ · S2 lifecycle spec ✅ · S3 donation flows spec ✅ — 68 e2e tests green; 4 pre-existing bugs logged in [backlog/BACKLOG_BUGS.md](backlog/BACKLOG_BUGS.md); next: S4 execution & financial spec |
 | 1 — Identity & Multi-Tenancy | [12_WAVE_1_IDENTITY_MULTI_TENANCY.md](12_WAVE_1_IDENTITY_MULTI_TENANCY.md) | ⬜ | | | Blocked until Wave 0 DoD |
 | 2 — Organizations | [13_WAVE_2_ORGANIZATIONS.md](13_WAVE_2_ORGANIZATIONS.md) | ⬜ | | | May overlap with Waves 3/4 |
 | 3 — Governance Board | [14_WAVE_3_GOVERNANCE_BOARD.md](14_WAVE_3_GOVERNANCE_BOARD.md) | ⬜ | | | May overlap with Waves 2/4 |
@@ -41,4 +41,4 @@ Record deviations from the roadmap here (what changed, why, which doc was update
 
 | Date | Wave | Decision | Doc updated |
 |---|---|---|---|
-| | | | |
+| 2026-07-08 | 0 | Pre-existing bugs found by the regression suite are logged as `BUG-n` items instead of being fixed mid-wave; specs pin current behavior with marked assertions | [backlog/BACKLOG_BUGS.md](backlog/BACKLOG_BUGS.md) (new) |

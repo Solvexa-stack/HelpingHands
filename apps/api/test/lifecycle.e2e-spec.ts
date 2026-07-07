@@ -4,6 +4,7 @@ import { PrismaService } from '../src/prisma/prisma.service';
 import { createTestApp } from './utils/app';
 import { resetDatabase } from './utils/db';
 import { authHeaderFor } from './utils/auth';
+import { createProjectViaApi } from './utils/fixtures';
 
 /**
  * W0-E1-S2 — Frozen lifecycle spec: project → study → vote → approval.
@@ -26,33 +27,6 @@ describe('Frozen lifecycle: project → study → vote → approval (W0-E1-S2)',
   let adminAdminId: number;
 
   const http = () => request(app.getHttpServer());
-
-  const createProjectViaApi = async (slug: string): Promise<{ blockId: number; projectId: number }> => {
-    const blockRes = await http()
-      .post('/api/v1/blocks')
-      .set('Authorization', employee)
-      .send({
-        category: 'project',
-        translations: [
-          {
-            languageCode: 'en',
-            name: `Lifecycle project ${slug}`,
-            slug: `lifecycle-project-${slug}`,
-            brief: 'E2E lifecycle fixture',
-            description: 'Project used by the frozen-lifecycle regression spec',
-          },
-        ],
-      })
-      .expect(201);
-
-    const projectRes = await http()
-      .post('/api/v1/projects')
-      .set('Authorization', employee)
-      .send({ blockId: blockRes.body.data.id, value: 50000, category: 'agricultural' })
-      .expect(201);
-
-    return { blockId: blockRes.body.data.id, projectId: projectRes.body.data.id };
-  };
 
   const getStudy = async (studyId: number) => {
     const res = await http()
@@ -106,7 +80,7 @@ describe('Frozen lifecycle: project → study → vote → approval (W0-E1-S2)',
     const statusHistory: string[] = [];
 
     it('employee creates a project', async () => {
-      ({ projectId } = await createProjectViaApi('approve'));
+      ({ projectId } = await createProjectViaApi(app, employee, 'approve'));
       await expectMirroredStatus(projectId, null);
     });
 
@@ -343,7 +317,7 @@ describe('Frozen lifecycle: project → study → vote → approval (W0-E1-S2)',
     const statusHistory: string[] = [];
 
     it('employee creates a second project with a study', async () => {
-      ({ projectId } = await createProjectViaApi('reject'));
+      ({ projectId } = await createProjectViaApi(app, employee, 'reject'));
       const res = await http()
         .post('/api/v1/study')
         .set('Authorization', employee)

@@ -23,6 +23,13 @@ export function applyTestEnv(): void {
   // regardless of any local .env files.
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'e2e-test-jwt-secret';
   process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'e2e-test-refresh-secret';
+
+  // Stripe test keys: the secret key must not be the "sk_test_placeholder"
+  // sentinel or StripeService disables itself. Webhook verification is pure
+  // HMAC over the raw body — no network — so specs can sign their own
+  // simulated events with this same webhook secret.
+  process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_e2e_dummy_key';
+  process.env.STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_e2e_test_secret';
 }
 
 /** URL of the server-level maintenance DB, used to CREATE the test database. */

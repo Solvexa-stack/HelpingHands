@@ -13,7 +13,8 @@ export async function createTestApp(): Promise<INestApplication> {
     imports: [AppModule],
   }).compile();
 
-  const app = moduleRef.createNestApplication({ logger: ['error', 'warn'] });
+  // rawBody mirrors main.ts — required by the Stripe webhook signature path
+  const app = moduleRef.createNestApplication({ logger: ['error', 'warn'], rawBody: true });
   configureApp(app);
   await app.init();
   return app;
