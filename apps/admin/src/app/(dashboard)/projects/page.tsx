@@ -45,10 +45,12 @@ export default function ProjectsPage() {
     mutationFn: (projectId: number) => studiesApi.create(projectId),
     onSuccess: (study) => {
       success('Study created');
+      qc.invalidateQueries({ queryKey: ['admin-projects'] });
       router.push(`/studies/${study.id}`);
     },
     onError: (err: any) => {
       toastError(err?.response?.data?.message || 'Failed to create study');
+      qc.invalidateQueries({ queryKey: ['admin-projects'] });
       setCreatingStudyFor(null);
     },
   });
@@ -118,7 +120,13 @@ export default function ProjectsPage() {
                       </td>
                       <td className="table-cell">
                         {p.studyStatus ? (
-                          <StudyStatusBadge status={p.studyStatus} size="sm" />
+                          p.studyId ? (
+                            <Link href={`/studies/${p.studyId}`}>
+                              <StudyStatusBadge status={p.studyStatus} size="sm" />
+                            </Link>
+                          ) : (
+                            <StudyStatusBadge status={p.studyStatus} size="sm" />
+                          )
                         ) : role === 'administrator' || role === 'employee' ? (
                           <button
                             onClick={() => handleCreateStudy(p.id)}

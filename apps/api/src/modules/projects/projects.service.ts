@@ -62,12 +62,19 @@ export class ProjectsService {
           },
           financialOfficer: { select: { id: true, firstName: true, lastName: true } },
           _count: { select: { donations: true } },
+          study: { select: { id: true, status: true } },
         },
       }),
       this.prisma.project.count({ where }),
     ]);
 
-    return paginatedResponse(data, total, page, limit);
+    const mapped = data.map(({ study, ...project }) => ({
+      ...project,
+      studyId: study?.id ?? null,
+      studyStatus: study?.status ?? null,
+    }));
+
+    return paginatedResponse(mapped, total, page, limit);
   }
 
   async findById(id: number, lang?: string) {

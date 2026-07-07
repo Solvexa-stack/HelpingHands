@@ -95,8 +95,23 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
       return editId ? blocksApi.update(editId, payload) : blocksApi.create(payload);
     },
     onSuccess: () => { success(editId ? 'Updated successfully' : 'Created successfully'); router.push(backHref); },
-    onError: (err: any) => toastError(err?.response?.data?.message || 'Failed'),
+    onError: (err: any) => {
+      const res = err?.response?.data;
+      toastError(res?.errors?.join('. ') || res?.message || 'Failed');
+    },
   });
+
+  const handleSubmit = () => {
+    const incomplete = LANGS.filter((l) => {
+      const t = translations[l.code];
+      return t.name && t.slug && (!t.brief || !t.description);
+    });
+    if (incomplete.length) {
+      toastError(`Brief and Description are required. Missing for: ${incomplete.map((l) => l.label).join(', ')}`);
+      return;
+    }
+    mutation.mutate();
+  };
 
   const setTrans = (lang: string, field: string, value: string) => {
     setTranslations((prev) => {
@@ -212,7 +227,7 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
 
       <div className="flex justify-end gap-3">
         <Link href={backHref} className="btn-secondary btn-md">{backLabel}</Link>
-        <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !translations.en.name}
+        <button onClick={handleSubmit} disabled={mutation.isPending || !translations.en.name}
           className="btn-primary btn-md gap-2">
           {mutation.isPending ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Save className="w-4 h-4" />}
           {editId ? 'Save Changes' : 'Publish'}

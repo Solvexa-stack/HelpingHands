@@ -12,7 +12,8 @@
     "db:seed": "cd ../../packages/database && pnpm db:seed",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
-    "test:coverage": "jest --coverage --passWithNoTests"
+    "test:coverage": "jest --coverage --passWithNoTests",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
     "@nestjs/bull": "^11.0.4",
@@ -53,6 +54,7 @@
     "@nestjs/cli": "^10.3.2",
     "@nestjs/testing": "^10.3.8",
     "@types/bcryptjs": "^2.4.6",
+    "@types/jest": "^29.5.12",
     "@types/bull": "^4.10.4",
     "@types/express": "^5.0.6",
     "@types/multer": "^1.4.11",
@@ -60,7 +62,11 @@
     "@types/nodemailer": "^6.4.15",
     "@types/passport-jwt": "^4.0.1",
     "@types/qrcode": "^1.5.5",
+    "@types/supertest": "^6.0.2",
     "@types/uuid": "^10.0.0",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.1.4",
     "typescript": "^5.4.5"
   }
 }

@@ -18,7 +18,8 @@
     "db:studio": "pnpm --filter @helping-hands/database studio",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "test:coverage": "turbo test:coverage"
+    "test:coverage": "turbo test:coverage",
+    "test:e2e": "pnpm --filter @helping-hands/api test:e2e"
   },
   "devDependencies": {
     "prettier": "^3.2.5",
