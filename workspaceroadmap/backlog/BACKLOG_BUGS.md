@@ -46,6 +46,51 @@ Fix: apply the same assignment check used in `donations.service.updateStatus` to
 AC: unassigned officer gets 403 on budget create / expense decision / manual transaction for a foreign project; assigned officer flow still green. Update the test `financial officer creates a budget (no project-assignment check — current behavior)` in `apps/api/test/execution.e2e-spec.ts`.
 Note: candidate to fold into Wave 1 RBAC work (`08_PERMISSIONS_RBAC_ABAC.md`) rather than a standalone patch.
 
+**BUG-6 · M · api — Refresh-token flow is completely broken (always 401)**
+Found by: W0-E1-S5 (verified against the running API and in e2e).
+Where: `apps/api/src/modules/auth/auth.controller.ts` → `refreshTokens(0, dto.refreshToken)`.
+Defect: the controller passes a hardcoded `userId` of `0`; `AuthService.refreshTokens` filters `where: { userId: 0, token, … }`, which never matches a stored token → every refresh attempt returns 401 "Refresh token invalid or expired". Clients silently fall back to re-login when the 15-minute access token expires.
+Fix: decode the userId from the refresh token (verify with `jwt.refreshSecret`) instead of trusting a parameter; then look up by `(userId, token)`.
+AC: flip the assertion marked `BUG-6` in `apps/api/test/auth-matrix.e2e-spec.ts` to expect 200 and add rotation assertions (old token revoked, new pair issued); suite green.
+
+**BUG-7 · L · api,db,migration — `User.adminId` / `User.participantId` are never populated → relations always null**
+Found by: W0-E1-S5 (verified in code, e2e, and the dev database — all rows NULL).
+Where: schema `User.adminId/participantId` FK columns (migration `20260606140000_add_user_relations`) vs. seed + `auth.service.register` + `admins.service`, which only ever set `referenceId/referenceType`.
+Defect: the Prisma relations `participant.user` / `admin.user` and `user.participant` / `user.admin` are backed by the FK columns, but no write path fills them. Observable symptoms, all pinned in the suite:
+1. Participants can NEVER update their own profile — `participants.service.update` checks `participant.user?.id` (always `undefined`) → 403 even for the owner.
+2. `user` is `null` in every include (participant lists, donation lists, admin vote audit) — no emails/avatars in the admin UI.
+3. Donation approval/rejection emails are never sent (`donations.service.updateStatus` reads `updated.participant.user?.email` → undefined → silently skipped).
+Fix: backfill migration (`UPDATE users SET participant_id = reference_id WHERE reference_type='participant'`, same for admins) + set the columns on user creation; or drop the columns and derive relations from `referenceId/referenceType`. Coordinate with Wave 1 identity work.
+AC: fix the marked assertions in `auth-matrix.e2e-spec.ts` (self-update 200 / foreign 403; `user` non-null in participant detail); donation approval e2e asserts an email send attempt.
+
+**BUG-8 · S · api — `GET /study/:id` has no role restriction: drafts and rejection reasons visible to participants**
+Found by: W0-E1-S5.
+Where: `apps/api/src/modules/study/study.controller.ts` `findOne` (no `@Roles`).
+Defect: any authenticated user (participants included) can read any study by id — including `draft`, `in_review` and `rejected` ones with `rejectionReason` and unpublished section content. The public-by-project endpoint carefully filters to published+; the by-id route bypasses that.
+Fix: add `@Roles(administrator, employee, financial_officer)` or status-based filtering for non-staff callers.
+AC: participant reading an unpublished study → 403/404; the `BUG-8` test in `auth-matrix.e2e-spec.ts` flipped; lifecycle suite still green.
+
+**BUG-9 · S · api — Dashboard endpoints have no role restriction**
+Found by: W0-E1-S5.
+Where: `apps/api/src/modules/dashboard/dashboard.controller.ts` (no `@Roles` on any route).
+Defect: participants can read the admin dashboard (`stats`, `recent-donations`, `recent-projects`, `donations-by-month`) — aggregate and per-donation data across all participants.
+Fix: `@Roles(administrator, employee, financial_officer)` at class level (verify the admin UI is the only consumer).
+AC: participant → 403 on all dashboard routes; matrix row updated.
+
+**BUG-10 · S · api — Two logins by the same user within one second → 500 (unique-constraint collision)**
+Found by: W0-E1-S5 (rapid consecutive logins in the suite hit it deterministically).
+Where: `auth.service.generateTokens` + `refresh_tokens.token @unique`.
+Defect: the refresh JWT is deterministic per (payload, secret, second) — same user logging in twice within the same `iat` second produces an identical token string, and the second `refreshToken.create` throws P2002 → 500. Real-world: double-click on the login button, or two devices.
+Fix: add a `jti`/nonce claim to the refresh payload (or catch P2002 and reuse).
+AC: two immediate logins both 200; remove the `BUG-10` sleep workarounds in `auth-matrix.e2e-spec.ts`.
+
+**BUG-11 · S · api — `GET /participants/:id` is not self-scoped for participants**
+Found by: W0-E1-S5.
+Where: `apps/api/src/modules/participants/participants.controller.ts` `findOne` (`@Roles(..., 'participant')` with no ownership check in `findById`).
+Defect: any participant can read any other participant's profile including their last 10 donations with amounts. (Email/avatar currently come back null only because of BUG-7 — fixing BUG-7 without this one widens the leak to emails.)
+Fix: scope to self for role `participant`, as `update` already intends to.
+AC: participant → 403 (or filtered payload) on foreign ids, 200 on own; the `BUG-11` test flipped. **Fix together with or before BUG-7.**
+
 ---
 
 When a bug is fixed, move its entry to a "Fixed" section at the bottom with the PR link.

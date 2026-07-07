@@ -184,6 +184,8 @@ pnpm test:e2e
 
 The suite lives in `apps/api/test/`. It seeds the four test accounts per run, resets the test DB between suites, and covers the frozen lifecycle (project → study → vote → approve/reject) that all roadmap waves must preserve (see `workspaceroadmap/backlog/BACKLOG_W0_FOUNDATIONS.md`, Epic W0-E1).
 
+The same suite runs in CI as the required merge gate for `main` — see [docs/10-ci.md](10-ci.md).
+
 ---
 
 ## DOCKER (Full Stack in Containers)
