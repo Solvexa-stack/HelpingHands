@@ -4,6 +4,7 @@ import { AdminRole, SectionStatus, StudyStatus } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { StudyService } from './study.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const mockPrisma = {
   project: {
@@ -48,6 +49,10 @@ describe('StudyService', () => {
         {
           provide: ConfigService,
           useValue: { get: jest.fn().mockReturnValue('http://localhost:4000') },
+        },
+        {
+          provide: NotificationsService,
+          useValue: { notify: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();

@@ -4,6 +4,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bull';
 import configuration from './config/configuration';
+import { EventsModule } from './events/events.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AdminsModule } from './modules/admins/admins.module';
@@ -47,6 +48,7 @@ import { ReportsModule } from './modules/reports/reports.module';
       }),
       inject: [ConfigService],
     }),
+    EventsModule,
     PrismaModule,
     AuthModule,
     AdminsModule,

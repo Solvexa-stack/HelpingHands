@@ -8,7 +8,7 @@ Track realization of each wave here. A wave's status moves to ✅ only when ever
 
 | Wave | Document | Status | Started | Completed | Notes |
 |---|---|---|---|---|---|
-| 0 — Foundations | [11_WAVE_0_FOUNDATIONS.md](11_WAVE_0_FOUNDATIONS.md) | 🔵 | 2026-07-07 | | **Epic W0-E1 complete** (S1–S6): 163 e2e tests green; CI workflow with failure artifacts ([docs/10-ci.md](../docs/10-ci.md)); ⚠️ pending one-time admin action: mark `e2e-regression-suite` required in branch protection. 11 pre-existing bugs in [backlog/BACKLOG_BUGS.md](backlog/BACKLOG_BUGS.md). Next: W0-E2 event bus |
+| 0 — Foundations | [11_WAVE_0_FOUNDATIONS.md](11_WAVE_0_FOUNDATIONS.md) | 🔵 | 2026-07-07 | | **W0-E1 complete** (163 e2e tests; CI gate — ⚠️ admin still to mark `e2e-regression-suite` required). **W0-E2-S1 event bus ✅** (`apps/api/src/events/`, emit-after-commit, 165 e2e + 42 unit green). 11 bugs in [backlog/BACKLOG_BUGS.md](backlog/BACKLOG_BUGS.md). Next: W0-E2-S2 ActorContext interceptor |
 | 1 — Identity & Multi-Tenancy | [12_WAVE_1_IDENTITY_MULTI_TENANCY.md](12_WAVE_1_IDENTITY_MULTI_TENANCY.md) | ⬜ | | | Blocked until Wave 0 DoD |
 | 2 — Organizations | [13_WAVE_2_ORGANIZATIONS.md](13_WAVE_2_ORGANIZATIONS.md) | ⬜ | | | May overlap with Waves 3/4 |
 | 3 — Governance Board | [14_WAVE_3_GOVERNANCE_BOARD.md](14_WAVE_3_GOVERNANCE_BOARD.md) | ⬜ | | | May overlap with Waves 2/4 |

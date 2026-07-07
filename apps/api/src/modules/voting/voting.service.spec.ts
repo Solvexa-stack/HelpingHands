@@ -8,10 +8,10 @@ const mockPrisma = {
   projectStudy: {
     findUnique: jest.fn(),
     findMany: jest.fn(),
-    updateMany: jest.fn(),
+    updateMany: jest.fn().mockReturnValue({ op: 'projectStudy.updateMany' }),
   },
   project: {
-    updateMany: jest.fn(),
+    updateMany: jest.fn().mockReturnValue({ op: 'project.updateMany' }),
   },
   studyVote: {
     findUnique: jest.fn(),
