@@ -8,7 +8,7 @@ Track realization of each wave here. A wave's status moves to ✅ only when ever
 
 | Wave | Document | Status | Started | Completed | Notes |
 |---|---|---|---|---|---|
-| 0 — Foundations | [11_WAVE_0_FOUNDATIONS.md](11_WAVE_0_FOUNDATIONS.md) | 🔵 | 2026-07-07 | | W0-E1: S1 harness ✅ · S2 lifecycle spec ✅ · S3 donation flows spec ✅ — 68 e2e tests green; 4 pre-existing bugs logged in [backlog/BACKLOG_BUGS.md](backlog/BACKLOG_BUGS.md); next: S4 execution & financial spec |
+| 0 — Foundations | [11_WAVE_0_FOUNDATIONS.md](11_WAVE_0_FOUNDATIONS.md) | 🔵 | 2026-07-07 | | W0-E1: S1 harness ✅ · S2 lifecycle ✅ · S3 donations ✅ · S4 execution & financial ✅ — 103 e2e tests green; 5 pre-existing bugs logged in [backlog/BACKLOG_BUGS.md](backlog/BACKLOG_BUGS.md); next: S5 auth & roles spec |
 | 1 — Identity & Multi-Tenancy | [12_WAVE_1_IDENTITY_MULTI_TENANCY.md](12_WAVE_1_IDENTITY_MULTI_TENANCY.md) | ⬜ | | | Blocked until Wave 0 DoD |
 | 2 — Organizations | [13_WAVE_2_ORGANIZATIONS.md](13_WAVE_2_ORGANIZATIONS.md) | ⬜ | | | May overlap with Waves 3/4 |
 | 3 — Governance Board | [14_WAVE_3_GOVERNANCE_BOARD.md](14_WAVE_3_GOVERNANCE_BOARD.md) | ⬜ | | | May overlap with Waves 2/4 |

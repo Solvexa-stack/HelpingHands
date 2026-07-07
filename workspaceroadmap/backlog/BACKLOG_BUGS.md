@@ -38,6 +38,14 @@ Defect: cosmetic-to-moderate — Stripe treats both 4xx and 5xx as delivery fail
 Fix: wrap in `BadRequestException` after logging.
 AC: invalid signature → 400; the WebhookLog error row is still written; suite green.
 
+**BUG-5 · M · api — Financial endpoints ignore financial-officer project assignment**
+Found by: W0-E1-S4 (execution & financial spec).
+Where: `apps/api/src/modules/financial/financial.controller.ts` / `financial.service.ts`.
+Defect: the donations module restricts financial officers to their assigned projects (`Project.financialOfficerId` check in `donations.service.updateStatus` and list filtering), but the financial module has no such check anywhere — **any** financial officer can create/update budgets, approve/reject expenses, and read or write the transaction ledger of **any** project. Studies and donations list-filter by assignment; financial does not. Authorization inconsistency with real money impact.
+Fix: apply the same assignment check used in `donations.service.updateStatus` to mutating financial operations (and decide whether reads should filter like `listStudies` does). Needs a product decision on whether administrators-only bypass applies.
+AC: unassigned officer gets 403 on budget create / expense decision / manual transaction for a foreign project; assigned officer flow still green. Update the test `financial officer creates a budget (no project-assignment check — current behavior)` in `apps/api/test/execution.e2e-spec.ts`.
+Note: candidate to fold into Wave 1 RBAC work (`08_PERMISSIONS_RBAC_ABAC.md`) rather than a standalone patch.
+
 ---
 
 When a bug is fixed, move its entry to a "Fixed" section at the bottom with the PR link.
