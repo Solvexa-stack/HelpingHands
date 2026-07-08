@@ -1,5 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PhaseStatus, TaskStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ActorContext } from '../../events/actor-context';
+import { EventBusService } from '../../events/event-bus.service';
 import {
   CreateStepDto, UpdateStepDto, UpdateProgressDto,
   CreatePhaseDto, UpdatePhaseDto,
@@ -8,7 +11,10 @@ import {
 
 @Injectable()
 export class ExecutionService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventBus: EventBusService,
+  ) {}
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -40,6 +46,7 @@ export class ExecutionService {
     });
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async createStep(projectId: number, dto: CreateStepDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     await this.assertBlockExists(dto.blockId);
@@ -65,6 +72,7 @@ export class ExecutionService {
     });
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async updateStep(projectId: number, stepId: number, dto: UpdateStepDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const step = await this.prisma.projectStep.findFirst({ where: { id: stepId, projectId: projectBlockId } });
@@ -82,6 +90,7 @@ export class ExecutionService {
     });
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async updateStepProgress(projectId: number, stepId: number, dto: UpdateProgressDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const step = await this.prisma.projectStep.findFirst({ where: { id: stepId, projectId: projectBlockId } });
@@ -93,11 +102,18 @@ export class ExecutionService {
     });
   }
 
-  async removeStep(projectId: number, stepId: number) {
+  async removeStep(actor: ActorContext, projectId: number, stepId: number) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const step = await this.prisma.projectStep.findFirst({ where: { id: stepId, projectId: projectBlockId } });
     if (!step) throw new NotFoundException(`Step #${stepId} not found`);
     await this.prisma.projectStep.delete({ where: { id: stepId } });
+
+    this.eventBus.publish({
+      event: 'step.deleted',
+      actor,
+      subject: { type: 'step', id: stepId },
+      data: { projectId },
+    });
   }
 
   // ─── Phases ───────────────────────────────────────────────────────────────
@@ -116,11 +132,11 @@ export class ExecutionService {
     });
   }
 
-  async createPhase(projectId: number, dto: CreatePhaseDto) {
+  async createPhase(actor: ActorContext, projectId: number, dto: CreatePhaseDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     await this.assertBlockExists(dto.blockId);
 
-    return this.prisma.projectPhase.create({
+    const phase = await this.prisma.projectPhase.create({
       data: {
         projectId: projectBlockId,
         blockId: dto.blockId,
@@ -131,15 +147,24 @@ export class ExecutionService {
       },
       include: { block: { include: { translations: true } } },
     });
+
+    this.eventBus.publish({
+      event: 'phase.created',
+      actor,
+      subject: { type: 'phase', id: phase.id },
+      data: { projectId, order: phase.order },
+    });
+
+    return phase;
   }
 
-  async updatePhase(projectId: number, phaseId: number, dto: UpdatePhaseDto) {
+  async updatePhase(actor: ActorContext, projectId: number, phaseId: number, dto: UpdatePhaseDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const phase = await this.prisma.projectPhase.findFirst({ where: { id: phaseId, projectId: projectBlockId } });
     if (!phase) throw new NotFoundException(`Phase #${phaseId} not found`);
 
     const { blockId, ...rest } = dto;
-    return this.prisma.projectPhase.update({
+    const updated = await this.prisma.projectPhase.update({
       where: { id: phaseId },
       data: {
         ...rest,
@@ -148,13 +173,38 @@ export class ExecutionService {
       },
       include: { block: { include: { translations: true } } },
     });
+
+    if (dto.status === PhaseStatus.in_progress) {
+      this.eventBus.publish({
+        event: 'phase.started',
+        actor,
+        subject: { type: 'phase', id: phaseId },
+        data: { projectId },
+      });
+    } else if (dto.status === PhaseStatus.completed) {
+      this.eventBus.publish({
+        event: 'phase.completed',
+        actor,
+        subject: { type: 'phase', id: phaseId },
+        data: { projectId },
+      });
+    }
+
+    return updated;
   }
 
-  async removePhase(projectId: number, phaseId: number) {
+  async removePhase(actor: ActorContext, projectId: number, phaseId: number) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const phase = await this.prisma.projectPhase.findFirst({ where: { id: phaseId, projectId: projectBlockId } });
     if (!phase) throw new NotFoundException(`Phase #${phaseId} not found`);
     await this.prisma.projectPhase.delete({ where: { id: phaseId } });
+
+    this.eventBus.publish({
+      event: 'phase.deleted',
+      actor,
+      subject: { type: 'phase', id: phaseId },
+      data: { projectId },
+    });
   }
 
   // ─── Tasks ────────────────────────────────────────────────────────────────
@@ -172,7 +222,7 @@ export class ExecutionService {
     });
   }
 
-  async createTask(projectId: number, dto: CreateTaskDto) {
+  async createTask(actor: ActorContext, projectId: number, dto: CreateTaskDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     await this.assertBlockExists(dto.blockId);
 
@@ -181,7 +231,7 @@ export class ExecutionService {
       if (!phase) throw new NotFoundException(`Phase #${dto.phaseId} not found in this project`);
     }
 
-    return this.prisma.projectTask.create({
+    const task = await this.prisma.projectTask.create({
       data: {
         projectId: projectBlockId,
         blockId: dto.blockId,
@@ -196,15 +246,24 @@ export class ExecutionService {
         assignedTo: { select: { id: true, firstName: true, lastName: true } },
       },
     });
+
+    this.eventBus.publish({
+      event: 'task.created',
+      actor,
+      subject: { type: 'task', id: task.id },
+      data: { projectId, phaseId: dto.phaseId ?? null, assignedToId: dto.assignedToId ?? null },
+    });
+
+    return task;
   }
 
-  async updateTask(projectId: number, taskId: number, dto: UpdateTaskDto) {
+  async updateTask(actor: ActorContext, projectId: number, taskId: number, dto: UpdateTaskDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const task = await this.prisma.projectTask.findFirst({ where: { id: taskId, projectId: projectBlockId } });
     if (!task) throw new NotFoundException(`Task #${taskId} not found`);
 
     const { blockId, ...rest } = dto;
-    return this.prisma.projectTask.update({
+    const updated = await this.prisma.projectTask.update({
       where: { id: taskId },
       data: {
         ...rest,
@@ -216,12 +275,28 @@ export class ExecutionService {
         assignedTo: { select: { id: true, firstName: true, lastName: true } },
       },
     });
+
+    this.eventBus.publish({
+      event: dto.status === TaskStatus.completed ? 'task.completed' : 'task.updated',
+      actor,
+      subject: { type: 'task', id: taskId },
+      data: { projectId, changedFields: Object.keys(rest) },
+    });
+
+    return updated;
   }
 
-  async removeTask(projectId: number, taskId: number) {
+  async removeTask(actor: ActorContext, projectId: number, taskId: number) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const task = await this.prisma.projectTask.findFirst({ where: { id: taskId, projectId: projectBlockId } });
     if (!task) throw new NotFoundException(`Task #${taskId} not found`);
     await this.prisma.projectTask.delete({ where: { id: taskId } });
+
+    this.eventBus.publish({
+      event: 'task.deleted',
+      actor,
+      subject: { type: 'task', id: taskId },
+      data: { projectId },
+    });
   }
 }

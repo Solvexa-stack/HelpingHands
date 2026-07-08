@@ -18,7 +18,19 @@ to services.
 | `study_section.assigned` / `study_section.completed` | `StudyService.updateSection` | subject: study_section; data.studyId |
 | `vote.cast` | `VotingService.castVote` | subject: study_vote; data: studyId, choice. `changeVote` is silent (not in the S3 list) |
 
-Donations/payments/execution/financial/milestones follow in W0-E2-S4.
+## Live events (S4 — donations, payments, execution, financial, milestones)
+
+| Event | Emitted from | Notes |
+|---|---|---|
+| `donation.pledged` | `DonationsService.create` | actor: participant. Cancellation is silent (not in the catalog) |
+| `donation.approved` / `donation.rejected` | `DonationsService.updateStatus` | emitted before progression recalc, so `project.closed` follows it in the stream |
+| `payment.completed` / `payment.failed` | `PaymentsService` webhook path | actor: anonymous (public route) carrying the webhook requestId; provider replays are deduped → exactly one event |
+| `project.closed` (online path) | `PaymentsService.updateProjectProgressionOnline` | mirrors the cash-path emission (S3 gap closed) |
+| `phase.created` / `phase.started` / `phase.completed` | `ExecutionService` | started/completed on status transitions; other phase updates silent |
+| `task.created` / `task.updated` / `task.completed` | `ExecutionService` | completed replaces updated when the change is a completion. Steps are silent (not in the catalog) |
+| `expense.submitted` | `FinancialService.createExpense` | budget creation and manual transactions are silent |
+| `expense.approved` / `expense.rejected` | `FinancialService.updateExpenseStatus` | approved emits after the ledger transaction commits |
+| `milestone.created` / `milestone.completed` / `milestone.missed` | `MilestonesService` | completed/missed on status transitions |
 
 ## The envelope
 

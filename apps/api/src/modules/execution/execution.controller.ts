@@ -10,6 +10,8 @@ import {
   CreateTaskDto, UpdateTaskDto,
 } from './dto/execution.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentActor } from '../../common/decorators/current-actor.decorator';
+import { ActorContext } from '../../events/actor-context';
 
 @ApiTags('Execution')
 @ApiBearerAuth('JWT')
@@ -60,8 +62,9 @@ export class ExecutionController {
   removeStep(
     @Param('projectId', ParseIntPipe) projectId: number,
     @Param('id', ParseIntPipe) id: number,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.executionService.removeStep(projectId, id);
+    return this.executionService.removeStep(actor, projectId, id);
   }
 
   // ─── Phases ───────────────────────────────────────────────────────────────
@@ -77,8 +80,9 @@ export class ExecutionController {
   createPhase(
     @Param('projectId', ParseIntPipe) projectId: number,
     @Body() dto: CreatePhaseDto,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.executionService.createPhase(projectId, dto);
+    return this.executionService.createPhase(actor, projectId, dto);
   }
 
   @Patch('phases/:id')
@@ -87,8 +91,9 @@ export class ExecutionController {
     @Param('projectId', ParseIntPipe) projectId: number,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePhaseDto,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.executionService.updatePhase(projectId, id, dto);
+    return this.executionService.updatePhase(actor, projectId, id, dto);
   }
 
   @Delete('phases/:id')
@@ -96,8 +101,9 @@ export class ExecutionController {
   removePhase(
     @Param('projectId', ParseIntPipe) projectId: number,
     @Param('id', ParseIntPipe) id: number,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.executionService.removePhase(projectId, id);
+    return this.executionService.removePhase(actor, projectId, id);
   }
 
   // ─── Tasks ────────────────────────────────────────────────────────────────
@@ -116,8 +122,9 @@ export class ExecutionController {
   createTask(
     @Param('projectId', ParseIntPipe) projectId: number,
     @Body() dto: CreateTaskDto,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.executionService.createTask(projectId, dto);
+    return this.executionService.createTask(actor, projectId, dto);
   }
 
   @Patch('tasks/:id')
@@ -126,8 +133,9 @@ export class ExecutionController {
     @Param('projectId', ParseIntPipe) projectId: number,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateTaskDto,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.executionService.updateTask(projectId, id, dto);
+    return this.executionService.updateTask(actor, projectId, id, dto);
   }
 
   @Delete('tasks/:id')
@@ -135,7 +143,8 @@ export class ExecutionController {
   removeTask(
     @Param('projectId', ParseIntPipe) projectId: number,
     @Param('id', ParseIntPipe) id: number,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.executionService.removeTask(projectId, id);
+    return this.executionService.removeTask(actor, projectId, id);
   }
 }

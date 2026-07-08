@@ -91,7 +91,19 @@ export class AuthService {
     };
   }
 
-  async refreshTokens(userId: number, refreshToken: string) {
+  async refreshTokens(refreshToken: string) {
+    // BUG-6 fix (W1-E5-S1): the userId comes from the verified refresh token
+    // itself — the previous hardcoded 0 made every refresh fail.
+    let userId: number;
+    try {
+      const payload = await this.jwt.verifyAsync(refreshToken, {
+        secret: this.config.get('jwt.refreshSecret'),
+      });
+      userId = payload.sub;
+    } catch {
+      throw new UnauthorizedException('Refresh token invalid or expired');
+    }
+
     const stored = await this.prisma.refreshToken.findFirst({
       where: { userId, token: refreshToken, expiresAt: { gt: new Date() } },
       include: { user: true },
@@ -152,6 +164,7 @@ export class AuthService {
     });
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async changePassword(userId: number, dto: ChangePasswordDto) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || !user.password) throw new NotFoundException('User not found');
@@ -180,6 +193,9 @@ export class AuthService {
     return { admin: null, participant };
   }
 
+  /** Bump when the token payload shape changes; older tokens re-auth via refresh. */
+  static readonly TOKEN_VERSION = 2;
+
   private async generateTokens(
     userId: number,
     email: string,
@@ -187,7 +203,21 @@ export class AuthService {
     referenceType: string,
     referenceId: number,
   ) {
-    const payload = { sub: userId, email, role, referenceType, referenceId };
+    // W1-E5-S1: activeOrgId defaults to the sole/first membership
+    const membership = await this.prisma.organizationMembership.findFirst({
+      where: { userId, status: 'active' },
+      orderBy: { id: 'asc' },
+    });
+
+    const payload = {
+      sub: userId,
+      email,
+      role,
+      referenceType,
+      referenceId,
+      activeOrgId: membership?.organizationId ?? null,
+      tokenVersion: AuthService.TOKEN_VERSION,
+    };
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwt.signAsync(payload, {

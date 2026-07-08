@@ -281,6 +281,7 @@ export class StudyService {
 
   // ─── Files ────────────────────────────────────────────────────────────────────
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async uploadSectionFiles(sectionId: number, files: Express.Multer.File[]) {
     const section = await this.prisma.studySection.findUnique({ where: { id: sectionId } });
     if (!section) throw new NotFoundException(`Section #${sectionId} not found`);
@@ -301,6 +302,7 @@ export class StudyService {
     );
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async deleteSectionFile(fileId: number) {
     const file = await this.prisma.studySectionFile.findUnique({ where: { id: fileId } });
     if (!file) throw new NotFoundException(`File #${fileId} not found`);
@@ -439,20 +441,32 @@ export class StudyService {
 
   // ─── Delete ───────────────────────────────────────────────────────────────────
 
-  async deleteStudy(studyId: number) {
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
+  async deleteStudy(actor: ActorContext, studyId: number) {
     const study = await this.prisma.projectStudy.findUnique({ where: { id: studyId } });
     if (!study) throw new NotFoundException(`Study #${studyId} not found`);
     if (study.status !== StudyStatus.draft) {
       throw new BadRequestException('Only draft studies can be deleted');
     }
 
+    // Sections (and votes) no longer cascade (W0-E4-S1: domain relations are
+    // Restrict) — delete children explicitly inside the same transaction.
     await this.prisma.$transaction([
+      this.prisma.studySection.deleteMany({ where: { studyId } }),
+      this.prisma.studyVote.deleteMany({ where: { studyId } }),
       this.prisma.projectStudy.delete({ where: { id: studyId } }),
       this.prisma.project.update({
         where: { id: study.projectId },
         data: { studyStatus: null },
       }),
     ]);
+
+    this.eventBus.publish({
+      event: 'study.deleted',
+      actor,
+      subject: { type: 'study', id: studyId },
+      data: { projectId: study.projectId },
+    });
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────────

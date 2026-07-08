@@ -1,5 +1,6 @@
 import { PrismaClient, AdminRole, BlockCategory, ProjectCategory, Representation, ProjectType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { backfillIdentity } from './backfills/w1-identity-backfill';
 
 const prisma = new PrismaClient();
 
@@ -152,6 +153,47 @@ async function main() {
     });
   }
 
+  // ─── Organizations (W1-E3) ────────────────────────────────────────────────────
+  let defaultOrg = await prisma.organization.findFirst({
+    where: { type: 'ngo', name: 'HelpingHands' },
+  });
+  if (!defaultOrg) {
+    defaultOrg = await prisma.organization.create({
+      data: {
+        type: 'ngo',
+        name: 'HelpingHands',
+        status: 'active',
+        capabilities: {
+          canExecuteProjects: true,
+          canReceivePublicFunds: true,
+          canOpenDonations: true,
+          isGovernmentEntity: false,
+          requiresBoardOversight: false,
+        },
+      },
+    });
+  }
+  const boardOrg = await prisma.organization.findFirst({
+    where: { type: 'board', name: 'HelpingHands Board' },
+  });
+  if (!boardOrg) {
+    await prisma.organization.create({
+      data: {
+        type: 'board',
+        name: 'HelpingHands Board',
+        status: 'active',
+        capabilities: {
+          canExecuteProjects: false,
+          canReceivePublicFunds: false,
+          canOpenDonations: false,
+          isGovernmentEntity: false,
+          requiresBoardOversight: false,
+        },
+      },
+    });
+  }
+  console.log('✅ Created default + board organizations');
+
   await prisma.project.upsert({
     where: { blockId: block.id },
     update: {},
@@ -164,6 +206,7 @@ async function main() {
       category: ProjectCategory.agricultural,
       expectedStartDate: new Date('2024-03-01'),
       financialOfficerId: foPerson.id,
+      ownerOrganizationId: defaultOrg.id,
     },
   });
   console.log('✅ Created sample project');
@@ -203,6 +246,10 @@ async function main() {
     });
   }
   console.log('✅ Created about us content');
+
+  // ─── W1 identity backfill (memberships + grants, idempotent) ─────────────────
+  const backfill = await backfillIdentity(prisma);
+  console.log(`✅ Identity backfill (${backfill.membershipsCreated} memberships, ${backfill.grantsCreated} grants)`);
 
   // ─── Study Department Templates ───────────────────────────────────────────────
   const sharedSections = [

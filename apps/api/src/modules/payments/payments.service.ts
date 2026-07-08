@@ -10,6 +10,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { StripeService } from './stripe.service';
 import { PayPalService } from './paypal.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ActorContextService } from '../../events/actor-context.storage';
+import { EventBusService } from '../../events/event-bus.service';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { PaymentFiltersDto } from './dto/payment-filters.dto';
 import { JwtPayload } from '../../common/decorators/current-user.decorator';
@@ -25,8 +27,11 @@ export class PaymentsService {
     private paypalService: PayPalService,
     private config: ConfigService,
     private notificationsService: NotificationsService,
+    private eventBus: EventBusService,
+    private actorContext: ActorContextService,
   ) {}
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async createCheckout(dto: CreateCheckoutDto, participantId: number) {
     const currency = (dto.currency ?? 'USD').toUpperCase();
 
@@ -212,6 +217,7 @@ export class PaymentsService {
     return paginatedResponse(data, total, page, limit);
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async updateProjectProgressionOnline(projectId: number) {
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project) return;
@@ -237,6 +243,17 @@ export class PaymentsService {
       where: { id: projectId },
       data: { progression, isCompleted },
     });
+
+    // Mirror of ProjectsService.recalculateProgress: an online payment can
+    // also be the one that closes the project.
+    if (isCompleted && !project.isCompleted) {
+      this.eventBus.publish({
+        event: 'project.closed',
+        actor: this.actorContext.currentOrSystem(),
+        subject: { type: 'project', id: projectId },
+        data: { value, collected, progression },
+      });
+    }
   }
 
   // ─── Private helpers ─────────────────────────────────────────────────────────
@@ -257,6 +274,15 @@ export class PaymentsService {
       },
     });
 
+    // Webhook routes are public → the ALS actor is anonymous, but carries
+    // the webhook request's requestId for correlation.
+    this.eventBus.publish({
+      event: 'payment.completed',
+      actor: this.actorContext.currentOrSystem(),
+      subject: { type: 'online_donation', id: donation.id },
+      data: { projectId: donation.projectId, provider: donation.provider, amount: Number(donation.amount) },
+    });
+
     await this.updateProjectProgressionOnline(donation.projectId);
 
     this.notificationsService
@@ -274,6 +300,13 @@ export class PaymentsService {
     await this.prisma.onlineDonation.update({
       where: { id: donation.id },
       data: { status: PaymentStatus.failed },
+    });
+
+    this.eventBus.publish({
+      event: 'payment.failed',
+      actor: this.actorContext.currentOrSystem(),
+      subject: { type: 'online_donation', id: donation.id },
+      data: { projectId: donation.projectId, provider: donation.provider, amount: Number(donation.amount) },
     });
   }
 

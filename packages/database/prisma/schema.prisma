@@ -142,6 +142,33 @@ enum TransactionType {
   adjustment
 }
 
+enum OrganizationType {
+  ngo
+  municipality
+  youth_team
+  initiative
+  board
+}
+
+enum OrganizationStatus {
+  pending_verification
+  active
+  suspended
+  archived
+}
+
+enum MembershipStatus {
+  active
+  suspended
+}
+
+enum RoleScopeType {
+  platform
+  organization
+  fund
+  project
+}
+
 // ─── Languages ────────────────────────────────────────────────────────────────
 
 model Language {
@@ -190,6 +217,10 @@ model Block {
   transactions    ProjectTransaction[] @relation("TransactionProject")
   milestones      ProjectMilestone[] @relation("MilestoneProject")
   milestoneBlocks ProjectMilestone[] @relation("MilestoneBlock")
+  organization    Organization?
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
 
   @@map("blocks")
 }
@@ -252,6 +283,9 @@ model Admin {
   assignedSections  StudySection[]    @relation("SectionAssignedTo")
   assignedTasks     ProjectTask[]     @relation("TaskAssignee")
 
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
+
   @@map("admins")
 }
 
@@ -268,6 +302,9 @@ model Participant {
   user            User?
   donations       ProjectDonation[]
   onlineDonations OnlineDonation[]
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
 
   @@map("participants")
 }
@@ -296,6 +333,11 @@ model User {
   refreshTokens RefreshToken[]
   studyVotes    StudyVote[]
   notifications Notification[]
+  organizationMemberships OrganizationMembership[]
+  roleAssignments         RoleAssignment[]
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
 
   @@unique([referenceId, referenceType])
   @@index([referenceId, referenceType])
@@ -332,14 +374,19 @@ model Project {
   expectedStartDate   DateTime?       @map("expected_start_date")
   financialOfficerId  Int?            @map("financial_officer_id")
   studyStatus         StudyStatus?    @map("study_status")
+  ownerOrganizationId Int             @map("owner_organization_id")
   createdAt           DateTime        @default(now()) @map("created_at")
   updatedAt           DateTime        @updatedAt @map("updated_at")
 
-  block            Block             @relation(fields: [blockId], references: [id], onDelete: Cascade)
-  financialOfficer Admin?            @relation("FinancialOfficerProjects", fields: [financialOfficerId], references: [id])
+  block             Block         @relation(fields: [blockId], references: [id], onDelete: Restrict)
+  financialOfficer  Admin?        @relation("FinancialOfficerProjects", fields: [financialOfficerId], references: [id])
+  ownerOrganization Organization  @relation("OrganizationProjects", fields: [ownerOrganizationId], references: [id], onDelete: Restrict)
   donations        ProjectDonation[]
   study            ProjectStudy?
   onlineDonations  OnlineDonation[]
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
 
   @@map("projects")
 }
@@ -359,9 +406,12 @@ model ProjectDonation {
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
 
-  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Restrict)
   approver    Admin?      @relation("ApprovedBy", fields: [approvedBy], references: [id])
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
 
   @@index([projectId])
   @@index([participantId])
@@ -405,7 +455,7 @@ model StudyDepartmentTemplate {
 model ProjectStudy {
   id              Int           @id @default(autoincrement())
   projectId       Int           @unique @map("project_id")
-  project         Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project         Project       @relation(fields: [projectId], references: [id], onDelete: Restrict)
   status          StudyStatus   @default(draft)
   summary         String?       @db.Text
   publishedAt     DateTime?     @map("published_at")
@@ -424,13 +474,16 @@ model ProjectStudy {
   sections StudySection[]
   votes    StudyVote[]
 
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
+
   @@map("project_studies")
 }
 
 model StudySection {
   id            Int           @id @default(autoincrement())
   studyId       Int           @map("study_id")
-  study         ProjectStudy  @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  study         ProjectStudy  @relation(fields: [studyId], references: [id], onDelete: Restrict)
   name          String        @db.VarChar(255)
   nameAr        String?       @db.VarChar(255) @map("name_ar")
   nameFr        String?       @db.VarChar(255) @map("name_fr")
@@ -448,6 +501,9 @@ model StudySection {
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
   files StudySectionFile[]
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
 
   @@index([studyId])
   @@map("study_sections")
@@ -469,7 +525,7 @@ model StudySectionFile {
 model StudyVote {
   id        Int          @id @default(autoincrement())
   studyId   Int          @map("study_id")
-  study     ProjectStudy @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  study     ProjectStudy @relation(fields: [studyId], references: [id], onDelete: Restrict)
   userId    Int          @map("user_id")
   user      User         @relation(fields: [userId], references: [id])
   choice    VoteChoice
@@ -545,6 +601,9 @@ model ProjectStep {
   parent   ProjectStep?  @relation("StepChildren", fields: [parentId], references: [id])
   children ProjectStep[] @relation("StepChildren")
 
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
+
   @@index([projectId])
   @@map("project_steps")
 }
@@ -564,6 +623,9 @@ model ProjectPhase {
   project Block         @relation("PhaseProject", fields: [projectId], references: [id])
   block   Block         @relation("PhaseBlock", fields: [blockId], references: [id])
   tasks   ProjectTask[]
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
 
   @@index([projectId])
   @@map("project_phases")
@@ -587,6 +649,9 @@ model ProjectTask {
   phase      ProjectPhase? @relation(fields: [phaseId], references: [id])
   assignedTo Admin?        @relation("TaskAssignee", fields: [assignedToId], references: [id])
 
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
+
   @@index([projectId])
   @@index([phaseId])
   @@map("project_tasks")
@@ -608,6 +673,9 @@ model ProjectBudget {
   block    Block            @relation("BudgetBlock", fields: [blockId], references: [id])
   expenses ProjectExpense[]
 
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
+
   @@index([projectId])
   @@map("project_budgets")
 }
@@ -626,6 +694,9 @@ model ProjectExpense {
   project Block          @relation("ExpenseProject", fields: [projectId], references: [id])
   block   Block          @relation("ExpenseBlock", fields: [blockId], references: [id])
   budget  ProjectBudget? @relation(fields: [budgetId], references: [id])
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
 
   @@index([projectId])
   @@index([budgetId])
@@ -664,6 +735,9 @@ model ProjectMilestone {
   project Block @relation("MilestoneProject", fields: [projectId], references: [id])
   block   Block @relation("MilestoneBlock", fields: [blockId], references: [id])
 
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
+
   @@index([projectId])
   @@map("project_milestones")
 }
@@ -680,4 +754,108 @@ model WebhookLog {
   createdAt   DateTime  @default(now()) @map("created_at")
 
   @@map("webhook_logs")
+}
+
+// ─── Audit Log (W0-E3, append-only) ──────────────────────────────────────────
+// Written by the audit subscriber from domain events; never updated or
+// deleted — corrections are new compensating rows (03_DATA_MODEL.md §6).
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  timestamp   DateTime @default(now())
+  actorUserId Int?     @map("actor_user_id")
+  actorOrgId  Int?     @map("actor_org_id") // populated from Wave 1 (activeOrgId)
+  action      String   @db.VarChar(255) // domain event name, e.g. "project.created"
+  subjectType String   @map("subject_type") @db.VarChar(100)
+  subjectId   String   @map("subject_id") @db.VarChar(100)
+  before      Json?
+  after       Json?
+  requestId   String   @map("request_id") @db.VarChar(128)
+  ip          String?  @db.VarChar(64)
+
+  // Idempotency key for the event subscriber (replayed event → no duplicate)
+  @@unique([requestId, action, subjectType, subjectId])
+  @@index([subjectType, subjectId])
+  @@index([actorUserId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+// ─── Organizations (W1-E1, multi-tenancy) ─────────────────────────────────────
+// 03_DATA_MODEL.md §1. No cascades on domain relations; soft-delete columns
+// per the Wave 0 convention.
+
+model Organization {
+  id                 Int                @id @default(autoincrement())
+  type               OrganizationType
+  name               String             @db.VarChar(255)
+  status             OrganizationStatus @default(pending_verification)
+  // { canExecuteProjects, canReceivePublicFunds, canOpenDonations,
+  //   isGovernmentEntity, requiresBoardOversight }
+  capabilities       Json               @default("{}")
+  registrationNumber String?            @map("registration_number") @db.VarChar(255)
+  verifiedAt         DateTime?          @map("verified_at")
+  verifiedBy         Int?               @map("verified_by")
+  contentBlockId     Int?               @unique @map("content_block_id")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  contentBlock  Block?                   @relation(fields: [contentBlockId], references: [id], onDelete: Restrict)
+  memberships   OrganizationMembership[]
+  ownedProjects Project[]                @relation("OrganizationProjects")
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
+
+  @@index([type])
+  @@index([status])
+  @@map("organizations")
+}
+
+model OrganizationMembership {
+  id             Int              @id @default(autoincrement())
+  organizationId Int              @map("organization_id")
+  userId         Int              @map("user_id")
+  status         MembershipStatus @default(active)
+  joinedAt       DateTime         @default(now()) @map("joined_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("organization_memberships")
+}
+
+// ─── Role assignments (W1-E1-S2, replaces AdminRole semantics — D5) ──────────
+// role strings come from the role catalog (08_PERMISSIONS_RBAC_ABAC.md).
+// scopeId is null for platform scope; the unique constraint therefore cannot
+// dedupe platform grants at the DB level (Postgres treats NULLs as distinct)
+// — writers must upsert via findFirst (see the W1-E3 backfill).
+
+model RoleAssignment {
+  id        Int           @id @default(autoincrement())
+  userId    Int           @map("user_id")
+  role      String        @db.VarChar(100)
+  scopeType RoleScopeType @map("scope_type")
+  scopeId   Int?          @map("scope_id")
+  grantedBy Int?          @map("granted_by")
+  grantedAt DateTime      @default(now()) @map("granted_at")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
+
+  @@unique([userId, role, scopeType, scopeId])
+  @@index([scopeType, scopeId])
+  @@index([userId])
+  @@map("role_assignments")
 }

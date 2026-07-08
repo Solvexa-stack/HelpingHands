@@ -3,10 +3,15 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateBlockDto, UpdateBlockDto, BlockQueryDto } from './dto/block.dto';
 import { BlockCategory } from '@prisma/client';
 import { paginate, paginatedResponse } from '../../common/dto/pagination.dto';
+import { ActorContext } from '../../events/actor-context';
+import { EventBusService } from '../../events/event-bus.service';
 
 @Injectable()
 export class BlocksService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventBus: EventBusService,
+  ) {}
 
   async findAll(query: BlockQueryDto) {
     const { page = 1, limit = 15, category, lang, search, activeOnly = true } = query;
@@ -74,6 +79,7 @@ export class BlocksService {
     return block;
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async create(dto: CreateBlockDto) {
     const { translations, ...blockData } = dto;
 
@@ -92,6 +98,7 @@ export class BlocksService {
     });
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async update(id: number, dto: UpdateBlockDto) {
     await this.findById(id);
     const { translations, ...blockData } = dto;
@@ -115,11 +122,19 @@ export class BlocksService {
     });
   }
 
-  async remove(id: number) {
+  async remove(actor: ActorContext, id: number) {
     await this.findById(id);
     await this.prisma.block.delete({ where: { id } });
+
+    this.eventBus.publish({
+      event: 'block.deleted',
+      actor,
+      subject: { type: 'block', id },
+      data: {},
+    });
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async toggleActive(id: number) {
     const block = await this.findById(id);
     return this.prisma.block.update({

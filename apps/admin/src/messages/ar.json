@@ -11,7 +11,8 @@
     "about": "من نحن",
     "studies": "الدراسات",
     "languages": "اللغات",
-    "reports": "التقارير"
+    "reports": "التقارير",
+    "audit": "سجل التدقيق"
   },
   "execution": {
     "title": "تنفيذ المشروع",
@@ -254,7 +255,20 @@
     "colSections": "الأقسام",
     "colVotes": "الأصوات",
     "colCreated": "تاريخ الإنشاء",
-    "section": "قسم",
+    "section": {
+      "notFound": "القسم غير موجود",
+      "save": "حفظ",
+      "content": "المحتوى",
+      "guidance": "إرشادات",
+      "status": "الحالة",
+      "contentPlaceholder": "اكتب محتوى القسم هنا. يدعم Markdown.",
+      "filesTitle": "الملفات",
+      "uploadDrop": "اسحب وأفلت أو انقر للرفع",
+      "uploadTypes": "PDF، صور، فيديو — الحد الأقصى 10 ميجابايت لكل ملف",
+      "uploading": "جارٍ الرفع...",
+      "noFiles": "لم يتم رفع أي ملفات بعد",
+      "required": "مطلوب"
+    },
     "sections": "أقسام",
     "vote": "صوت",
     "votes_": "أصوات",
@@ -389,20 +403,6 @@
       "next": "التالي",
       "page": "صفحة",
       "of": "من"
-    },
-    "section": {
-      "notFound": "القسم غير موجود",
-      "save": "حفظ",
-      "content": "المحتوى",
-      "guidance": "إرشادات",
-      "status": "الحالة",
-      "contentPlaceholder": "اكتب محتوى القسم هنا. يدعم Markdown.",
-      "filesTitle": "الملفات",
-      "uploadDrop": "اسحب وأفلت أو انقر للرفع",
-      "uploadTypes": "PDF، صور، فيديو — الحد الأقصى 10 ميجابايت لكل ملف",
-      "uploading": "جارٍ الرفع...",
-      "noFiles": "لم يتم رفع أي ملفات بعد",
-      "required": "مطلوب"
     },
     "countdown": {
       "ended": "انتهى التصويت",

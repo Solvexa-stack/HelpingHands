@@ -135,6 +135,9 @@ export class ProjectsService {
         expectedStartDate: dto.expectedStartDate ? new Date(dto.expectedStartDate) : undefined,
         dateOfCompletion: dto.dateOfCompletion ? new Date(dto.dateOfCompletion) : undefined,
         financialOfficerId: dto.financialOfficerId,
+        // W1-E3: all projects are organization-owned; platform creates go to
+        // the default org until Wave 2 introduces org-scoped creation.
+        ownerOrganizationId: await this.getDefaultOrganizationId(),
       },
       include: {
         block: { include: { translations: true } },
@@ -182,10 +185,32 @@ export class ProjectsService {
     return updated;
   }
 
-  async remove(id: number) {
+  async remove(actor: ActorContext, id: number) {
     const project = await this.prisma.project.findUnique({ where: { id } });
     if (!project) throw new NotFoundException(`Project #${id} not found`);
     await this.prisma.project.delete({ where: { id } });
+
+    this.eventBus.publish({
+      event: 'project.deleted',
+      actor,
+      subject: { type: 'project', id },
+      data: { blockId: project.blockId },
+    });
+  }
+
+  /** Resolved once per process; ids are stable within a database lifetime. */
+  private defaultOrganizationId: number | null = null;
+
+  private async getDefaultOrganizationId(): Promise<number> {
+    if (this.defaultOrganizationId !== null) return this.defaultOrganizationId;
+    const org = await this.prisma.organization.findFirst({
+      where: { type: 'ngo', name: 'HelpingHands' },
+    });
+    if (!org) {
+      throw new Error('Default organization missing — run the W1-E3 backfill migration/seed');
+    }
+    this.defaultOrganizationId = org.id;
+    return org.id;
   }
 
   async recalculateProgress(projectId: number) {
@@ -227,6 +252,7 @@ export class ProjectsService {
     }
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async assignFinancialOfficer(projectId: number, officerId: number) {
     const [project, officer] = await Promise.all([
       this.prisma.project.findUnique({ where: { id: projectId } }),

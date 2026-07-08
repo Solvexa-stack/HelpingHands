@@ -71,6 +71,7 @@ export class NotificationsService {
     });
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async createNotificationRecord(data: {
     userId: number;
     type: string;

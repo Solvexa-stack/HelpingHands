@@ -51,7 +51,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get new access token using refresh token' })
   refreshTokens(@Body() dto: RefreshTokenDto) {
-    return this.authService.refreshTokens(0, dto.refreshToken);
+    return this.authService.refreshTokens(dto.refreshToken);
   }
 
   @Post('logout')

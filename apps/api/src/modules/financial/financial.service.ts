@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ActorContext } from '../../events/actor-context';
+import { EventBusService } from '../../events/event-bus.service';
 import {
   CreateBudgetDto, UpdateBudgetDto,
   CreateExpenseDto, UpdateExpenseDto, UpdateExpenseStatusDto,
@@ -9,7 +11,10 @@ import { ExpenseStatus } from '@prisma/client';
 
 @Injectable()
 export class FinancialService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventBus: EventBusService,
+  ) {}
 
   private async getProjectBlockId(projectId: number): Promise<number> {
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
@@ -36,6 +41,7 @@ export class FinancialService {
     });
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async createBudget(projectId: number, dto: CreateBudgetDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     await this.assertBlockExists(dto.blockId);
@@ -51,6 +57,7 @@ export class FinancialService {
     });
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async updateBudget(projectId: number, budgetId: number, dto: UpdateBudgetDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const budget = await this.prisma.projectBudget.findFirst({ where: { id: budgetId, projectId: projectBlockId } });
@@ -64,6 +71,7 @@ export class FinancialService {
     });
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async removeBudget(projectId: number, budgetId: number) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const budget = await this.prisma.projectBudget.findFirst({ where: { id: budgetId, projectId: projectBlockId } });
@@ -89,7 +97,7 @@ export class FinancialService {
     });
   }
 
-  async createExpense(projectId: number, dto: CreateExpenseDto) {
+  async createExpense(actor: ActorContext, projectId: number, dto: CreateExpenseDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     await this.assertBlockExists(dto.blockId);
 
@@ -98,7 +106,7 @@ export class FinancialService {
       if (!budget) throw new NotFoundException(`Budget #${dto.budgetId} not found in this project`);
     }
 
-    return this.prisma.projectExpense.create({
+    const expense = await this.prisma.projectExpense.create({
       data: {
         projectId: projectBlockId,
         blockId: dto.blockId,
@@ -108,8 +116,18 @@ export class FinancialService {
       },
       include: { block: { include: { translations: true } } },
     });
+
+    this.eventBus.publish({
+      event: 'expense.submitted',
+      actor,
+      subject: { type: 'expense', id: expense.id },
+      data: { projectId, budgetId: dto.budgetId ?? null, amount: dto.amount },
+    });
+
+    return expense;
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async updateExpense(projectId: number, expenseId: number, dto: UpdateExpenseDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const expense = await this.prisma.projectExpense.findFirst({ where: { id: expenseId, projectId: projectBlockId } });
@@ -124,7 +142,12 @@ export class FinancialService {
     });
   }
 
-  async updateExpenseStatus(projectId: number, expenseId: number, dto: UpdateExpenseStatusDto) {
+  async updateExpenseStatus(
+    actor: ActorContext,
+    projectId: number,
+    expenseId: number,
+    dto: UpdateExpenseStatusDto,
+  ) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const expense = await this.prisma.projectExpense.findFirst({ where: { id: expenseId, projectId: projectBlockId } });
     if (!expense) throw new NotFoundException(`Expense #${expenseId} not found`);
@@ -157,9 +180,20 @@ export class FinancialService {
       ]);
     }
 
+    // Emit after the ledger transaction has committed
+    if (dto.status === ExpenseStatus.approved || dto.status === ExpenseStatus.rejected) {
+      this.eventBus.publish({
+        event: dto.status === ExpenseStatus.approved ? 'expense.approved' : 'expense.rejected',
+        actor,
+        subject: { type: 'expense', id: expenseId },
+        data: { projectId, budgetId: expense.budgetId, amount: Number(expense.amount) },
+      });
+    }
+
     return updated;
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async removeExpense(projectId: number, expenseId: number) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const expense = await this.prisma.projectExpense.findFirst({ where: { id: expenseId, projectId: projectBlockId } });
@@ -178,6 +212,7 @@ export class FinancialService {
     });
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async createTransaction(projectId: number, dto: CreateTransactionDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     return this.prisma.projectTransaction.create({

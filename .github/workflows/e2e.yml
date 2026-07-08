@@ -64,6 +64,9 @@ jobs:
       - name: Generate Prisma client
         run: pnpm --filter @helping-hands/database db:generate
 
+      - name: Lint (ActorContext convention, W0-E2-S5)
+        run: pnpm --filter @helping-hands/api lint
+
       - name: Run e2e regression suite
         run: |
           set -o pipefail

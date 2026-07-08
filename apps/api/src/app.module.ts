@@ -5,6 +5,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bull';
 import configuration from './config/configuration';
 import { EventsModule } from './events/events.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { PolicyModule } from './modules/policy/policy.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AdminsModule } from './modules/admins/admins.module';
@@ -24,6 +26,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { ExecutionModule } from './modules/execution/execution.module';
 import { FinancialModule } from './modules/financial/financial.module';
 import { MilestonesModule } from './modules/milestones/milestones.module';
+import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
@@ -49,6 +52,8 @@ import { ReportsModule } from './modules/reports/reports.module';
       inject: [ConfigService],
     }),
     EventsModule,
+    AuditModule,
+    PolicyModule,
     PrismaModule,
     AuthModule,
     AdminsModule,
@@ -68,6 +73,7 @@ import { ReportsModule } from './modules/reports/reports.module';
     ExecutionModule,
     FinancialModule,
     MilestonesModule,
+    OrganizationsModule,
     ReportsModule,
   ],
 })

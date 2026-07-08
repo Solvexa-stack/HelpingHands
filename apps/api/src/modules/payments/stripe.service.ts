@@ -23,6 +23,7 @@ export class StripeService {
     return this.stripe;
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async createCheckoutSession(params: {
     projectId: number;
     projectName: string;

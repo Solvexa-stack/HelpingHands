@@ -12,6 +12,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { CreateDonationDto, UpdateDonationStatusDto, DonationQueryDto } from './dto/donation.dto';
 import { AdminRole, DonationStatus } from '@prisma/client';
 import { paginate, paginatedResponse } from '../../common/dto/pagination.dto';
+import { ActorContext } from '../../events/actor-context';
+import { EventBusService } from '../../events/event-bus.service';
 
 @Injectable()
 export class DonationsService {
@@ -21,6 +23,7 @@ export class DonationsService {
     private emailService: EmailService,
     private projectsService: ProjectsService,
     private notificationsService: NotificationsService,
+    private eventBus: EventBusService,
   ) {}
 
   async findAll(query: DonationQueryDto, role?: string, adminId?: number, participantId?: number) {
@@ -101,7 +104,7 @@ export class DonationsService {
     return donation;
   }
 
-  async create(dto: CreateDonationDto, participantId: number) {
+  async create(actor: ActorContext, dto: CreateDonationDto, participantId: number) {
     const project = await this.prisma.project.findUnique({
       where: { id: dto.projectId },
     });
@@ -132,6 +135,13 @@ export class DonationsService {
       },
     });
 
+    this.eventBus.publish({
+      event: 'donation.pledged',
+      actor,
+      subject: { type: 'donation', id: donation.id },
+      data: { projectId: dto.projectId, amount: dto.amount },
+    });
+
     // Generate QR data URL to embed in response
     const qrDataUrl = await this.qrService.generateQrDataUrl(qrToken);
 
@@ -139,6 +149,7 @@ export class DonationsService {
   }
 
   async updateStatus(
+    actor: ActorContext,
     id: number,
     dto: UpdateDonationStatusDto,
     adminId: number,
@@ -179,6 +190,15 @@ export class DonationsService {
         participant: { include: { user: { select: { email: true } } } },
       },
     });
+
+    if (dto.status === DonationStatus.approved || dto.status === DonationStatus.rejected) {
+      this.eventBus.publish({
+        event: dto.status === DonationStatus.approved ? 'donation.approved' : 'donation.rejected',
+        actor,
+        subject: { type: 'donation', id },
+        data: { projectId: donation.projectId, amount: Number(donation.amount) },
+      });
+    }
 
     // Update project progress after approval/rejection
     if (dto.status === DonationStatus.approved || dto.status === DonationStatus.rejected) {
@@ -235,6 +255,7 @@ export class DonationsService {
     return updated;
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async cancelDonation(id: number, participantId: number) {
     const donation = await this.findById(id);
 

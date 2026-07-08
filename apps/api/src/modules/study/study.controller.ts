@@ -154,7 +154,7 @@ export class StudyController {
   @Roles(AdminRole.administrator)
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Delete a draft study (admin only)' })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.studyService.deleteStudy(id);
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentActor() actor: ActorContext) {
+    return this.studyService.deleteStudy(actor, id);
   }
 }

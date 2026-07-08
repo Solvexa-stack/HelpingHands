@@ -264,22 +264,42 @@ describe('Auth & roles matrix (W0-E1-S5)', () => {
   });
 
   describe('refresh-token flow', () => {
-    it('login stores a refresh token, but refreshing with it fails — refresh is broken (BUG-6, current behavior)', async () => {
+    it('a fresh refresh token rotates into a new working pair (BUG-6 fixed in W1-E5-S1)', async () => {
       const login = await http().post('/api/v1/auth/login').send(SEED_ACCOUNTS.employee).expect(200);
+      const oldRefresh = login.body.data.refreshToken;
 
-      const stored = await prisma.refreshToken.findFirst({
-        where: { token: login.body.data.refreshToken },
-      });
+      const stored = await prisma.refreshToken.findFirst({ where: { token: oldRefresh } });
       expect(stored).toBeTruthy();
       expect(stored!.expiresAt.getTime()).toBeGreaterThan(Date.now());
 
-      // AuthController.refreshTokens passes a hardcoded userId of 0, so the
-      // stored-token lookup never matches. Flip to expect(200) + rotation
-      // assertions when BUG-6 is fixed.
-      await http()
+      await new Promise((resolve) => setTimeout(resolve, 1100)); // BUG-10 guard (distinct iat)
+
+      const refreshed = await http()
         .post('/api/v1/auth/refresh')
-        .send({ refreshToken: login.body.data.refreshToken })
-        .expect(401);
+        .send({ refreshToken: oldRefresh })
+        .expect(200);
+      expect(refreshed.body.data.accessToken).toBeDefined();
+      expect(refreshed.body.data.refreshToken).not.toBe(oldRefresh);
+
+      // Rotation: the used token is revoked, the new pair works
+      expect(await prisma.refreshToken.findFirst({ where: { token: oldRefresh } })).toBeNull();
+      await http()
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${refreshed.body.data.accessToken}`)
+        .expect(200);
+    });
+
+    it('outdated-version access tokens are rejected so clients re-auth (token versioning)', async () => {
+      const { JwtService } = require('@nestjs/jwt');
+      const stale = await new JwtService({ secret: process.env.JWT_SECRET }).signAsync({
+        sub: 1,
+        email: SEED_ACCOUNTS.administrator.email,
+        role: 'administrator',
+        referenceType: 'admin',
+        referenceId: 1,
+        // no tokenVersion — pre-W1 shape
+      });
+      await http().get('/api/v1/auth/me').set('Authorization', `Bearer ${stale}`).expect(401);
     });
 
     it('garbage refresh tokens are rejected', async () => {

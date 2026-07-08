@@ -41,7 +41,10 @@ describe('Domain event emission: projects, study, voting (W0-E2-S3)', () => {
 
     captured = [];
     app.get(EventEmitter2).on('**', (event: DomainEvent) => {
-      if (event && typeof event === 'object' && 'event' in event) captured.push(event);
+      // policy.decided is a shadow-mode decision record (W1-E4), not a domain mutation
+      if (event && typeof event === 'object' && 'event' in event && event.event !== 'policy.decided') {
+        captured.push(event);
+      }
     });
 
     [admin, employee, officer, participant] = await Promise.all([
@@ -201,6 +204,8 @@ describe('Domain event emission: projects, study, voting (W0-E2-S3)', () => {
       'voting.closed',
       'study.approved',
       'project.updated',
+      'donation.pledged', // funding step — donation events joined the stream in S4
+      'donation.approved',
       'project.closed',
     ]);
 

@@ -11,7 +11,8 @@
     "about": "About Us",
     "studies": "Studies",
     "languages": "Languages",
-    "reports": "Reports"
+    "reports": "Reports",
+    "audit": "Audit Trail"
   },
   "execution": {
     "title": "Project Execution",
@@ -254,7 +255,20 @@
     "colSections": "Sections",
     "colVotes": "Votes",
     "colCreated": "Created",
-    "section": "section",
+    "section": {
+      "notFound": "Section not found",
+      "save": "Save",
+      "content": "Content",
+      "guidance": "Guidance",
+      "status": "Status",
+      "contentPlaceholder": "Write the section content here. Markdown is supported.",
+      "filesTitle": "Files",
+      "uploadDrop": "Drag & drop or click to upload",
+      "uploadTypes": "PDF, images, video — max 10 MB each",
+      "uploading": "Uploading...",
+      "noFiles": "No files uploaded yet",
+      "required": "Required"
+    },
     "sections": "sections",
     "vote": "vote",
     "votes_": "votes",
@@ -389,20 +403,6 @@
       "next": "Next",
       "page": "Page",
       "of": "of"
-    },
-    "section": {
-      "notFound": "Section not found",
-      "save": "Save",
-      "content": "Content",
-      "guidance": "Guidance",
-      "status": "Status",
-      "contentPlaceholder": "Write the section content here. Markdown is supported.",
-      "filesTitle": "Files",
-      "uploadDrop": "Drag & drop or click to upload",
-      "uploadTypes": "PDF, images, video — max 10 MB each",
-      "uploading": "Uploading...",
-      "noFiles": "No files uploaded yet",
-      "required": "Required"
     },
     "countdown": {
       "ended": "Voting has ended",

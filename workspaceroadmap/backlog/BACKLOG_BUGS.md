@@ -46,13 +46,6 @@ Fix: apply the same assignment check used in `donations.service.updateStatus` to
 AC: unassigned officer gets 403 on budget create / expense decision / manual transaction for a foreign project; assigned officer flow still green. Update the test `financial officer creates a budget (no project-assignment check — current behavior)` in `apps/api/test/execution.e2e-spec.ts`.
 Note: candidate to fold into Wave 1 RBAC work (`08_PERMISSIONS_RBAC_ABAC.md`) rather than a standalone patch.
 
-**BUG-6 · M · api — Refresh-token flow is completely broken (always 401)**
-Found by: W0-E1-S5 (verified against the running API and in e2e).
-Where: `apps/api/src/modules/auth/auth.controller.ts` → `refreshTokens(0, dto.refreshToken)`.
-Defect: the controller passes a hardcoded `userId` of `0`; `AuthService.refreshTokens` filters `where: { userId: 0, token, … }`, which never matches a stored token → every refresh attempt returns 401 "Refresh token invalid or expired". Clients silently fall back to re-login when the 15-minute access token expires.
-Fix: decode the userId from the refresh token (verify with `jwt.refreshSecret`) instead of trusting a parameter; then look up by `(userId, token)`.
-AC: flip the assertion marked `BUG-6` in `apps/api/test/auth-matrix.e2e-spec.ts` to expect 200 and add rotation assertions (old token revoked, new pair issued); suite green.
-
 **BUG-7 · L · api,db,migration — `User.adminId` / `User.participantId` are never populated → relations always null**
 Found by: W0-E1-S5 (verified in code, e2e, and the dev database — all rows NULL).
 Where: schema `User.adminId/participantId` FK columns (migration `20260606140000_add_user_relations`) vs. seed + `auth.service.register` + `admins.service`, which only ever set `referenceId/referenceType`.
@@ -94,3 +87,9 @@ AC: participant → 403 (or filtered payload) on foreign ids, 200 on own; the `B
 ---
 
 When a bug is fixed, move its entry to a "Fixed" section at the bottom with the PR link.
+
+## Fixed
+
+**BUG-6 — Refresh-token flow always 401** · fixed in W1-E5-S1: `AuthService.refreshTokens` now derives the userId from the verified refresh token (was a hardcoded 0). Rotation covered in `auth-matrix.e2e-spec.ts`.
+
+**FLAKE-1 (open, test-infra)** · The e2e run intermittently reports one suite failed with all tests passing (suite-level teardown error, ~1 in 5 runs, not reproducible on retry). Suspect Bull/Redis handle teardown; investigate when it next reproduces with a captured log.

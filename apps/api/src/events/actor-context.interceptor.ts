@@ -28,6 +28,7 @@ export class ActorContextInterceptor implements NestInterceptor {
             referenceType: user.referenceType,
             requestId,
             ip: request.ip ?? null,
+            activeOrgId: (user as any).activeOrgId ?? null,
           }
         : anonymousActor(requestId, request.ip ?? null);
 

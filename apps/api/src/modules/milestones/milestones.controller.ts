@@ -6,6 +6,8 @@ import { AdminRole } from '@prisma/client';
 import { MilestonesService } from './milestones.service';
 import { CreateMilestoneDto, UpdateMilestoneDto } from './dto/milestone.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentActor } from '../../common/decorators/current-actor.decorator';
+import { ActorContext } from '../../events/actor-context';
 
 @ApiTags('Milestones')
 @ApiBearerAuth('JWT')
@@ -25,8 +27,9 @@ export class MilestonesController {
   create(
     @Param('projectId', ParseIntPipe) projectId: number,
     @Body() dto: CreateMilestoneDto,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.milestonesService.create(projectId, dto);
+    return this.milestonesService.create(actor, projectId, dto);
   }
 
   @Patch(':id')
@@ -35,8 +38,9 @@ export class MilestonesController {
     @Param('projectId', ParseIntPipe) projectId: number,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateMilestoneDto,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.milestonesService.update(projectId, id, dto);
+    return this.milestonesService.update(actor, projectId, id, dto);
   }
 
   @Delete(':id')
@@ -44,7 +48,8 @@ export class MilestonesController {
   remove(
     @Param('projectId', ParseIntPipe) projectId: number,
     @Param('id', ParseIntPipe) id: number,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.milestonesService.remove(projectId, id);
+    return this.milestonesService.remove(actor, projectId, id);
   }
 }

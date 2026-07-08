@@ -15,6 +15,8 @@ import { AdminRole } from '@prisma/client';
 import { BlocksService } from './blocks.service';
 import { CreateBlockDto, UpdateBlockDto, BlockQueryDto } from './dto/block.dto';
 import { Roles, Public } from '../../common/decorators/roles.decorator';
+import { CurrentActor } from '../../common/decorators/current-actor.decorator';
+import { ActorContext } from '../../events/actor-context';
 
 @ApiTags('Blocks')
 @Controller({ path: 'blocks', version: '1' })
@@ -70,7 +72,7 @@ export class BlocksController {
   @Roles(AdminRole.administrator, AdminRole.employee)
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Delete content block' })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.blocksService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentActor() actor: ActorContext) {
+    return this.blocksService.remove(actor, id);
   }
 }

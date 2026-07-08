@@ -65,6 +65,7 @@ export class VotingService {
 
   // ─── Change vote ──────────────────────────────────────────────────────────────
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async changeVote(studyId: number, userId: number, dto: ChangeVoteDto) {
     const study = await this.prisma.projectStudy.findUnique({ where: { id: studyId } });
     if (!study) throw new NotFoundException(`Study #${studyId} not found`);

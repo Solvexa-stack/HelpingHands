@@ -244,3 +244,18 @@ export const reportsApi = {
     URL.revokeObjectURL(url);
   },
 };
+
+// ─── Audit trail (administrator only) ─────────────────────────────────────────
+export const auditApi = {
+  list: (params: {
+    page?: number;
+    limit?: number;
+    action?: string;
+    subjectType?: string;
+    subjectId?: string;
+    actorUserId?: number;
+    from?: string;
+    to?: string;
+  }) => api.get('/audit', { params }).then((r) => r.data.data),
+  get: (id: number) => api.get(`/audit/${id}`).then((r) => r.data.data),
+};

@@ -33,12 +33,19 @@ export async function accessTokenFor(prisma: PrismaClient, role: SeededRole): Pr
     signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '15m' },
   });
 
+  const membership = await prisma.organizationMembership.findFirst({
+    where: { userId: user.id, status: 'active' },
+    orderBy: { id: 'asc' },
+  });
+
   return jwt.signAsync({
     sub: user.id,
     email: user.email,
     role: resolvedRole,
     referenceType: user.referenceType,
     referenceId: user.referenceId,
+    activeOrgId: membership?.organizationId ?? null,
+    tokenVersion: 2, // keep in sync with AuthService.TOKEN_VERSION
   });
 }
 

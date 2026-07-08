@@ -11,7 +11,8 @@
     "about": "À propos",
     "studies": "Études",
     "languages": "Langues",
-    "reports": "Rapports"
+    "reports": "Rapports",
+    "audit": "Journal d'audit"
   },
   "execution": {
     "title": "Exécution du projet",
@@ -254,7 +255,20 @@
     "colSections": "Sections",
     "colVotes": "Votes",
     "colCreated": "Créé le",
-    "section": "section",
+    "section": {
+      "notFound": "Section introuvable",
+      "save": "Enregistrer",
+      "content": "Contenu",
+      "guidance": "Conseils",
+      "status": "Statut",
+      "contentPlaceholder": "Rédigez le contenu de la section ici. Markdown est supporté.",
+      "filesTitle": "Fichiers",
+      "uploadDrop": "Glisser-déposer ou cliquer pour téléverser",
+      "uploadTypes": "PDF, images, vidéo — max 10 Mo chacun",
+      "uploading": "Téléversement...",
+      "noFiles": "Aucun fichier téléversé",
+      "required": "Requis"
+    },
     "sections": "sections",
     "vote": "vote",
     "votes_": "votes",
@@ -389,20 +403,6 @@
       "next": "Suivant",
       "page": "Page",
       "of": "sur"
-    },
-    "section": {
-      "notFound": "Section introuvable",
-      "save": "Enregistrer",
-      "content": "Contenu",
-      "guidance": "Conseils",
-      "status": "Statut",
-      "contentPlaceholder": "Rédigez le contenu de la section ici. Markdown est supporté.",
-      "filesTitle": "Fichiers",
-      "uploadDrop": "Glisser-déposer ou cliquer pour téléverser",
-      "uploadTypes": "PDF, images, vidéo — max 10 Mo chacun",
-      "uploading": "Téléversement...",
-      "noFiles": "Aucun fichier téléversé",
-      "required": "Requis"
     },
     "countdown": {
       "ended": "Le vote est terminé",

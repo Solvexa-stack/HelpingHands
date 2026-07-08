@@ -15,6 +15,8 @@ export interface ActorContext {
   /** Correlation id, one per request (or per system job run). */
   requestId: string;
   ip: string | null;
+  /** W1-E5: the organization the actor operates as (sole membership default); null for participants/system. */
+  activeOrgId?: number | null;
 }
 
 /** Actor for work not triggered by an authenticated request (cron, webhooks, seeds). */

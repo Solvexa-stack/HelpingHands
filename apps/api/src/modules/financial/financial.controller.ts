@@ -10,6 +10,8 @@ import {
   CreateTransactionDto,
 } from './dto/financial.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentActor } from '../../common/decorators/current-actor.decorator';
+import { ActorContext } from '../../events/actor-context';
 
 @ApiTags('Financial')
 @ApiBearerAuth('JWT')
@@ -76,8 +78,9 @@ export class FinancialController {
   createExpense(
     @Param('projectId', ParseIntPipe) projectId: number,
     @Body() dto: CreateExpenseDto,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.financialService.createExpense(projectId, dto);
+    return this.financialService.createExpense(actor, projectId, dto);
   }
 
   @Patch('expenses/:id')
@@ -98,8 +101,9 @@ export class FinancialController {
     @Param('projectId', ParseIntPipe) projectId: number,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateExpenseStatusDto,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.financialService.updateExpenseStatus(projectId, id, dto);
+    return this.financialService.updateExpenseStatus(actor, projectId, id, dto);
   }
 
   @Delete('expenses/:id')

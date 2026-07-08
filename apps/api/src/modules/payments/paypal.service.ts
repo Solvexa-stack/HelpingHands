@@ -25,6 +25,7 @@ export class PayPalService {
     this.client = new paypal.core.PayPalHttpClient(environment);
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async createOrder(params: {
     projectId: number;
     amount: number;

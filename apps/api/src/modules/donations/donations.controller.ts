@@ -18,6 +18,8 @@ import { DonationsService } from './donations.service';
 import { CreateDonationDto, UpdateDonationStatusDto, DonationQueryDto } from './dto/donation.dto';
 import { Roles, Public } from '../../common/decorators/roles.decorator';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
+import { CurrentActor } from '../../common/decorators/current-actor.decorator';
+import { ActorContext } from '../../events/actor-context';
 
 @ApiTags('Donations')
 @Controller({ path: 'donations', version: '1' })
@@ -74,8 +76,12 @@ export class DonationsController {
   @Roles('participant')
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Create a new donation request (participant only)' })
-  create(@Body() dto: CreateDonationDto, @CurrentUser() user: JwtPayload) {
-    return this.donationsService.create(dto, user.referenceId);
+  create(
+    @Body() dto: CreateDonationDto,
+    @CurrentUser() user: JwtPayload,
+    @CurrentActor() actor: ActorContext,
+  ) {
+    return this.donationsService.create(actor, dto, user.referenceId);
   }
 
   @Patch(':id/status')
@@ -86,8 +92,9 @@ export class DonationsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateDonationStatusDto,
     @CurrentUser() user: JwtPayload,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.donationsService.updateStatus(id, dto, user.referenceId, user.role);
+    return this.donationsService.updateStatus(actor, id, dto, user.referenceId, user.role);
   }
 
   @Patch(':id/cancel')

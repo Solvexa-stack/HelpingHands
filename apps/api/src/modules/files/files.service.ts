@@ -12,6 +12,7 @@ export class FilesService {
     private config: ConfigService,
   ) {}
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async uploadFile(
     file: Express.Multer.File,
     referenceId: number,
@@ -50,6 +51,7 @@ export class FilesService {
     });
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async deleteFile(id: number) {
     const file = await this.prisma.file.findUnique({ where: { id } });
     if (!file) throw new NotFoundException(`File #${id} not found`);

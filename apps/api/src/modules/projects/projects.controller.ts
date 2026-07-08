@@ -62,8 +62,8 @@ export class ProjectsController {
   @Roles(AdminRole.administrator)
   @ApiBearerAuth('JWT')
   @ApiOperation({ summary: 'Delete project (admin only)' })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.projectsService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentActor() actor: ActorContext) {
+    return this.projectsService.remove(actor, id);
   }
 
   @Patch(':id/assign-officer')

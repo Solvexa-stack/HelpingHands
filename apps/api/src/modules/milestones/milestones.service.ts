@@ -1,10 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { MilestoneStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ActorContext } from '../../events/actor-context';
+import { EventBusService } from '../../events/event-bus.service';
 import { CreateMilestoneDto, UpdateMilestoneDto } from './dto/milestone.dto';
 
 @Injectable()
 export class MilestonesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventBus: EventBusService,
+  ) {}
 
   private async getProjectBlockId(projectId: number): Promise<number> {
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
@@ -21,12 +27,12 @@ export class MilestonesService {
     });
   }
 
-  async create(projectId: number, dto: CreateMilestoneDto) {
+  async create(actor: ActorContext, projectId: number, dto: CreateMilestoneDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const block = await this.prisma.block.findUnique({ where: { id: dto.blockId } });
     if (!block) throw new NotFoundException(`Block #${dto.blockId} not found`);
 
-    return this.prisma.projectMilestone.create({
+    const milestone = await this.prisma.projectMilestone.create({
       data: {
         projectId: projectBlockId,
         blockId: dto.blockId,
@@ -35,15 +41,24 @@ export class MilestonesService {
       },
       include: { block: { include: { translations: true } } },
     });
+
+    this.eventBus.publish({
+      event: 'milestone.created',
+      actor,
+      subject: { type: 'milestone', id: milestone.id },
+      data: { projectId, targetDate: milestone.targetDate?.toISOString() ?? null },
+    });
+
+    return milestone;
   }
 
-  async update(projectId: number, milestoneId: number, dto: UpdateMilestoneDto) {
+  async update(actor: ActorContext, projectId: number, milestoneId: number, dto: UpdateMilestoneDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const milestone = await this.prisma.projectMilestone.findFirst({ where: { id: milestoneId, projectId: projectBlockId } });
     if (!milestone) throw new NotFoundException(`Milestone #${milestoneId} not found`);
 
     const { blockId, ...rest } = dto;
-    return this.prisma.projectMilestone.update({
+    const updated = await this.prisma.projectMilestone.update({
       where: { id: milestoneId },
       data: {
         ...rest,
@@ -52,12 +67,30 @@ export class MilestonesService {
       },
       include: { block: { include: { translations: true } } },
     });
+
+    if (dto.status === MilestoneStatus.completed || dto.status === MilestoneStatus.missed) {
+      this.eventBus.publish({
+        event: dto.status === MilestoneStatus.completed ? 'milestone.completed' : 'milestone.missed',
+        actor,
+        subject: { type: 'milestone', id: milestoneId },
+        data: { projectId },
+      });
+    }
+
+    return updated;
   }
 
-  async remove(projectId: number, milestoneId: number) {
+  async remove(actor: ActorContext, projectId: number, milestoneId: number) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     const milestone = await this.prisma.projectMilestone.findFirst({ where: { id: milestoneId, projectId: projectBlockId } });
     if (!milestone) throw new NotFoundException(`Milestone #${milestoneId} not found`);
     await this.prisma.projectMilestone.delete({ where: { id: milestoneId } });
+
+    this.eventBus.publish({
+      event: 'milestone.deleted',
+      actor,
+      subject: { type: 'milestone', id: milestoneId },
+      data: { projectId },
+    });
   }
 }

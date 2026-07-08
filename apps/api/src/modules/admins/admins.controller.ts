@@ -15,6 +15,8 @@ import { AdminsService } from './admins.service';
 import { CreateAdminDto, UpdateAdminDto } from './dto/admin.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
+import { CurrentActor } from '../../common/decorators/current-actor.decorator';
+import { ActorContext } from '../../events/actor-context';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @ApiTags('Admins')
@@ -48,8 +50,12 @@ export class AdminsController {
   @Post()
   @Roles(AdminRole.administrator)
   @ApiOperation({ summary: 'Create new admin/employee/financial officer' })
-  create(@Body() dto: CreateAdminDto, @CurrentUser('role') role: AdminRole) {
-    return this.adminsService.create(dto, role);
+  create(
+    @Body() dto: CreateAdminDto,
+    @CurrentUser('role') role: AdminRole,
+    @CurrentActor() actor: ActorContext,
+  ) {
+    return this.adminsService.create(actor, dto, role);
   }
 
   @Put(':id')
@@ -59,8 +65,9 @@ export class AdminsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateAdminDto,
     @CurrentUser('role') role: AdminRole,
+    @CurrentActor() actor: ActorContext,
   ) {
-    return this.adminsService.update(id, dto, role);
+    return this.adminsService.update(actor, id, dto, role);
   }
 
   @Patch(':id/toggle-active')

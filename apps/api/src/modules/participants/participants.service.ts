@@ -67,6 +67,7 @@ export class ParticipantsService {
     return participant;
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async update(participantId: number, dto: UpdateParticipantDto, requestingUserId: number, role: string) {
     const participant = await this.prisma.participant.findUnique({
       where: { id: participantId },
@@ -82,6 +83,7 @@ export class ParticipantsService {
     return this.prisma.participant.update({ where: { id: participantId }, data: dto });
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async toggleActive(id: number) {
     const participant = await this.prisma.participant.findUnique({
       where: { id },
@@ -97,6 +99,7 @@ export class ParticipantsService {
     });
   }
 
+  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async updateAvatar(participantId: number, avatarUrl: string) {
     return this.prisma.user.updateMany({
       where: { referenceId: participantId, referenceType: 'participant' },
