@@ -6,6 +6,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ParseIntPipe,
   Patch,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
@@ -13,6 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import {
+  ActivateInviteDto,
   LoginDto,
   RegisterDto,
   RefreshTokenDto,
@@ -44,6 +46,15 @@ export class AuthController {
   @ApiOperation({ summary: 'Register as a new participant' })
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
+  }
+
+  @Public()
+  @Post('activate-invite')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ short: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ summary: 'Activate an invited account: set identity + password, get JWTs' })
+  activateInvite(@Body() dto: ActivateInviteDto) {
+    return this.authService.activateInvite(dto);
   }
 
   @Public()
@@ -84,6 +95,21 @@ export class AuthController {
   @ApiOperation({ summary: 'Change password (authenticated)' })
   changePassword(@CurrentUser('sub') userId: number, @Body() dto: ChangePasswordDto) {
     return this.authService.changePassword(userId, dto);
+  }
+
+  @Get('contexts')
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'List my workspace contexts (org memberships + Board)' })
+  getContexts(@CurrentUser('sub') userId: number) {
+    return this.authService.getContexts(userId);
+  }
+
+  @Post('switch-context')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Switch active organization (returns a new token pair)' })
+  switchContext(@CurrentUser('sub') userId: number, @Body('organizationId', ParseIntPipe) organizationId: number) {
+    return this.authService.switchContext(userId, organizationId);
   }
 
   @Get('me')

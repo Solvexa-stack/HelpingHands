@@ -6,6 +6,9 @@ import { StudyService } from './study.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EventBusService } from '../../events/event-bus.service';
+import { TenancyRepository } from '../policy/tenancy.repository';
+import { PolicyService } from '../policy/policy.service';
+import { GovernanceService } from '../governance/governance.service';
 
 const mockPrisma = {
   project: {
@@ -33,11 +36,29 @@ const mockPrisma = {
     create: jest.fn(),
     delete: jest.fn(),
   },
-  studyVote: { groupBy: jest.fn() },
+  vote: { groupBy: jest.fn() },
+  voteRound: { findFirst: jest.fn() },
   $transaction: jest.fn(),
 };
 
 const mockEventBus = { publish: jest.fn() };
+
+// flag-off default: tenancy scoping is a no-op in unit tests
+// W3 governance collaborators (unit tests run flags-off: legacy role gate applies)
+const mockPolicy = { can: jest.fn().mockResolvedValue({ allow: true, reason: 'granted:test' }) };
+const mockGovernance = {
+  decideStudy: jest.fn(),
+  syncRoundOnStudyStatus: jest.fn().mockResolvedValue(undefined),
+  latestRoundForStudy: jest.fn().mockResolvedValue({ id: 77 }),
+  decisionsForStudy: jest.fn().mockResolvedValue([]),
+};
+
+const mockTenancy = {
+  assertProjectVisible: jest.fn().mockResolvedValue(undefined),
+  enforcedOrgId: jest.fn().mockResolvedValue(null),
+  enforcedProjectWhere: jest.fn(async (w: any = {}) => w),
+  enforcedProjectRelationWhere: jest.fn(async (w: any = {}) => w),
+};
 
 const actor = { userId: 1, referenceType: 'admin', requestId: 'unit-test', ip: null };
 
@@ -60,6 +81,9 @@ describe('StudyService', () => {
           useValue: { notify: jest.fn().mockResolvedValue(undefined) },
         },
         { provide: EventBusService, useValue: mockEventBus },
+        { provide: TenancyRepository, useValue: mockTenancy },
+        { provide: PolicyService, useValue: mockPolicy },
+        { provide: GovernanceService, useValue: mockGovernance },
       ],
     }).compile();
 
@@ -169,6 +193,7 @@ describe('StudyService', () => {
         id: 1,
         studyId: 1,
         assignedTo: 2,
+        assignedToUserId: 1, // matches the spec actor (W2-E2 cutover)
         isRequired: true,
         study: { id: 1, projectId: 5, status: StudyStatus.draft },
       };
@@ -196,6 +221,7 @@ describe('StudyService', () => {
         id: 1,
         studyId: 1,
         assignedTo: 2,
+        assignedToUserId: 1, // matches the spec actor (W2-E2 cutover)
         study: { id: 1, projectId: 5, status: StudyStatus.draft },
       };
 
@@ -261,7 +287,7 @@ describe('StudyService', () => {
         sections: [],
       };
       mockPrisma.projectStudy.findFirst.mockResolvedValue(mockStudy);
-      mockPrisma.studyVote.groupBy.mockResolvedValue([
+      mockPrisma.vote.groupBy.mockResolvedValue([
         { choice: 'for', _count: { choice: 5 } },
         { choice: 'against', _count: { choice: 2 } },
       ]);

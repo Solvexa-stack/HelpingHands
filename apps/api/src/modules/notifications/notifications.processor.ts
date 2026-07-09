@@ -43,6 +43,8 @@ export class NotificationsProcessor {
         return this.handleStudyApproved(event.studyId, event.projectId);
       case 'study_rejected':
         return this.handleStudyRejected(event.studyId, event.adminId, event.reason);
+      case 'study_changes_requested':
+        return this.handleStudyChangesRequested(event.studyId);
       case 'donation_online_confirmed':
         return this.handleOnlineDonationConfirmed(event.donationId);
       case 'donation_cash_approved':
@@ -292,6 +294,35 @@ export class NotificationsProcessor {
       adminName,
       projectName,
       reason,
+    });
+  }
+
+  // ─── study_changes_requested (W3-E4-S3) ──────────────────────────────────────
+
+  private async handleStudyChangesRequested(studyId: number) {
+    const study = await this.prisma.projectStudy.findUnique({
+      where: { id: studyId },
+      include: {
+        project: { include: { block: { include: { translations: true } } } },
+        createdBy: { include: { user: { select: { id: true, email: true } } } },
+      },
+    });
+    if (!study?.createdBy?.user) return;
+
+    // Latest changes_requested decision carries the Board's rationale
+    const decision = await this.prisma.boardDecision.findFirst({
+      where: { subjectType: 'project_study', subjectId: studyId, decision: 'changes_requested' },
+      orderBy: { decidedAt: 'desc' },
+    });
+    const projectName = study.project.block.translations[0]?.name ?? `Project #${study.projectId}`;
+
+    await this.notificationsService.createNotificationRecord({
+      userId: study.createdBy.user.id,
+      type: 'study_changes_requested',
+      title: `Changes requested: ${projectName}`,
+      body: `The Board requested changes to the study for ${projectName}.${decision ? ` Rationale: ${decision.rationale}` : ''}`,
+      referenceId: studyId,
+      referenceType: 'study',
     });
   }
 

@@ -12,7 +12,11 @@
     "studies": "الدراسات",
     "languages": "اللغات",
     "reports": "التقارير",
-    "audit": "سجل التدقيق"
+    "audit": "سجل التدقيق",
+    "organizations": "المنظمات",
+    "board": "المجلس",
+    "team": "الفريق",
+    "settings": "الإعدادات"
   },
   "execution": {
     "title": "تنفيذ المشروع",

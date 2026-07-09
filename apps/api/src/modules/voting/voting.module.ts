@@ -1,3 +1,4 @@
+import { GovernanceModule } from '../governance/governance.module';
 import { Module } from '@nestjs/common';
 import { VotingController } from './voting.controller';
 import { VotingService } from './voting.service';
@@ -6,7 +7,7 @@ import { StudyModule } from '../study/study.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [StudyModule, NotificationsModule],
+  imports: [StudyModule, NotificationsModule, GovernanceModule],
   controllers: [VotingController],
   providers: [VotingService, VotingScheduler],
   exports: [VotingService],

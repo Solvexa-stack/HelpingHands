@@ -12,6 +12,11 @@ export class ChangeStudyStatusDto {
   @IsString()
   rejectionReason?: string;
 
+  @ApiPropertyOptional({ description: 'W3: decision rationale (approvals); templated default when omitted' })
+  @IsOptional()
+  @IsString()
+  rationale?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsDateString()

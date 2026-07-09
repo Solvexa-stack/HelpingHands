@@ -12,6 +12,10 @@ import { JwtPayload } from '../../common/decorators/current-user.decorator';
 import { paginate, paginatedResponse } from '../../common/dto/pagination.dto';
 import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
+import { TenancyRepository } from '../policy/tenancy.repository';
+import { PolicyService } from '../policy/policy.service';
+import { policyEnforced } from '../policy/policy.guard';
+import { GovernanceService } from '../governance/governance.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ChangeStudyStatusDto } from './dto/change-study-status.dto';
@@ -28,8 +32,10 @@ const VALID_TRANSITIONS: Partial<Record<StudyStatus, StudyStatus[]>> = {
   [StudyStatus.voting_closed]: [StudyStatus.approved, StudyStatus.rejected, StudyStatus.in_review],
 };
 
-// Transitions that require administrator role
-const ADMIN_ONLY_TARGETS = new Set<StudyStatus>([
+// Governance transitions: Board roles under policy enforcement (W3, closes the
+// D5 finding); legacy administrator-enum gate only when POLICY_ENFORCED=false
+// (09 rollback rule).
+const GOVERNANCE_TARGETS = new Set<StudyStatus>([
   StudyStatus.published,
   StudyStatus.voting_open,
   StudyStatus.voting_closed,
@@ -51,11 +57,15 @@ export class StudyService {
     private config: ConfigService,
     private notificationsService: NotificationsService,
     private eventBus: EventBusService,
+    private tenancy: TenancyRepository,
+    private policy: PolicyService,
+    private governance: GovernanceService,
   ) {}
 
   // ─── Create ───────────────────────────────────────────────────────────────────
 
   async createStudy(actor: ActorContext, dto: CreateStudyDto, createdById: number) {
+    await this.tenancy.assertProjectVisible(dto.projectId); // W2 isolation
     const project = await this.prisma.project.findUnique({ where: { id: dto.projectId } });
     if (!project) throw new NotFoundException(`Project #${dto.projectId} not found`);
 
@@ -78,6 +88,7 @@ export class StudyService {
         votingStartsAt: dto.votingStartsAt ? new Date(dto.votingStartsAt) : undefined,
         votingEndsAt: dto.votingEndsAt ? new Date(dto.votingEndsAt) : undefined,
         createdById,
+        createdByUserId: actor.userId, // W2-E2-S2 dual-write (D2)
         sections: {
           create: templates.map((t) => ({
             name: t.name,
@@ -134,11 +145,19 @@ export class StudyService {
       },
     });
     if (!study) throw new NotFoundException(`Study #${studyId} not found`);
+    await this.tenancy.assertProjectVisible(study.projectId); // W2 isolation
 
-    return { ...study, votesSummary: await this.buildVotesSummary(study.id) };
+    return {
+      ...study,
+      votesSummary: await this.buildVotesSummary(study.id),
+      // W3-E4-S3: Board decisions (incl. changes_requested rationale) are
+      // visible to the owning org on the study detail
+      decisions: await this.governance.decisionsForStudy(study.id),
+    };
   }
 
   async getStudyByProject(projectId: number) {
+    await this.tenancy.assertProjectVisible(projectId); // W2 isolation (no-op for public/anon)
     const study = await this.prisma.projectStudy.findFirst({
       where: {
         projectId,
@@ -172,6 +191,7 @@ export class StudyService {
     if (projectId) where.projectId = projectId;
 
     if (user.role === AdminRole.financial_officer) {
+      // eslint-disable-next-line no-unscoped-org-reads -- legacy (pre-W2-E3): route through TenancyRepository when touched
       const assigned = await this.prisma.project.findMany({
         where: { financialOfficerId: user.referenceId },
         select: { id: true },
@@ -179,9 +199,12 @@ export class StudyService {
       where.projectId = { in: assigned.map((p) => p.id) };
     }
 
+    // W2 isolation: studies are visible through their project's owner org
+    const scopedWhere = await this.tenancy.enforcedProjectRelationWhere(where, 'study.list');
+
     const [data, total] = await Promise.all([
       this.prisma.projectStudy.findMany({
-        where,
+        where: scopedWhere,
         skip,
         take,
         orderBy: { createdAt: 'desc' },
@@ -191,7 +214,7 @@ export class StudyService {
           _count: { select: { sections: true, votes: true } },
         },
       }),
-      this.prisma.projectStudy.count({ where }),
+      this.prisma.projectStudy.count({ where: scopedWhere }),
     ]);
 
     return paginatedResponse(data, total, page, limit);
@@ -211,12 +234,22 @@ export class StudyService {
       include: { study: true },
     });
     if (!section) throw new NotFoundException(`Section #${sectionId} not found`);
+    await this.tenancy.assertProjectVisible(section.study.projectId); // W2 isolation
 
+    // W2-E2-S2: assignee check reads the User-FK twin
     if (
       requestingRole !== AdminRole.administrator &&
-      section.assignedTo !== requestingAdminId
+      section.assignedToUserId !== actor.userId
     ) {
       throw new ForbiddenException('You are not assigned to this section');
+    }
+
+    let assignedToUserId: number | undefined;
+    if (dto.assignedTo !== undefined) {
+      const assigneeUser = await this.prisma.user.findFirst({
+        where: { referenceType: 'admin', referenceId: dto.assignedTo },
+      });
+      assignedToUserId = assigneeUser?.id;
     }
 
     const updated = await this.prisma.studySection.update({
@@ -225,6 +258,7 @@ export class StudyService {
         content: dto.content,
         status: dto.status,
         assignedTo: dto.assignedTo,
+        assignedToUserId, // W2-E2-S2 dual-write (D2)
         completedAt:
           dto.status === SectionStatus.completed
             ? new Date()
@@ -283,8 +317,12 @@ export class StudyService {
 
   // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async uploadSectionFiles(sectionId: number, files: Express.Multer.File[]) {
-    const section = await this.prisma.studySection.findUnique({ where: { id: sectionId } });
+    const section = await this.prisma.studySection.findUnique({
+      where: { id: sectionId },
+      include: { study: { select: { projectId: true } } },
+    });
     if (!section) throw new NotFoundException(`Section #${sectionId} not found`);
+    await this.tenancy.assertProjectVisible(section.study.projectId); // W2 isolation
 
     const appUrl = this.config.get<string>('app.url', 'http://localhost:4000');
 
@@ -304,8 +342,12 @@ export class StudyService {
 
   // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async deleteSectionFile(fileId: number) {
-    const file = await this.prisma.studySectionFile.findUnique({ where: { id: fileId } });
+    const file = await this.prisma.studySectionFile.findUnique({
+      where: { id: fileId },
+      include: { section: { select: { study: { select: { projectId: true } } } } },
+    });
     if (!file) throw new NotFoundException(`File #${fileId} not found`);
+    await this.tenancy.assertProjectVisible(file.section.study.projectId); // W2 isolation
 
     try {
       const uploadDir = this.config.get<string>('app.uploadDir', './uploads');
@@ -332,6 +374,7 @@ export class StudyService {
   ) {
     const study = await this.prisma.projectStudy.findUnique({ where: { id: studyId } });
     if (!study) throw new NotFoundException(`Study #${studyId} not found`);
+    await this.tenancy.assertProjectVisible(study.projectId); // W2 isolation
 
     const allowed = VALID_TRANSITIONS[study.status] ?? [];
     if (!allowed.includes(dto.status)) {
@@ -340,12 +383,39 @@ export class StudyService {
       );
     }
 
-    if (ADMIN_ONLY_TARGETS.has(dto.status) && adminRole !== AdminRole.administrator) {
-      throw new ForbiddenException('Only administrators can perform this status change');
+    if (GOVERNANCE_TARGETS.has(dto.status)) {
+      if (policyEnforced()) {
+        const verdict = await this.policy.can(actor, 'study.govern', {});
+        if (!verdict.allow) {
+          throw new ForbiddenException('Only Board governance roles can perform this status change');
+        }
+      } else if (adminRole !== AdminRole.administrator) {
+        throw new ForbiddenException('Only administrators can perform this status change');
+      }
     }
 
     if (dto.status === StudyStatus.rejected && !dto.rejectionReason) {
       throw new BadRequestException('Rejection reason is required');
+    }
+
+    // W3-E4-S1: approvals/rejections route through the governance service —
+    // an immutable BoardDecision is recorded and the legacy columns are
+    // synced from it (new→old, 09). No non-decision approval path remains.
+    if (dto.status === StudyStatus.approved || dto.status === StudyStatus.rejected) {
+      const rationale =
+        dto.status === StudyStatus.rejected
+          ? dto.rejectionReason!
+          : dto.rationale?.trim() ||
+            'Routine approval — study review complete (templated rationale).';
+      const { study: updatedStudy } = await this.governance.decideStudy(
+        actor,
+        studyId,
+        dto.status === StudyStatus.approved ? 'approved' : 'rejected',
+        rationale,
+      );
+      this.fireStatusEvent(actor, dto, updatedStudy, study.projectId);
+      this.fireStatusNotification(dto.status, studyId, study.projectId, adminId, dto.rejectionReason);
+      return updatedStudy;
     }
 
     const updateData: any = { status: dto.status };
@@ -359,13 +429,9 @@ export class StudyService {
       if (dto.votingEndsAt) updateData.votingEndsAt = new Date(dto.votingEndsAt);
     }
     if (dto.status === StudyStatus.voting_closed) updateData.votingEndsAt = new Date();
-    if (dto.status === StudyStatus.approved) {
-      updateData.approvedById = adminId;
-      updateData.approvedAt = new Date();
-    }
     if (dto.rejectionReason) updateData.rejectionReason = dto.rejectionReason;
 
-    // Keep Project.studyStatus mirrored; use transaction for approved
+    // Keep Project.studyStatus mirrored
     const [updatedStudy] = await this.prisma.$transaction([
       this.prisma.projectStudy.update({ where: { id: studyId }, data: updateData }),
       this.prisma.project.update({
@@ -373,6 +439,15 @@ export class StudyService {
         data: { studyStatus: dto.status },
       }),
     ]);
+
+    // W3: voting transitions keep their contract; the VoteRound is the new
+    // representation (opened on voting_open, closed+tallied on voting_closed)
+    await this.governance.syncRoundOnStudyStatus(
+      actor,
+      updatedStudy,
+      dto.status,
+      dto.status === StudyStatus.voting_open ? (updatedStudy.votingEndsAt ?? undefined) : undefined,
+    );
 
     // Emit after the transaction committed
     this.fireStatusEvent(actor, dto, updatedStudy, study.projectId);
@@ -445,14 +520,23 @@ export class StudyService {
   async deleteStudy(actor: ActorContext, studyId: number) {
     const study = await this.prisma.projectStudy.findUnique({ where: { id: studyId } });
     if (!study) throw new NotFoundException(`Study #${studyId} not found`);
+    await this.tenancy.assertProjectVisible(study.projectId); // W2 isolation
     if (study.status !== StudyStatus.draft) {
       throw new BadRequestException('Only draft studies can be deleted');
     }
 
     // Sections (and votes) no longer cascade (W0-E4-S1: domain relations are
     // Restrict) — delete children explicitly inside the same transaction.
+    // W3: the aggregate now includes governance rounds/votes; legacy frozen
+    // StudyVote rows (pre-cutover) go with them.
+    const rounds = await this.prisma.voteRound.findMany({
+      where: { subjectType: 'project_study', subjectId: studyId },
+      select: { id: true },
+    });
     await this.prisma.$transaction([
       this.prisma.studySection.deleteMany({ where: { studyId } }),
+      this.prisma.vote.deleteMany({ where: { voteRoundId: { in: rounds.map((r) => r.id) } } }),
+      this.prisma.voteRound.deleteMany({ where: { id: { in: rounds.map((r) => r.id) } } }),
       this.prisma.studyVote.deleteMany({ where: { studyId } }),
       this.prisma.projectStudy.delete({ where: { id: studyId } }),
       this.prisma.project.update({
@@ -472,9 +556,13 @@ export class StudyService {
   // ─── Helpers ──────────────────────────────────────────────────────────────────
 
   private async buildVotesSummary(studyId: number) {
-    const groups = await this.prisma.studyVote.groupBy({
+    // W3-E3-S2: tallies read from the generalized VoteRound/Vote model — the
+    // latest round is the current voting cycle (StudyVote is frozen).
+    const round = await this.governance.latestRoundForStudy(studyId);
+    if (!round) return { for: 0, against: 0, abstain: 0, total: 0 };
+    const groups = await this.prisma.vote.groupBy({
       by: ['choice'],
-      where: { studyId },
+      where: { voteRoundId: round.id },
       _count: { choice: true },
     });
 

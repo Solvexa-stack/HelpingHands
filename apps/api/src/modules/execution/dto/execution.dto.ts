@@ -44,6 +44,7 @@ export class CreateTaskDto {
   @ApiProperty() @IsInt() blockId: number;
   @ApiPropertyOptional() @IsOptional() @IsInt() phaseId?: number;
   @ApiPropertyOptional() @IsOptional() @IsInt() assignedToId?: number;
+  @ApiPropertyOptional({ description: 'W2-E2: assign any org member by User id' }) @IsOptional() @IsInt() assignedToUserId?: number;
   @ApiPropertyOptional({ enum: TaskStatus }) @IsOptional() @IsEnum(TaskStatus) status?: TaskStatus;
   @ApiPropertyOptional() @IsOptional() @IsDateString() startDate?: string;
   @ApiPropertyOptional() @IsOptional() @IsDateString() endDate?: string;

@@ -16,6 +16,7 @@ import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { PaymentFiltersDto } from './dto/payment-filters.dto';
 import { JwtPayload } from '../../common/decorators/current-user.decorator';
 import { paginate, paginatedResponse } from '../../common/dto/pagination.dto';
+import { TenancyRepository } from '../policy/tenancy.repository';
 
 @Injectable()
 export class PaymentsService {
@@ -29,6 +30,7 @@ export class PaymentsService {
     private notificationsService: NotificationsService,
     private eventBus: EventBusService,
     private actorContext: ActorContextService,
+    private tenancy: TenancyRepository,
   ) {}
 
   // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
@@ -173,6 +175,7 @@ export class PaymentsService {
       },
     });
     if (!donation) throw new NotFoundException(`Online donation #${donationId} not found`);
+    await this.tenancy.assertProjectVisible(donation.projectId); // W2 isolation
 
     const isAdmin =
       user.referenceType === 'admin' &&
@@ -200,9 +203,12 @@ export class PaymentsService {
       where.participantId = filters.participantId;
     }
 
+    // W2 isolation: online donations are visible through their project's owner org
+    const scopedWhere = await this.tenancy.enforcedProjectRelationWhere(where, 'online_donation.list');
+
     const [data, total] = await Promise.all([
       this.prisma.onlineDonation.findMany({
-        where,
+        where: scopedWhere,
         skip,
         take,
         orderBy: { createdAt: 'desc' },
@@ -211,7 +217,7 @@ export class PaymentsService {
           participant: { include: { user: { select: { email: true, avatar: true } } } },
         },
       }),
-      this.prisma.onlineDonation.count({ where }),
+      this.prisma.onlineDonation.count({ where: scopedWhere }),
     ]);
 
     return paginatedResponse(data, total, page, limit);

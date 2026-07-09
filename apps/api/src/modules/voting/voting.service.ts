@@ -13,6 +13,8 @@ import { EventBusService } from '../../events/event-bus.service';
 import { CastVoteDto } from './dto/cast-vote.dto';
 import { ChangeVoteDto } from './dto/change-vote.dto';
 import { VoteFiltersDto } from './dto/vote-filters.dto';
+import { TenancyRepository } from '../policy/tenancy.repository';
+import { GovernanceService } from '../governance/governance.service';
 
 @Injectable()
 export class VotingService {
@@ -21,7 +23,37 @@ export class VotingService {
   constructor(
     private prisma: PrismaService,
     private eventBus: EventBusService,
+    private tenancy: TenancyRepository,
+    private governance: GovernanceService,
   ) {}
+
+  /**
+   * W3-E3-S2 — compatibility anchor: the study's current voting cycle is its
+   * latest open round. Legacy voting_open studies that predate a round (edge:
+   * unbackfilled data) get one self-healed to mirror the study window.
+   */
+  private async openRoundForStudy(study: {
+    id: number;
+    votingStartsAt: Date | null;
+    votingEndsAt: Date | null;
+  }) {
+    const round = await this.prisma.voteRound.findFirst({
+      where: { subjectType: 'project_study', subjectId: study.id, status: 'open' },
+      orderBy: { id: 'desc' },
+    });
+    if (round) return round;
+    this.logger.warn(`Self-healing missing vote round for study ${study.id}`);
+    return this.prisma.voteRound.create({
+      data: {
+        subjectType: 'project_study',
+        subjectId: study.id,
+        opensAt: study.votingStartsAt ?? new Date(),
+        closesAt: study.votingEndsAt,
+        eligibility: { type: 'authenticated' },
+        rules: {},
+      },
+    });
+  }
 
   // ─── Cast vote ────────────────────────────────────────────────────────────────
 
@@ -36,14 +68,15 @@ export class VotingService {
       throw new BadRequestException('Voting period has ended');
     }
 
-    const existing = await this.prisma.studyVote.findUnique({
-      where: { studyId_userId: { studyId: dto.studyId, userId } },
+    const round = await this.openRoundForStudy(study);
+    const existing = await this.prisma.vote.findUnique({
+      where: { voteRoundId_userId: { voteRoundId: round.id, userId } },
     });
     if (existing) throw new ConflictException('You have already voted on this study');
 
-    const vote = await this.prisma.studyVote.create({
+    const vote = await this.prisma.vote.create({
       data: {
-        studyId: dto.studyId,
+        voteRoundId: round.id,
         userId,
         choice: dto.choice,
         comment: dto.comment,
@@ -56,11 +89,12 @@ export class VotingService {
     this.eventBus.publish({
       event: 'vote.cast',
       actor,
-      subject: { type: 'study_vote', id: vote.id },
-      data: { studyId: dto.studyId, choice: dto.choice },
+      subject: { type: 'vote', id: vote.id },
+      data: { studyId: dto.studyId, voteRoundId: round.id, choice: dto.choice },
     });
 
-    return vote;
+    // contract compatibility: legacy vote rows carried studyId
+    return { ...vote, studyId: dto.studyId };
   }
 
   // ─── Change vote ──────────────────────────────────────────────────────────────
@@ -77,18 +111,22 @@ export class VotingService {
       throw new BadRequestException('Voting period has ended');
     }
 
-    const existing = await this.prisma.studyVote.findUnique({
-      where: { studyId_userId: { studyId, userId } },
+    const round = await this.openRoundForStudy(study);
+    const existing = await this.prisma.vote.findUnique({
+      where: { voteRoundId_userId: { voteRoundId: round.id, userId } },
     });
     if (!existing) throw new NotFoundException('You have not voted on this study yet');
 
-    return this.prisma.studyVote.update({
-      where: { studyId_userId: { studyId, userId } },
+    // Compatibility exception to Vote immutability (endpoint contract, 14):
+    // changing is allowed only while the round is open; retired in Wave 8.
+    const updated = await this.prisma.vote.update({
+      where: { voteRoundId_userId: { voteRoundId: round.id, userId } },
       data: { choice: dto.choice, comment: dto.comment ?? null },
       include: {
         user: { select: { id: true, email: true } },
       },
     });
+    return { ...updated, studyId };
   }
 
   // ─── Results (public) ─────────────────────────────────────────────────────────
@@ -96,12 +134,16 @@ export class VotingService {
   async getResults(studyId: number, userId?: number) {
     const study = await this.prisma.projectStudy.findUnique({ where: { id: studyId } });
     if (!study) throw new NotFoundException(`Study #${studyId} not found`);
+    await this.tenancy.assertProjectVisible(study.projectId); // W2 isolation (no-op for public/anon)
 
-    const groups = await this.prisma.studyVote.groupBy({
-      by: ['choice'],
-      where: { studyId },
-      _count: { choice: true },
-    });
+    const round = await this.governance.latestRoundForStudy(studyId);
+    const groups = round
+      ? await this.prisma.vote.groupBy({
+          by: ['choice'],
+          where: { voteRoundId: round.id },
+          _count: { choice: true },
+        })
+      : [];
 
     const total = groups.reduce((sum, g) => sum + g._count.choice, 0);
     const countOf = (c: VoteChoice) =>
@@ -115,20 +157,22 @@ export class VotingService {
     const abstainCount = countOf(VoteChoice.abstain);
 
     let myVote: VoteChoice | null = null;
-    if (userId) {
-      const vote = await this.prisma.studyVote.findUnique({
-        where: { studyId_userId: { studyId, userId } },
+    if (userId && round) {
+      const vote = await this.prisma.vote.findUnique({
+        where: { voteRoundId_userId: { voteRoundId: round.id, userId } },
         select: { choice: true },
       });
       myVote = vote?.choice ?? null;
     }
 
-    const recentComments = await this.prisma.studyVote.findMany({
-      where: { studyId, comment: { not: null } },
-      select: { choice: true, comment: true, createdAt: true },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-    });
+    const recentComments = round
+      ? await this.prisma.vote.findMany({
+          where: { voteRoundId: round.id, comment: { not: null } },
+          select: { choice: true, comment: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        })
+      : [];
 
     return {
       studyId,
@@ -148,15 +192,20 @@ export class VotingService {
   async listVotes(studyId: number, filters: VoteFiltersDto) {
     const study = await this.prisma.projectStudy.findUnique({ where: { id: studyId } });
     if (!study) throw new NotFoundException(`Study #${studyId} not found`);
+    await this.tenancy.assertProjectVisible(study.projectId); // W2 isolation
 
     const { choice, page = 1, limit = 50 } = filters;
     const { skip, take } = paginate(page, limit);
 
-    const where: any = { studyId };
+    const rounds = await this.prisma.voteRound.findMany({
+      where: { subjectType: 'project_study', subjectId: studyId },
+      select: { id: true },
+    });
+    const where: any = { voteRoundId: { in: rounds.map((r) => r.id) } };
     if (choice) where.choice = choice;
 
     const [data, total] = await Promise.all([
-      this.prisma.studyVote.findMany({
+      this.prisma.vote.findMany({
         where,
         skip,
         take,
@@ -172,7 +221,7 @@ export class VotingService {
           },
         },
       }),
-      this.prisma.studyVote.count({ where }),
+      this.prisma.vote.count({ where }),
     ]);
 
     return paginatedResponse(data, total, page, limit);
@@ -181,29 +230,36 @@ export class VotingService {
   // ─── My votes (participant) ───────────────────────────────────────────────────
 
   async getMyVotes(userId: number) {
-    const votes = await this.prisma.studyVote.findMany({
-      where: { userId },
+    const votes = await this.prisma.vote.findMany({
+      where: { userId, voteRound: { subjectType: 'project_study' } },
       orderBy: { createdAt: 'desc' },
-      include: {
-        study: {
+      include: { voteRound: { select: { subjectId: true } } },
+    });
+    const studyIds = [...new Set(votes.map((v) => v.voteRound.subjectId))];
+    const studies = await this.prisma.projectStudy.findMany({
+      where: { id: { in: studyIds } },
+      select: {
+        id: true,
+        status: true,
+        project: {
           select: {
             id: true,
-            status: true,
-            project: {
+            block: {
               select: {
-                id: true,
-                block: {
-                  select: {
-                    translations: { select: { languageCode: true, name: true } },
-                  },
-                },
+                translations: { select: { languageCode: true, name: true } },
               },
             },
           },
         },
       },
     });
-    return votes;
+    const byId = new Map(studies.map((s) => [s.id, s]));
+    // legacy shape: each vote carries studyId + its study summary
+    return votes.map(({ voteRound, ...vote }) => ({
+      ...vote,
+      studyId: voteRound.subjectId,
+      study: byId.get(voteRound.subjectId) ?? null,
+    }));
   }
 
   // ─── Cron: auto-close expired votings ────────────────────────────────────────
@@ -235,6 +291,14 @@ export class VotingService {
 
     // Cron-triggered — no request context; one system actor per job run
     const actor = systemActor();
+
+    // W3: close the rounds too — tally + result recorded on each
+    for (const study of expired) {
+      const open = await this.prisma.voteRound.findFirst({
+        where: { subjectType: 'project_study', subjectId: study.id, status: 'open' },
+      });
+      if (open) await this.governance.closeRound(actor, open.id).catch(() => null);
+    }
     for (const study of expired) {
       this.eventBus.publish({
         event: 'voting.closed',

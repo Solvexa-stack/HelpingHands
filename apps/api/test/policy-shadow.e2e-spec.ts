@@ -148,3 +148,57 @@ describe('Policy engine shadow mode (W1-E4)', () => {
     await http().get('/api/v1/admins').set('Authorization', admin).expect(200);
   });
 });
+
+/**
+ * W2-E4-S1 — enforcement flip: with POLICY_ENFORCED on, PolicyGuard blocks
+ * (RolesGuard dormant); outcomes match the legacy matrix (zero-divergence
+ * evidence above); one-flag rollback restores legacy enforcement.
+ */
+describe('Policy enforcement flip (W2-E4-S1)', () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+  let admin: string;
+  let employee: string;
+  let participant: string;
+
+  beforeAll(async () => {
+    app = await createTestApp();
+    prisma = app.get(PrismaService);
+    await resetDatabase(prisma);
+    [admin, employee, participant] = await Promise.all([
+      authHeaderFor(prisma, 'administrator'),
+      authHeaderFor(prisma, 'employee'),
+      authHeaderFor(prisma, 'participant'),
+    ]);
+    process.env.POLICY_ENFORCED = 'true';
+  });
+
+  afterAll(async () => {
+    delete process.env.POLICY_ENFORCED;
+    await app.close();
+  });
+
+  it('grants decide access: outcomes equal the legacy matrix', async () => {
+    await request(app.getHttpServer()).get('/api/v1/admins').set('Authorization', admin).expect(200);
+    await request(app.getHttpServer()).get('/api/v1/admins').set('Authorization', employee).expect(403);
+    await request(app.getHttpServer()).get('/api/v1/study').set('Authorization', employee).expect(200);
+    await request(app.getHttpServer()).get('/api/v1/study').set('Authorization', participant).expect(403);
+    await request(app.getHttpServer()).post('/api/v1/donations').set('Authorization', participant).send({}).expect(400);
+    await request(app.getHttpServer()).post('/api/v1/donations').set('Authorization', employee).send({}).expect(403);
+    await request(app.getHttpServer()).get('/api/v1/auth/me').set('Authorization', participant).expect(200);
+  });
+
+  it('enforcement is grant-driven, not enum-driven: revoking the grant revokes access', async () => {
+    const { SEED_ACCOUNTS } = require('./utils/auth');
+    const employeeUser = await prisma.user.findUnique({ where: { email: SEED_ACCOUNTS.employee.email } });
+    await prisma.roleAssignment.deleteMany({ where: { userId: employeeUser!.id } });
+
+    // enum still says employee, but without the staff grant policy denies
+    await request(app.getHttpServer()).get('/api/v1/study').set('Authorization', employee).expect(403);
+
+    // rollback flag → legacy RolesGuard (enum) decides again
+    process.env.POLICY_ENFORCED = 'false';
+    await request(app.getHttpServer()).get('/api/v1/study').set('Authorization', employee).expect(200);
+    process.env.POLICY_ENFORCED = 'true';
+  });
+});

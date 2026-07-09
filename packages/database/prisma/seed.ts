@@ -1,6 +1,7 @@
 import { PrismaClient, AdminRole, BlockCategory, ProjectCategory, Representation, ProjectType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { backfillIdentity } from './backfills/w1-identity-backfill';
+import { backfillGovernance } from './backfills/w3-governance-backfill';
 
 const prisma = new PrismaClient();
 
@@ -250,6 +251,13 @@ async function main() {
   // ─── W1 identity backfill (memberships + grants, idempotent) ─────────────────
   const backfill = await backfillIdentity(prisma);
   console.log(`✅ Identity backfill (${backfill.membershipsCreated} memberships, ${backfill.grantsCreated} grants)`);
+
+  // ─── W3 governance backfill (rounds/votes + legacy decisions, idempotent) ────
+  const governance = await backfillGovernance(prisma);
+  if (governance.verification.mismatches.length > 0) {
+    throw new Error(`W3 governance backfill verification failed: ${governance.verification.mismatches.join('; ')}`);
+  }
+  console.log(`✅ Governance backfill (${governance.roundsCreated} rounds, ${governance.votesCopied} votes, ${governance.decisionsCreated} decisions; tallies verified)`);
 
   // ─── Study Department Templates ───────────────────────────────────────────────
   const sharedSections = [

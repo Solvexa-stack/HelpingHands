@@ -88,6 +88,39 @@ export class OrganizationsController {
     return this.organizationsService.addMember(actor, id, dto);
   }
 
+  @Post(':id/invite-admin')
+  @ApiOperation({ summary: 'Invite the first org_admin (account + membership + grant, audited)' })
+  inviteFirstAdmin(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: { email: string; firstName: string; lastName: string },
+    @CurrentActor() actor: ActorContext,
+  ) {
+    return this.organizationsService.inviteFirstAdmin(actor, id, dto);
+  }
+
+  @Post(':id/members/:userId/roles')
+  @ApiOperation({ summary: 'Grant an org-scoped role (audited)' })
+  grantRole(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('userId', ParseIntPipe) userId: number,
+    @Body('role') role: string,
+    @CurrentActor() actor: ActorContext,
+  ) {
+    return this.organizationsService.grantRole(actor, id, userId, role);
+  }
+
+  @Delete(':id/members/:userId/roles/:role')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Revoke an org-scoped role (audited)' })
+  revokeRole(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('userId', ParseIntPipe) userId: number,
+    @Param('role') role: string,
+    @CurrentActor() actor: ActorContext,
+  ) {
+    return this.organizationsService.revokeRole(actor, id, userId, role);
+  }
+
   @Delete(':id/members/:userId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove a member' })

@@ -1,10 +1,16 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   Logger,
   SetMetadata,
 } from '@nestjs/common';
+
+/** W2-E4-S1: when true, PolicyGuard enforces and RolesGuard goes dormant. */
+export function policyEnforced(): boolean {
+  return process.env.POLICY_ENFORCED === 'true';
+}
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../../common/decorators/roles.decorator';
 import { systemActor } from '../../events/actor-context';
@@ -85,6 +91,29 @@ export class PolicyGuard implements CanActivate {
       ROUTE_ACTION_MAP[route] ??
       `route:${route}`;
 
+    // ── Enforce mode (W2-E4-S1): PolicyGuard blocks, shadow logging retired ──
+    if (policyEnforced()) {
+      const decision = await this.policyService.can(
+        request.actorContext ?? { userId: user.sub, referenceType: user.referenceType, requestId: 'n/a', ip: null },
+        action,
+        this.resourceFrom(request),
+        requiredRoles ?? [],
+      );
+      if (this.policyService.isSensitive(action)) {
+        this.eventBus.publish({
+          event: 'policy.decided',
+          actor: request.actorContext ?? systemActor(),
+          subject: { type: 'policy_decision', id: action },
+          data: { action, route, allow: decision.allow, reason: decision.reason, enforced: true },
+        });
+      }
+      if (!decision.allow) {
+        throw new ForbiddenException('You do not have permission to access this resource');
+      }
+      return true;
+    }
+
+    // ── Shadow mode (W1-E4-S2) ────────────────────────────────────────────────
     try {
       const legacyAllowed =
         !requiredRoles || requiredRoles.length === 0

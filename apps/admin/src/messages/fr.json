@@ -12,7 +12,11 @@
     "studies": "Études",
     "languages": "Langues",
     "reports": "Rapports",
-    "audit": "Journal d'audit"
+    "audit": "Journal d'audit",
+    "organizations": "Organisations",
+    "board": "Conseil",
+    "team": "Équipe",
+    "settings": "Paramètres"
   },
   "execution": {
     "title": "Exécution du projet",

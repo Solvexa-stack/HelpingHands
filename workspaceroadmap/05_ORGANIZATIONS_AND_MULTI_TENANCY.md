@@ -35,6 +35,24 @@ Rules:
 3. **DB layer (Wave 8, optional):** Postgres RLS policies as backstop.
 Board cross-org read is an explicit, policy-granted, audited bypass — not an unscoped query.
 
+#### Implemented state (W2 isolation, 2026-07-08)
+Isolation is live: `TENANCY_ENFORCED=true` and `POLICY_ENFORCED=true` are the defaults (`.env.example`); `false` remains the one-flag rollback (09 rule).
+
+**Tenant-scoped entities** (all resolve ownership through `projects.ownerOrganizationId`):
+- projects (list/detail/update/delete) and the whole subtree: steps, phases, tasks, milestones, budgets, expenses, transactions
+- donations (QR/cash) and online donations incl. QR-token lookups
+- studies, study sections, section files, votes (admin views)
+- reports (all per-project PDF/Excel), dashboard aggregations (stats, recents, monthly)
+- participants: an org workspace only sees people who donated to its own projects
+
+**How it is enforced** — every service routes through `TenancyRepository` (`apps/api/src/modules/policy/tenancy.repository.ts`):
+- `enforcedOrgId(subject)` resolves the org to enforce (null for public/anon actors, flag-off, or the audited Board bypass — bypass emits `tenancy.bypassed`).
+- `enforcedProjectWhere` / `enforcedProjectRelationWhere` merge the owner-org filter into list queries.
+- `assertProjectVisible(projectId)` guards id-addressed reads AND writes; cross-org ids read as **404** (no existence leak). Project-subtree routes are additionally denied earlier by the policy scope-chain (**403**).
+- Creation ownership comes from `ActorContext.activeOrgId` — never the request body (no `organizationId` field exists on any create DTO) and no longer the platform default org.
+
+**How to test locally**: `pnpm --filter @helping-hands/api test:e2e -- w2-tenancy-isolation` (two-org A/B wall: lists, id probes, writes, dashboard, reports, platform-admin global view). The broader `w2-tenancy-leak` and `w2-pilot` specs stay in the permanent suite.
+
 ### Onboarding & verification
 Organization registration runs on the workflow engine (`org-verification` definition, Wave 6): `submitted → under_review → verified → active` with Board approval guard, or `rejected`. Municipalities additionally attach official registration documents (existing `File` model).
 

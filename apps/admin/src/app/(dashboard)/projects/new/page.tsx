@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { blocksApi, projectsApi, adminsApi } from '@/lib/api';
+import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/components/ui/toaster';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
@@ -48,6 +49,9 @@ export default function NewProjectPage() {
     queryFn: adminsApi.financialOfficers,
   });
 
+  const qc = useQueryClient();
+  const { workspaceType } = useAuth();
+
   const mutation = useMutation({
     mutationFn: async () => {
       const block = await blocksApi.create({
@@ -65,7 +69,17 @@ export default function NewProjectPage() {
         financialOfficerId: project.financialOfficerId ? Number(project.financialOfficerId) : undefined,
       });
     },
-    onSuccess: () => { success('Project created'); router.push('/projects'); },
+    onSuccess: () => {
+      success('Project created');
+      // The 30s staleTime would otherwise show pre-create numbers: invalidate
+      // every surface that counts or lists projects, in both workspaces.
+      qc.invalidateQueries({ queryKey: ['admin-projects'] });
+      qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      qc.invalidateQueries({ queryKey: ['recent-projects'] });
+      qc.invalidateQueries({ queryKey: ['org-stats'] });
+      qc.invalidateQueries({ queryKey: ['org-recent-projects'] });
+      router.push(workspaceType === 'organization' ? '/org/projects' : '/projects');
+    },
     onError: (err: any) => toastError(err?.response?.data?.message || 'Failed to create project'),
   });
 

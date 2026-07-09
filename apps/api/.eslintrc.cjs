@@ -13,5 +13,6 @@ module.exports = {
   },
   rules: {
     'require-actor-context': 'error',
+    'no-unscoped-org-reads': 'error',
   },
 };

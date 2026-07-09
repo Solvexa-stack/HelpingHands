@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TenancyRepository } from '../policy/tenancy.repository';
 import { PaginationDto, paginate, paginatedResponse } from '../../common/dto/pagination.dto';
 import { AdminRole } from '@prisma/client';
 import { IsString, IsOptional, IsEnum, MaxLength } from 'class-validator';
@@ -14,13 +15,23 @@ export class UpdateParticipantDto {
 
 @Injectable()
 export class ParticipantsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private tenancy: TenancyRepository,
+  ) {}
 
   async findAll(query: PaginationDto) {
     const { page = 1, limit = 15, search } = query;
     const { skip, take } = paginate(page, limit);
 
     const where: any = {};
+
+    // W2 isolation: an org workspace only sees participants who donated to its
+    // own projects — there is no platform-wide people directory for tenants.
+    const orgId = await this.tenancy.enforcedOrgId('participant.list');
+    if (orgId != null) {
+      where.donations = { some: { project: { ownerOrganizationId: orgId } } };
+    }
     if (search) {
       where.OR = [
         { firstName: { contains: search, mode: 'insensitive' } },
@@ -47,11 +58,17 @@ export class ParticipantsService {
   }
 
   async findById(id: number) {
+    // W2 isolation: cross-org participants read as nonexistence, and the
+    // embedded donation history is limited to the workspace's own projects.
+    const orgId = await this.tenancy.enforcedOrgId('participant.read');
+    const donationWhere = orgId == null ? undefined : { project: { ownerOrganizationId: orgId } };
+
     const participant = await this.prisma.participant.findUnique({
       where: { id },
       include: {
         user: { select: { id: true, email: true, isActive: true, avatar: true, joiningDate: true } },
         donations: {
+          where: donationWhere,
           orderBy: { createdAt: 'desc' },
           take: 10,
           include: {
@@ -60,10 +77,17 @@ export class ParticipantsService {
             },
           },
         },
-        _count: { select: { donations: true } },
+        _count: { select: { donations: donationWhere ? { where: donationWhere } : true } },
       },
     });
     if (!participant) throw new NotFoundException(`Participant #${id} not found`);
+
+    if (orgId != null) {
+      const related = await this.prisma.projectDonation.count({
+        where: { participantId: id, project: { ownerOrganizationId: orgId } },
+      });
+      if (related === 0) throw new NotFoundException(`Participant #${id} not found`);
+    }
     return participant;
   }
 

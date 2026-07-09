@@ -21,6 +21,7 @@ import { QrModule } from './modules/qr/qr.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { StudyModule } from './modules/study/study.module';
 import { VotingModule } from './modules/voting/voting.module';
+import { GovernanceModule } from './modules/governance/governance.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ExecutionModule } from './modules/execution/execution.module';
@@ -34,7 +35,9 @@ import { ReportsModule } from './modules/reports/reports.module';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
-      envFilePath: ['.env.local', '.env'],
+      // Local dev (`pnpm dev`) runs with CWD apps/api — fall back to the repo
+      // root .env so enforcement flags match the docker/e2e environments.
+      envFilePath: ['.env.local', '.env', '../../.env'],
     }),
     ThrottlerModule.forRoot([
       { name: 'short', ttl: 1000, limit: 20 },
@@ -68,6 +71,7 @@ import { ReportsModule } from './modules/reports/reports.module';
     DashboardModule,
     StudyModule,
     VotingModule,
+    GovernanceModule,
     PaymentsModule,
     NotificationsModule,
     ExecutionModule,

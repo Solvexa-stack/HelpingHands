@@ -4,6 +4,8 @@ import { StudyStatus, VoteChoice } from '@prisma/client';
 import { VotingService } from './voting.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventBusService } from '../../events/event-bus.service';
+import { TenancyRepository } from '../policy/tenancy.repository';
+import { GovernanceService } from '../governance/governance.service';
 
 const mockPrisma = {
   projectStudy: {
@@ -14,7 +16,7 @@ const mockPrisma = {
   project: {
     updateMany: jest.fn().mockReturnValue({ op: 'project.updateMany' }),
   },
-  studyVote: {
+  vote: {
     findUnique: jest.fn(),
     findMany: jest.fn(),
     create: jest.fn(),
@@ -22,10 +24,30 @@ const mockPrisma = {
     count: jest.fn(),
     groupBy: jest.fn(),
   },
+  voteRound: {
+    findFirst: jest.fn(),
+    create: jest.fn(),
+    findMany: jest.fn(),
+  },
   $transaction: jest.fn(),
 };
 
 const mockEventBus = { publish: jest.fn() };
+
+// flag-off default: tenancy scoping is a no-op in unit tests
+// W3: the study's current voting cycle
+const OPEN_ROUND = { id: 77, subjectType: 'project_study', subjectId: 1, status: 'open' };
+const mockGovernance = {
+  latestRoundForStudy: jest.fn(),
+  closeRound: jest.fn().mockResolvedValue(undefined),
+};
+
+const mockTenancy = {
+  assertProjectVisible: jest.fn().mockResolvedValue(undefined),
+  enforcedOrgId: jest.fn().mockResolvedValue(null),
+  enforcedProjectWhere: jest.fn(async (w: any = {}) => w),
+  enforcedProjectRelationWhere: jest.fn(async (w: any = {}) => w),
+};
 
 const actor = { userId: 1, referenceType: 'participant', requestId: 'unit-test', ip: null };
 
@@ -40,10 +62,14 @@ describe('VotingService', () => {
         VotingService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EventBusService, useValue: mockEventBus },
+        { provide: TenancyRepository, useValue: mockTenancy },
+        { provide: GovernanceService, useValue: mockGovernance },
       ],
     }).compile();
 
     service = module.get<VotingService>(VotingService);
+    mockPrisma.voteRound.findFirst.mockResolvedValue(OPEN_ROUND);
+    mockGovernance.latestRoundForStudy.mockResolvedValue(OPEN_ROUND);
   });
 
   // ─── castVote ─────────────────────────────────────────────────────────────────
@@ -87,7 +113,7 @@ describe('VotingService', () => {
         status: StudyStatus.voting_open,
         votingEndsAt: null,
       });
-      mockPrisma.studyVote.findUnique.mockResolvedValue({ id: 5, choice: VoteChoice.for });
+      mockPrisma.vote.findUnique.mockResolvedValue({ id: 5, choice: VoteChoice.for });
 
       await expect(
         service.castVote(actor, { studyId: 1, choice: VoteChoice.against }, 1),
@@ -100,8 +126,8 @@ describe('VotingService', () => {
         status: StudyStatus.voting_open,
         votingEndsAt: null,
       });
-      mockPrisma.studyVote.findUnique.mockResolvedValue(null);
-      mockPrisma.studyVote.create.mockResolvedValue({
+      mockPrisma.vote.findUnique.mockResolvedValue(null);
+      mockPrisma.vote.create.mockResolvedValue({
         id: 10,
         studyId: 1,
         userId: 1,
@@ -112,12 +138,13 @@ describe('VotingService', () => {
 
       const result = await service.castVote(actor, { studyId: 1, choice: VoteChoice.for }, 1);
 
-      expect(mockPrisma.studyVote.create).toHaveBeenCalledWith(
+      expect(mockPrisma.vote.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ studyId: 1, userId: 1, choice: VoteChoice.for }),
+          data: expect.objectContaining({ voteRoundId: OPEN_ROUND.id, userId: 1, choice: VoteChoice.for }),
         }),
       );
       expect(result.choice).toBe(VoteChoice.for);
+      expect(result.studyId).toBe(1); // legacy contract: vote rows carry studyId
     });
   });
 
@@ -130,12 +157,12 @@ describe('VotingService', () => {
         status: StudyStatus.voting_open,
         votingEndsAt: null,
       });
-      mockPrisma.studyVote.findUnique.mockResolvedValue({ id: 5, choice: VoteChoice.for });
-      mockPrisma.studyVote.update.mockResolvedValue({ id: 5, choice: VoteChoice.against });
+      mockPrisma.vote.findUnique.mockResolvedValue({ id: 5, choice: VoteChoice.for });
+      mockPrisma.vote.update.mockResolvedValue({ id: 5, choice: VoteChoice.against });
 
       const result = await service.changeVote(1, 1, { choice: VoteChoice.against });
 
-      expect(mockPrisma.studyVote.update).toHaveBeenCalled();
+      expect(mockPrisma.vote.update).toHaveBeenCalled();
       expect(result.choice).toBe(VoteChoice.against);
     });
 
@@ -157,7 +184,7 @@ describe('VotingService', () => {
         status: StudyStatus.voting_open,
         votingEndsAt: null,
       });
-      mockPrisma.studyVote.findUnique.mockResolvedValue(null);
+      mockPrisma.vote.findUnique.mockResolvedValue(null);
 
       await expect(
         service.changeVote(1, 1, { choice: VoteChoice.abstain }),
@@ -174,12 +201,12 @@ describe('VotingService', () => {
         status: StudyStatus.voting_open,
         votingEndsAt: null,
       });
-      mockPrisma.studyVote.groupBy.mockResolvedValue([
+      mockPrisma.vote.groupBy.mockResolvedValue([
         { choice: VoteChoice.for, _count: { choice: 6 } },
         { choice: VoteChoice.against, _count: { choice: 3 } },
         { choice: VoteChoice.abstain, _count: { choice: 1 } },
       ]);
-      mockPrisma.studyVote.findMany.mockResolvedValue([]);
+      mockPrisma.vote.findMany.mockResolvedValue([]);
 
       const result = await service.getResults(1);
 
@@ -198,8 +225,8 @@ describe('VotingService', () => {
         status: StudyStatus.voting_open,
         votingEndsAt: null,
       });
-      mockPrisma.studyVote.groupBy.mockResolvedValue([]);
-      mockPrisma.studyVote.findMany.mockResolvedValue([]);
+      mockPrisma.vote.groupBy.mockResolvedValue([]);
+      mockPrisma.vote.findMany.mockResolvedValue([]);
 
       const result = await service.getResults(1);
 
@@ -215,9 +242,9 @@ describe('VotingService', () => {
         status: StudyStatus.voting_open,
         votingEndsAt: null,
       });
-      mockPrisma.studyVote.groupBy.mockResolvedValue([]);
-      mockPrisma.studyVote.findUnique.mockResolvedValue({ choice: VoteChoice.for });
-      mockPrisma.studyVote.findMany.mockResolvedValue([]);
+      mockPrisma.vote.groupBy.mockResolvedValue([]);
+      mockPrisma.vote.findUnique.mockResolvedValue({ choice: VoteChoice.for });
+      mockPrisma.vote.findMany.mockResolvedValue([]);
 
       const result = await service.getResults(1, 42);
 
@@ -230,9 +257,9 @@ describe('VotingService', () => {
         status: StudyStatus.voting_open,
         votingEndsAt: null,
       });
-      mockPrisma.studyVote.groupBy.mockResolvedValue([]);
-      mockPrisma.studyVote.findUnique.mockResolvedValue(null);
-      mockPrisma.studyVote.findMany.mockResolvedValue([]);
+      mockPrisma.vote.groupBy.mockResolvedValue([]);
+      mockPrisma.vote.findUnique.mockResolvedValue(null);
+      mockPrisma.vote.findMany.mockResolvedValue([]);
 
       const result = await service.getResults(1, 42);
 

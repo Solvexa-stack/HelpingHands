@@ -35,6 +35,32 @@ export const POLICY_REGISTRY: Record<string, PolicyEntry> = {
     sensitive: true,
   },
 
+  // ─── W3 governance action class (07: board roles, all sensitive) ────────────
+  'governance.decide': {
+    anyGrants: [{ scopeType: 'platform', roles: ['board_chair', 'board_member'] }],
+    sensitive: true,
+  },
+  'governance.round.manage': {
+    anyGrants: [{ scopeType: 'platform', roles: ['board_chair', 'board_secretary'] }],
+    sensitive: true,
+  },
+  'governance.vote': {
+    // Round-level eligibility is evaluated in the service; the route itself is
+    // open to any authenticated user (study rounds transcribe today's electorate).
+    authenticatedOnly: true,
+  },
+  'governance.read': {
+    anyGrants: [
+      { scopeType: 'platform', roles: ['board_chair', 'board_member', 'board_secretary', 'platform_auditor'] },
+    ],
+  },
+  // W3: study governance transitions require Board roles, replacing the
+  // legacy administrator-enum gate (D5 finding closed).
+  'study.govern': {
+    anyGrants: [{ scopeType: 'platform', roles: ['board_chair', 'board_member'] }],
+    sensitive: true,
+  },
+
   // ─── Capability-conditioned example (08 §policy examples; not yet routed) ───
   'project.donation.open': {
     anyGrants: [{ scopeType: 'organization', roles: ['org_admin', 'project_manager'] }],
@@ -59,4 +85,19 @@ export const ROUTE_ACTION_MAP: Record<string, string> = {
   'PUT /api/v1/organizations/:id': 'organization.manage',
   'POST /api/v1/organizations/:id/members': 'organization.manage',
   'DELETE /api/v1/organizations/:id/members/:userId': 'organization.manage',
+  // Platform-only reads: without these mappings the legacy @Roles(administrator)
+  // translation (org_admin@organization) lets tenants read cross-org surfaces
+  // when the route carries no org resource (isolation leak, found post-W3).
+  'GET /api/v1/organizations': 'organization.manage',
+  'GET /api/v1/audit': 'governance.read',
+  'GET /api/v1/audit/:id': 'governance.read',
+  // W3 governance
+  'POST /api/v1/governance/decisions': 'governance.decide',
+  'GET /api/v1/governance/decisions': 'governance.read',
+  'GET /api/v1/governance/queue': 'governance.read',
+  'POST /api/v1/governance/rounds': 'governance.round.manage',
+  'GET /api/v1/governance/rounds': 'governance.read',
+  'GET /api/v1/governance/rounds/:id': 'governance.read',
+  'POST /api/v1/governance/rounds/:id/votes': 'governance.vote',
+  'PATCH /api/v1/governance/rounds/:id/close': 'governance.round.manage',
 };

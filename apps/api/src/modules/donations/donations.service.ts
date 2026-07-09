@@ -14,6 +14,7 @@ import { AdminRole, DonationStatus } from '@prisma/client';
 import { paginate, paginatedResponse } from '../../common/dto/pagination.dto';
 import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
+import { TenancyRepository } from '../policy/tenancy.repository';
 
 @Injectable()
 export class DonationsService {
@@ -24,6 +25,7 @@ export class DonationsService {
     private projectsService: ProjectsService,
     private notificationsService: NotificationsService,
     private eventBus: EventBusService,
+    private tenancy: TenancyRepository,
   ) {}
 
   async findAll(query: DonationQueryDto, role?: string, adminId?: number, participantId?: number) {
@@ -48,9 +50,12 @@ export class DonationsService {
       where.participantId = query.participantId;
     }
 
+    // W2 isolation: donations are visible through their project's owner org
+    const scopedWhere = await this.tenancy.enforcedProjectRelationWhere(where, 'donation.list');
+
     const [data, total] = await Promise.all([
       this.prisma.projectDonation.findMany({
-        where,
+        where: scopedWhere,
         skip,
         take,
         orderBy: { createdAt: 'desc' },
@@ -64,7 +69,7 @@ export class DonationsService {
           approver: { select: { id: true, firstName: true, lastName: true } },
         },
       }),
-      this.prisma.projectDonation.count({ where }),
+      this.prisma.projectDonation.count({ where: scopedWhere }),
     ]);
 
     return paginatedResponse(data, total, page, limit);
@@ -84,6 +89,7 @@ export class DonationsService {
       },
     });
     if (!donation) throw new NotFoundException(`Donation #${id} not found`);
+    await this.tenancy.assertProjectVisible(donation.projectId); // W2 isolation
     return donation;
   }
 
@@ -101,6 +107,7 @@ export class DonationsService {
       },
     });
     if (!donation) throw new NotFoundException('Donation not found for this QR token');
+    await this.tenancy.assertProjectVisible(donation.projectId); // W2 isolation
     return donation;
   }
 
@@ -179,6 +186,7 @@ export class DonationsService {
 
     if (dto.status === DonationStatus.approved) {
       updateData.approvedBy = adminId;
+      updateData.approvedByUserId = actor.userId; // W2-E2-S2 dual-write (D2)
       updateData.approvedAt = new Date();
     }
 
@@ -212,6 +220,7 @@ export class DonationsService {
         this.prisma.projectTransaction.create({
           data: {
             projectId: project.blockId,
+            projectRefId: donation.projectId, // W2-E1-S2 dual-write (D1)
             type: 'income',
             amount: donation.amount,
             referenceType: 'donation',
@@ -275,6 +284,7 @@ export class DonationsService {
   async getQrCode(token: string, format: 'dataurl' | 'buffer' = 'dataurl') {
     const donation = await this.prisma.projectDonation.findUnique({ where: { qrToken: token } });
     if (!donation) throw new NotFoundException('Donation not found');
+    await this.tenancy.assertProjectVisible(donation.projectId); // W2 isolation
 
     if (format === 'buffer') {
       return this.qrService.generateQrBuffer(token);

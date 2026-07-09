@@ -24,22 +24,35 @@ export class VotingScheduler {
     const windowStart = new Date(now.getTime() + 23 * 3_600_000);
     const windowEnd = new Date(now.getTime() + 25 * 3_600_000);
 
-    const studies = await this.prisma.projectStudy.findMany({
+    // W3-E2-S3: reminders are round-scoped — each voting cycle gets its own
+    // reminder; the legacy study field is kept synced until Wave 8.
+    const rounds = await this.prisma.voteRound.findMany({
       where: {
-        status: StudyStatus.voting_open,
-        votingEndsAt: { gte: windowStart, lte: windowEnd },
+        subjectType: 'project_study',
+        status: 'open',
+        closesAt: { gte: windowStart, lte: windowEnd },
         reminderSentAt: null,
       },
     });
 
-    for (const study of studies) {
+    for (const round of rounds) {
+      const study = await this.prisma.projectStudy.findFirst({
+        where: { id: round.subjectId, status: StudyStatus.voting_open },
+      });
+      if (!study) continue;
+
       await this.notificationsService
         .notify({ type: 'voting_reminder', studyId: study.id })
         .catch(() => null);
 
+      const sentAt = new Date();
+      await this.prisma.voteRound.update({
+        where: { id: round.id },
+        data: { reminderSentAt: sentAt },
+      });
       await this.prisma.projectStudy.update({
         where: { id: study.id },
-        data: { reminderSentAt: new Date() },
+        data: { reminderSentAt: sentAt },
       });
     }
   }

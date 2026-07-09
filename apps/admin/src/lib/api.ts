@@ -45,7 +45,13 @@ export const authApi = {
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login', data).then((r) => r.data.data),
   getMe: () => api.get('/auth/me').then((r) => r.data.data),
+  activateInvite: (data: { token: string; firstName: string; lastName: string; password: string }) =>
+    api.post('/auth/activate-invite', data).then((r) => r.data.data),
   logout: () => api.post('/auth/logout').catch(() => {}),
+  // W2-E5: workspace contexts
+  getContexts: () => api.get('/auth/contexts').then((r) => r.data.data),
+  switchContext: (organizationId: number) =>
+    api.post('/auth/switch-context', { organizationId }).then((r) => r.data.data),
 };
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
@@ -258,4 +264,42 @@ export const auditApi = {
     to?: string;
   }) => api.get('/audit', { params }).then((r) => r.data.data),
   get: (id: number) => api.get(`/audit/${id}`).then((r) => r.data.data),
+};
+
+// ─── Governance (W3-E5) ───────────────────────────────────────────────────────
+export const governanceApi = {
+  queue: () => api.get('/governance/queue').then((r) => r.data.data),
+  decisions: (params?: { subjectType?: string; subjectId?: number }) =>
+    api.get('/governance/decisions', { params }).then((r) => r.data.data),
+  recordDecision: (data: {
+    subjectType: string;
+    subjectId: number;
+    decision: 'approved' | 'rejected' | 'changes_requested';
+    rationale: string;
+    sessionRef?: string;
+  }) => api.post('/governance/decisions', data).then((r) => r.data.data),
+  getRound: (id: number) => api.get(`/governance/rounds/${id}`).then((r) => r.data.data),
+  listRounds: (subjectType?: string, subjectId?: number) =>
+    api.get('/governance/rounds', { params: { subjectType, subjectId } }).then((r) => r.data.data),
+};
+
+// ─── Organizations (W2-E5) ────────────────────────────────────────────────────
+export const organizationsApi = {
+  list: (params?: { page?: number; limit?: number }) =>
+    api.get('/organizations', { params }).then((r) => r.data.data),
+  get: (id: number) => api.get(`/organizations/${id}`).then((r) => r.data.data),
+  members: (id: number) => api.get(`/organizations/${id}/members`).then((r) => r.data.data),
+  addMember: (id: number, userId: number) =>
+    api.post(`/organizations/${id}/members`, { userId }).then((r) => r.data.data),
+  removeMember: (id: number, userId: number) => api.delete(`/organizations/${id}/members/${userId}`),
+  grantRole: (id: number, userId: number, role: string) =>
+    api.post(`/organizations/${id}/members/${userId}/roles`, { role }).then((r) => r.data.data),
+  revokeRole: (id: number, userId: number, role: string) =>
+    api.delete(`/organizations/${id}/members/${userId}/roles/${role}`),
+  create: (data: { type: string; name: string; registrationNumber?: string }) =>
+    api.post('/organizations', data).then((r) => r.data.data),
+  update: (id: number, data: { name?: string; registrationNumber?: string; status?: string }) =>
+    api.put(`/organizations/${id}`, data).then((r) => r.data.data),
+  inviteFirstAdmin: (id: number, data: { email: string; firstName: string; lastName: string }) =>
+    api.post(`/organizations/${id}/invite-admin`, data).then((r) => r.data.data),
 };

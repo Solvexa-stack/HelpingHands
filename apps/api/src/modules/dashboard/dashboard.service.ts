@@ -1,18 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AdminRole, DonationStatus, StudyStatus } from '@prisma/client';
+import { TenancyRepository } from '../policy/tenancy.repository';
 
 @Injectable()
 export class DashboardService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private tenancy: TenancyRepository,
+  ) {}
 
   async getStats(role: string, adminId?: number) {
     const projectWhere: any = {};
     const donationWhere: any = {};
+    const studyWhere: any = {};
 
     if (role === AdminRole.financial_officer && adminId) {
       projectWhere.financialOfficerId = adminId;
       donationWhere.project = { financialOfficerId: adminId };
+    }
+
+    // W2 isolation: org workspaces see their own numbers only (Board bypass audited)
+    const orgId = await this.tenancy.enforcedOrgId('dashboard.stats');
+    if (orgId != null) {
+      projectWhere.ownerOrganizationId = orgId;
+      donationWhere.project = { ...(donationWhere.project ?? {}), ownerOrganizationId: orgId };
+      studyWhere.project = { ownerOrganizationId: orgId };
     }
 
     const [
@@ -29,7 +42,9 @@ export class DashboardService {
       pendingVotes,
       studiesByStatusGroups,
     ] = await Promise.all([
+      // eslint-disable-next-line no-unscoped-org-reads -- scoped: projectWhere carries tenancy.enforcedOrgId above
       this.prisma.project.count({ where: projectWhere }),
+      // eslint-disable-next-line no-unscoped-org-reads -- scoped: projectWhere carries tenancy.enforcedOrgId above
       this.prisma.project.count({ where: { ...projectWhere, isCompleted: true } }),
       this.prisma.projectDonation.count({ where: donationWhere }),
       this.prisma.projectDonation.count({ where: { ...donationWhere, status: DonationStatus.pending } }),
@@ -42,9 +57,10 @@ export class DashboardService {
         where: { ...donationWhere, status: DonationStatus.approved },
         _sum: { amount: true },
       }),
-      this.prisma.projectStudy.count({ where: { status: StudyStatus.voting_open } }),
+      this.prisma.projectStudy.count({ where: { ...studyWhere, status: StudyStatus.voting_open } }),
       this.prisma.projectStudy.groupBy({
         by: ['status'],
+        where: studyWhere,
         _count: { status: true },
       }),
     ]);
@@ -76,10 +92,11 @@ export class DashboardService {
   }
 
   async getRecentDonations(role: string, adminId?: number, limit = 10) {
-    const where: any = {};
+    let where: any = {};
     if (role === AdminRole.financial_officer && adminId) {
       where.project = { financialOfficerId: adminId };
     }
+    where = await this.tenancy.enforcedProjectRelationWhere(where, 'dashboard.recent_donations'); // W2 isolation
 
     return this.prisma.projectDonation.findMany({
       where,
@@ -93,11 +110,13 @@ export class DashboardService {
   }
 
   async getRecentProjects(role: string, adminId?: number, limit = 6) {
-    const where: any = {};
+    let where: any = {};
     if (role === AdminRole.financial_officer && adminId) {
       where.financialOfficerId = adminId;
     }
+    where = await this.tenancy.enforcedProjectWhere(where, 'dashboard.recent_projects'); // W2 isolation
 
+    // eslint-disable-next-line no-unscoped-org-reads -- scoped: where carries tenancy.enforcedProjectWhere above
     return this.prisma.project.findMany({
       where,
       take: limit,
@@ -119,11 +138,14 @@ export class DashboardService {
     const start = new Date(`${targetYear}-01-01`);
     const end = new Date(`${targetYear + 1}-01-01`);
 
+    // W2 isolation
+    const where = await this.tenancy.enforcedProjectRelationWhere<any>(
+      { status: DonationStatus.approved, approvedAt: { gte: start, lt: end } },
+      'dashboard.donations_by_month',
+    );
+
     const donations = await this.prisma.projectDonation.findMany({
-      where: {
-        status: DonationStatus.approved,
-        approvedAt: { gte: start, lt: end },
-      },
+      where,
       select: { approvedAt: true, amount: true },
     });
 

@@ -81,6 +81,34 @@ export class ResetPasswordDto {
   password: string;
 }
 
+/** Invitation activation (org onboarding): sets identity + first password. */
+export class ActivateInviteDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+
+  @ApiProperty({ example: 'Ali' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  firstName: string;
+
+  @ApiProperty({ example: 'Hassan' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  lastName: string;
+
+  @ApiProperty({ example: 'NewSecurePass@123' })
+  @IsString()
+  @MinLength(8)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/, {
+    message: 'Password must contain uppercase, lowercase, number and special character',
+  })
+  password: string;
+}
+
 export class ChangePasswordDto {
   @ApiProperty()
   @IsString()

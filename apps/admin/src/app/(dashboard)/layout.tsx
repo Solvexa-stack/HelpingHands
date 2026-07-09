@@ -5,14 +5,23 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
+import { orgPathFor } from '@/lib/workspace';
 
+/**
+ * Platform Workspace shell (global administration + Board). W3 UI isolation:
+ * organization members are redirected to their own workspace (/org/*) before
+ * any platform page mounts.
+ */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, workspaceType } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && !user) router.replace('/login');
-  }, [user, loading, router]);
+    if (loading) return;
+    if (!user) router.replace('/login');
+    else if (workspaceType === 'organization') router.replace(orgPathFor(pathname));
+  }, [user, loading, workspaceType, pathname, router]);
 
   if (loading) {
     return (
@@ -22,7 +31,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (!user) return null;
+  // Wrong workspace: platform pages never mount for organization members.
+  if (!user || workspaceType === 'organization') return null;
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950">

@@ -1,14 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TenancyRepository } from '../policy/tenancy.repository';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const PDFDocument = require('pdfkit');
 import * as ExcelJS from 'exceljs';
 
 @Injectable()
 export class ReportsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private tenancy: TenancyRepository,
+  ) {}
 
+  /** Single chokepoint for every report: cross-org projects read as nonexistence. */
   private async getProject(projectId: number) {
+    await this.tenancy.assertProjectVisible(projectId); // W2 isolation
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       include: {
@@ -31,16 +37,16 @@ export class ReportsService {
 
     const [steps, phases, milestones] = await Promise.all([
       this.prisma.projectStep.findMany({
-        where: { projectId: project.blockId },
+        where: { projectRefId: project.id },
         include: { block: { include: { translations: true } } },
       }),
       this.prisma.projectPhase.findMany({
-        where: { projectId: project.blockId },
+        where: { projectRefId: project.id },
         include: { block: { include: { translations: true } } },
         orderBy: { order: 'asc' },
       }),
       this.prisma.projectMilestone.findMany({
-        where: { projectId: project.blockId },
+        where: { projectRefId: project.id },
         include: { block: { include: { translations: true } } },
         orderBy: { targetDate: 'asc' },
       }),
@@ -126,16 +132,16 @@ export class ReportsService {
 
     const [budgets, expenses, transactions] = await Promise.all([
       this.prisma.projectBudget.findMany({
-        where: { projectId: project.blockId },
+        where: { projectRefId: project.id },
         include: { block: { include: { translations: true } } },
       }),
       this.prisma.projectExpense.findMany({
-        where: { projectId: project.blockId },
+        where: { projectRefId: project.id },
         include: { block: { include: { translations: true } } },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.projectTransaction.findMany({
-        where: { projectId: project.blockId },
+        where: { projectRefId: project.id },
         orderBy: { createdAt: 'desc' },
       }),
     ]);
@@ -206,10 +212,10 @@ export class ReportsService {
     const name = project.block.translations[0]?.name || `Project #${projectId}`;
 
     const [steps, phases, tasks, milestones] = await Promise.all([
-      this.prisma.projectStep.findMany({ where: { projectId: project.blockId }, include: { block: { include: { translations: true } } } }),
-      this.prisma.projectPhase.findMany({ where: { projectId: project.blockId }, include: { block: { include: { translations: true } } }, orderBy: { order: 'asc' } }),
-      this.prisma.projectTask.findMany({ where: { projectId: project.blockId }, include: { block: { include: { translations: true } } } }),
-      this.prisma.projectMilestone.findMany({ where: { projectId: project.blockId }, include: { block: { include: { translations: true } } }, orderBy: { targetDate: 'asc' } }),
+      this.prisma.projectStep.findMany({ where: { projectRefId: project.id }, include: { block: { include: { translations: true } } } }),
+      this.prisma.projectPhase.findMany({ where: { projectRefId: project.id }, include: { block: { include: { translations: true } } }, orderBy: { order: 'asc' } }),
+      this.prisma.projectTask.findMany({ where: { projectRefId: project.id }, include: { block: { include: { translations: true } } } }),
+      this.prisma.projectMilestone.findMany({ where: { projectRefId: project.id }, include: { block: { include: { translations: true } } }, orderBy: { targetDate: 'asc' } }),
     ]);
 
     return new Promise((resolve) => {
@@ -254,9 +260,9 @@ export class ReportsService {
   async generateFinancialExcel(projectId: number): Promise<Buffer> {
     const project = await this.getProject(projectId);
     const [transactions, expenses, budgets] = await Promise.all([
-      this.prisma.projectTransaction.findMany({ where: { projectId: project.blockId }, orderBy: { createdAt: 'desc' } }),
-      this.prisma.projectExpense.findMany({ where: { projectId: project.blockId }, include: { block: { include: { translations: true } } }, orderBy: { createdAt: 'desc' } }),
-      this.prisma.projectBudget.findMany({ where: { projectId: project.blockId }, include: { block: { include: { translations: true } } } }),
+      this.prisma.projectTransaction.findMany({ where: { projectRefId: project.id }, orderBy: { createdAt: 'desc' } }),
+      this.prisma.projectExpense.findMany({ where: { projectRefId: project.id }, include: { block: { include: { translations: true } } }, orderBy: { createdAt: 'desc' } }),
+      this.prisma.projectBudget.findMany({ where: { projectRefId: project.id }, include: { block: { include: { translations: true } } } }),
     ]);
 
     const wb = new ExcelJS.Workbook();
@@ -339,7 +345,7 @@ export class ReportsService {
   async generateExpensesExcel(projectId: number): Promise<Buffer> {
     const project = await this.getProject(projectId);
     const expenses = await this.prisma.projectExpense.findMany({
-      where: { projectId: project.blockId },
+      where: { projectRefId: project.id },
       include: { block: { include: { translations: true } }, budget: { include: { block: { include: { translations: true } } } } },
       orderBy: { createdAt: 'desc' },
     });

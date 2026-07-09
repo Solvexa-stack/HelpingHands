@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
+import { TenancyRepository } from '../policy/tenancy.repository';
 import {
   CreateBudgetDto, UpdateBudgetDto,
   CreateExpenseDto, UpdateExpenseDto, UpdateExpenseStatusDto,
@@ -14,9 +15,11 @@ export class FinancialService {
   constructor(
     private prisma: PrismaService,
     private eventBus: EventBusService,
+    private tenancy: TenancyRepository,
   ) {}
 
   private async getProjectBlockId(projectId: number): Promise<number> {
+    await this.tenancy.assertProjectVisible(projectId); // W2-E3-S1
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project) throw new NotFoundException(`Project #${projectId} not found`);
     return project.blockId;
@@ -32,7 +35,7 @@ export class FinancialService {
   async findBudgets(projectId: number) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     return this.prisma.projectBudget.findMany({
-      where: { projectId: projectBlockId },
+      where: { projectRefId: projectId },
       include: {
         block: { include: { translations: true } },
         expenses: true,
@@ -49,6 +52,7 @@ export class FinancialService {
     return this.prisma.projectBudget.create({
       data: {
         projectId: projectBlockId,
+        projectRefId: projectId, // W2-E1-S2 dual-write (D1)
         blockId: dto.blockId,
         estimatedAmount: dto.estimatedAmount,
         approvedAmount: dto.approvedAmount,
@@ -60,7 +64,7 @@ export class FinancialService {
   // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async updateBudget(projectId: number, budgetId: number, dto: UpdateBudgetDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
-    const budget = await this.prisma.projectBudget.findFirst({ where: { id: budgetId, projectId: projectBlockId } });
+    const budget = await this.prisma.projectBudget.findFirst({ where: { id: budgetId, projectRefId: projectId } });
     if (!budget) throw new NotFoundException(`Budget #${budgetId} not found`);
 
     const { blockId, ...rest } = dto;
@@ -74,7 +78,7 @@ export class FinancialService {
   // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async removeBudget(projectId: number, budgetId: number) {
     const projectBlockId = await this.getProjectBlockId(projectId);
-    const budget = await this.prisma.projectBudget.findFirst({ where: { id: budgetId, projectId: projectBlockId } });
+    const budget = await this.prisma.projectBudget.findFirst({ where: { id: budgetId, projectRefId: projectId } });
     if (!budget) throw new NotFoundException(`Budget #${budgetId} not found`);
     await this.prisma.projectBudget.delete({ where: { id: budgetId } });
   }
@@ -85,7 +89,7 @@ export class FinancialService {
     const projectBlockId = await this.getProjectBlockId(projectId);
     return this.prisma.projectExpense.findMany({
       where: {
-        projectId: projectBlockId,
+        projectRefId: projectId,
         ...(budgetId ? { budgetId } : {}),
         ...(status ? { status } : {}),
       },
@@ -102,13 +106,14 @@ export class FinancialService {
     await this.assertBlockExists(dto.blockId);
 
     if (dto.budgetId) {
-      const budget = await this.prisma.projectBudget.findFirst({ where: { id: dto.budgetId, projectId: projectBlockId } });
+      const budget = await this.prisma.projectBudget.findFirst({ where: { id: dto.budgetId, projectRefId: projectId } });
       if (!budget) throw new NotFoundException(`Budget #${dto.budgetId} not found in this project`);
     }
 
     const expense = await this.prisma.projectExpense.create({
       data: {
         projectId: projectBlockId,
+        projectRefId: projectId, // W2-E1-S2 dual-write (D1)
         blockId: dto.blockId,
         budgetId: dto.budgetId,
         amount: dto.amount,
@@ -130,7 +135,7 @@ export class FinancialService {
   // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async updateExpense(projectId: number, expenseId: number, dto: UpdateExpenseDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
-    const expense = await this.prisma.projectExpense.findFirst({ where: { id: expenseId, projectId: projectBlockId } });
+    const expense = await this.prisma.projectExpense.findFirst({ where: { id: expenseId, projectRefId: projectId } });
     if (!expense) throw new NotFoundException(`Expense #${expenseId} not found`);
     if (expense.status === ExpenseStatus.approved) throw new BadRequestException('Approved expenses cannot be modified');
 
@@ -149,7 +154,7 @@ export class FinancialService {
     dto: UpdateExpenseStatusDto,
   ) {
     const projectBlockId = await this.getProjectBlockId(projectId);
-    const expense = await this.prisma.projectExpense.findFirst({ where: { id: expenseId, projectId: projectBlockId } });
+    const expense = await this.prisma.projectExpense.findFirst({ where: { id: expenseId, projectRefId: projectId } });
     if (!expense) throw new NotFoundException(`Expense #${expenseId} not found`);
     if (expense.status !== ExpenseStatus.pending) throw new BadRequestException('Only pending expenses can be approved/rejected');
 
@@ -163,6 +168,7 @@ export class FinancialService {
         this.prisma.projectTransaction.create({
           data: {
             projectId: projectBlockId,
+            projectRefId: projectId, // W2-E1-S2 dual-write (D1)
             type: 'expense',
             amount: expense.amount,
             referenceType: 'expense',
@@ -196,7 +202,7 @@ export class FinancialService {
   // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
   async removeExpense(projectId: number, expenseId: number) {
     const projectBlockId = await this.getProjectBlockId(projectId);
-    const expense = await this.prisma.projectExpense.findFirst({ where: { id: expenseId, projectId: projectBlockId } });
+    const expense = await this.prisma.projectExpense.findFirst({ where: { id: expenseId, projectRefId: projectId } });
     if (!expense) throw new NotFoundException(`Expense #${expenseId} not found`);
     if (expense.status === ExpenseStatus.approved) throw new BadRequestException('Approved expenses cannot be deleted');
     await this.prisma.projectExpense.delete({ where: { id: expenseId } });
@@ -207,7 +213,7 @@ export class FinancialService {
   async findTransactions(projectId: number) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     return this.prisma.projectTransaction.findMany({
-      where: { projectId: projectBlockId },
+      where: { projectRefId: projectId },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -218,6 +224,7 @@ export class FinancialService {
     return this.prisma.projectTransaction.create({
       data: {
         projectId: projectBlockId,
+        projectRefId: projectId, // W2-E1-S2 dual-write (D1)
         type: dto.type,
         amount: dto.amount,
         notes: dto.notes,
@@ -230,15 +237,15 @@ export class FinancialService {
 
     const [income, expense, budgets] = await Promise.all([
       this.prisma.projectTransaction.aggregate({
-        where: { projectId: projectBlockId, type: { in: ['income', 'adjustment'] } },
+        where: { projectRefId: projectId, type: { in: ['income', 'adjustment'] } },
         _sum: { amount: true },
       }),
       this.prisma.projectTransaction.aggregate({
-        where: { projectId: projectBlockId, type: 'expense' },
+        where: { projectRefId: projectId, type: 'expense' },
         _sum: { amount: true },
       }),
       this.prisma.projectBudget.aggregate({
-        where: { projectId: projectBlockId },
+        where: { projectRefId: projectId },
         _sum: { estimatedAmount: true, approvedAmount: true, actualAmount: true },
       }),
     ]);

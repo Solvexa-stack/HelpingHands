@@ -3,7 +3,8 @@ import { ActorContextService, actorContextStorage } from '../../events/actor-con
 import { anonymousActor } from '../../events/actor-context';
 
 describe('TenancyRepository (W1-E5-S2, dark)', () => {
-  const repo = new TenancyRepository(new ActorContextService());
+  // enforcement deps are unused by the dark helpers under test
+  const repo = new TenancyRepository(new ActorContextService(), {} as any, {} as any);
 
   it('injects the active org filter inside a request context', () => {
     actorContextStorage.run(

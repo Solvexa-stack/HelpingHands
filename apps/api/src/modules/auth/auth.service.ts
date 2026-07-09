@@ -9,9 +9,13 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+import { EventBusService } from '../../events/event-bus.service';
+import { ActorContextService } from '../../events/actor-context.storage';
+import { BOARD_READ_ROLES } from '../policy/tenancy.repository';
 import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import {
+  ActivateInviteDto,
   LoginDto,
   RegisterDto,
   ForgotPasswordDto,
@@ -26,6 +30,8 @@ export class AuthService {
     private jwt: JwtService,
     private config: ConfigService,
     private emailService: EmailService,
+    private eventBus: EventBusService,
+    private actorContext: ActorContextService,
   ) {}
 
   async login(dto: LoginDto) {
@@ -143,6 +149,45 @@ export class AuthService {
     await this.emailService.sendPasswordResetEmail(dto.email, token);
   }
 
+  /**
+   * Invitation activation (org onboarding): the invite created the account
+   * with an unusable password plus a reset-flow token; this endpoint turns it
+   * into a usable account in one step — identity + password + immediate JWTs
+   * (activeOrgId resolves to the invited organization via the membership the
+   * invite created). The token is single-use.
+   */
+  async activateInvite(dto: ActivateInviteDto) {
+    const record = await this.prisma.passwordResetToken.findUnique({ where: { token: dto.token } });
+    if (!record || record.expiresAt < new Date()) {
+      throw new BadRequestException('Invitation link is invalid or has expired');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { email: record.email } });
+    if (!user) throw new BadRequestException('Invitation account not found');
+
+    if (user.referenceType === 'admin') {
+      await this.prisma.admin.update({
+        where: { id: user.referenceId },
+        data: { firstName: dto.firstName, lastName: dto.lastName },
+      });
+    }
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash(dto.password, 12), emailVerifiedAt: new Date() },
+    });
+    // single-use: consume every outstanding token for this email
+    await this.prisma.passwordResetToken.deleteMany({ where: { email: record.email } });
+
+    const { admin, participant } = await this.resolveReference(user.referenceId, user.referenceType);
+    const role = user.referenceType === 'admin' ? admin?.role : 'participant';
+    const tokens = await this.generateTokens(user.id, user.email, role!, user.referenceType, user.referenceId);
+
+    return {
+      user: this.sanitizeUser({ ...user, emailVerifiedAt: new Date(), admin, participant }),
+      ...tokens,
+    };
+  }
+
   async resetPassword(dto: ResetPasswordDto) {
     const record = await this.prisma.passwordResetToken.findUnique({
       where: { token: dto.token },
@@ -196,12 +241,68 @@ export class AuthService {
   /** Bump when the token payload shape changes; older tokens re-auth via refresh. */
   static readonly TOKEN_VERSION = 2;
 
+  /** W2-E5-S1: the workspaces this user may operate in. */
+  async getContexts(userId: number) {
+    const memberships = await this.prisma.organizationMembership.findMany({
+      where: { userId, status: 'active' },
+      include: { organization: { select: { id: true, name: true, type: true, status: true } } },
+      orderBy: { id: 'asc' },
+    });
+    const boardGrant = await this.prisma.roleAssignment.findFirst({
+      where: { userId, scopeType: 'platform' },
+    });
+    return {
+      organizations: memberships.map((m) => m.organization),
+      hasBoardWorkspace: boardGrant !== null,
+    };
+  }
+
+  /**
+   * W2-E5-S1: mint a token pair for a different active organization.
+   * Members switch into their own organizations; platform/Board grant holders
+   * may enter ANY organization workspace — the same read-everywhere principle
+   * as the tenancy bypass, and audited the same way (every switch emits
+   * `workspace.switched`, with `boardBypass` set for non-member entries).
+   */
+  async switchContext(userId: number, organizationId: number) {
+    const membership = await this.prisma.organizationMembership.findFirst({
+      where: { userId, organizationId, status: 'active' },
+    });
+
+    let boardBypass = false;
+    if (!membership) {
+      const boardGrant = await this.prisma.roleAssignment.findFirst({
+        where: { userId, scopeType: 'platform', role: { in: BOARD_READ_ROLES } },
+      });
+      if (!boardGrant) throw new UnauthorizedException('You are not a member of this organization');
+      const organization = await this.prisma.organization.findUnique({ where: { id: organizationId } });
+      if (!organization) throw new UnauthorizedException('You are not a member of this organization');
+      boardBypass = true;
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('User not found');
+    const { admin } = await this.resolveReference(user.referenceId, user.referenceType);
+    const role = user.referenceType === 'admin' ? admin?.role : 'participant';
+    const tokens = await this.generateTokens(user.id, user.email, role!, user.referenceType, user.referenceId, organizationId);
+
+    this.eventBus.publish({
+      event: 'workspace.switched',
+      actor: this.actorContext.currentOrSystem(),
+      subject: { type: 'organization', id: organizationId },
+      data: { userId, organizationId, boardBypass },
+    });
+
+    return tokens;
+  }
+
   private async generateTokens(
     userId: number,
     email: string,
     role: string,
     referenceType: string,
     referenceId: number,
+    activeOrgIdOverride?: number,
   ) {
     // W1-E5-S1: activeOrgId defaults to the sole/first membership
     const membership = await this.prisma.organizationMembership.findFirst({
@@ -215,7 +316,7 @@ export class AuthService {
       role,
       referenceType,
       referenceId,
-      activeOrgId: membership?.organizationId ?? null,
+      activeOrgId: activeOrgIdOverride ?? membership?.organizationId ?? null,
       tokenVersion: AuthService.TOKEN_VERSION,
     };
 
@@ -224,7 +325,9 @@ export class AuthService {
         secret: this.config.get('jwt.secret'),
         expiresIn: this.config.get('jwt.expiresIn', '15m'),
       }),
-      this.jwt.signAsync(payload, {
+      // jti: two mints for the same user in the same second would otherwise
+      // produce byte-identical JWTs and violate refresh_tokens.token UNIQUE
+      this.jwt.signAsync({ ...payload, jti: uuidv4() }, {
         secret: this.config.get('jwt.refreshSecret'),
         expiresIn: this.config.get('jwt.refreshExpiresIn', '7d'),
       }),

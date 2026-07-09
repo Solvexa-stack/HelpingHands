@@ -12,7 +12,11 @@
     "studies": "Studies",
     "languages": "Languages",
     "reports": "Reports",
-    "audit": "Audit Trail"
+    "audit": "Audit Trail",
+    "organizations": "Organizations",
+    "board": "Board",
+    "team": "Team",
+    "settings": "Settings"
   },
   "execution": {
     "title": "Project Execution",

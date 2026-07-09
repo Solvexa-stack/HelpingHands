@@ -32,9 +32,11 @@ The Board becomes operational: an immutable decision record on every approval, g
 Wave 1 (Board org + platform grants). Wave 2 workspace shell for the Board UI (queue placeholder exists from Wave 2). Overlappable with Wave 4 development per `10`.
 
 ## Definition of done
-- [ ] Every study approval/rejection in production produces a `BoardDecision` with rationale; parity check green.
-- [ ] Historical votes migrated; tallies verified equal; voting endpoints byte-compatible (regression suite green unmodified).
-- [ ] A full study voting cycle (open → votes → close → tally → approve) runs end-to-end on `VoteRound`/`Vote` with `StudyVote` frozen.
-- [ ] Board workspace live: cross-org queue, decision recording, decision/vote history views.
-- [ ] `changes_requested` decision path exercised: study returns to revision with rationale visible to the owning org.
-- [ ] Audit trail shows decision + votes for a complete cycle (spot-audited).
+- [x] Every study approval/rejection in production produces a `BoardDecision` with rationale; parity check green. *(study approve/reject delegates to `GovernanceService.decideStudy`; nightly `DecisionParityService`; pre-W3 approvals backfilled)*
+- [x] Historical votes migrated; tallies verified equal; voting endpoints byte-compatible (regression suite green unmodified). *(`w3-governance-backfill` verified in seed + `w3-governance-cycle` spec; 268-test suite green — only the W0 event-catalog spec grew the three designed W3 events)*
+- [x] A full study voting cycle (open → votes → close → tally → approve) runs end-to-end on `VoteRound`/`Vote` with `StudyVote` frozen. *(`w3-governance-cycle.e2e-spec.ts`; freeze middleware blocks writes)*
+- [x] Board workspace live: cross-org queue, decision recording, decision/vote history views. *(`/board`: queue + decision modal with templated rationales + history tabs)*
+- [x] `changes_requested` decision path exercised: study returns to revision with rationale visible to the owning org. *(decision → study back to draft; rationale on study detail + notification to the study author)*
+- [x] Audit trail shows decision + votes for a complete cycle (spot-audited). *(spec asserts `board_decision.recorded`, `vote.cast`, `vote_round.opened/closed` audit rows)*
+
+**W3 addendum:** study governance transitions (`published`/`voting_*`/`approved`/`rejected`) are gated on Board permissions (`study.govern`: platform `board_chair`/`board_member`) under `POLICY_ENFORCED` — the administrator-enum gate survives only as the flags-off rollback path (09), closing the D5 finding.

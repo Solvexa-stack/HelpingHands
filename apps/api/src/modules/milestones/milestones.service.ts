@@ -3,6 +3,7 @@ import { MilestoneStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
+import { TenancyRepository } from '../policy/tenancy.repository';
 import { CreateMilestoneDto, UpdateMilestoneDto } from './dto/milestone.dto';
 
 @Injectable()
@@ -10,9 +11,11 @@ export class MilestonesService {
   constructor(
     private prisma: PrismaService,
     private eventBus: EventBusService,
+    private tenancy: TenancyRepository,
   ) {}
 
   private async getProjectBlockId(projectId: number): Promise<number> {
+    await this.tenancy.assertProjectVisible(projectId); // W2-E3-S1
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project) throw new NotFoundException(`Project #${projectId} not found`);
     return project.blockId;
@@ -21,7 +24,7 @@ export class MilestonesService {
   async findAll(projectId: number) {
     const projectBlockId = await this.getProjectBlockId(projectId);
     return this.prisma.projectMilestone.findMany({
-      where: { projectId: projectBlockId },
+      where: { projectRefId: projectId },
       include: { block: { include: { translations: true } } },
       orderBy: { targetDate: 'asc' },
     });
@@ -35,6 +38,7 @@ export class MilestonesService {
     const milestone = await this.prisma.projectMilestone.create({
       data: {
         projectId: projectBlockId,
+        projectRefId: projectId, // W2-E1-S2 dual-write (D1)
         blockId: dto.blockId,
         targetDate: dto.targetDate ? new Date(dto.targetDate) : undefined,
         status: dto.status,
@@ -54,7 +58,7 @@ export class MilestonesService {
 
   async update(actor: ActorContext, projectId: number, milestoneId: number, dto: UpdateMilestoneDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
-    const milestone = await this.prisma.projectMilestone.findFirst({ where: { id: milestoneId, projectId: projectBlockId } });
+    const milestone = await this.prisma.projectMilestone.findFirst({ where: { id: milestoneId, projectRefId: projectId } });
     if (!milestone) throw new NotFoundException(`Milestone #${milestoneId} not found`);
 
     const { blockId, ...rest } = dto;
@@ -82,7 +86,7 @@ export class MilestonesService {
 
   async remove(actor: ActorContext, projectId: number, milestoneId: number) {
     const projectBlockId = await this.getProjectBlockId(projectId);
-    const milestone = await this.prisma.projectMilestone.findFirst({ where: { id: milestoneId, projectId: projectBlockId } });
+    const milestone = await this.prisma.projectMilestone.findFirst({ where: { id: milestoneId, projectRefId: projectId } });
     if (!milestone) throw new NotFoundException(`Milestone #${milestoneId} not found`);
     await this.prisma.projectMilestone.delete({ where: { id: milestoneId } });
 

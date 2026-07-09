@@ -593,6 +593,19 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
         )}
       </div>
 
+      {/* W3-E4-S3: Board rationale — visible to the owning org when the
+          latest decision requested changes */}
+      {(() => {
+        const latest = (study.decisions ?? [])[((study.decisions ?? []).length || 1) - 1];
+        if (!latest || latest.decision !== 'changes_requested' || !['draft', 'in_review'].includes(study.status)) return null;
+        return (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+            <p className="text-sm font-semibold text-yellow-800">The Board requested changes</p>
+            <p className="text-sm text-yellow-700 mt-1">{latest.rationale}</p>
+          </div>
+        );
+      })()}
+
       {/* Tabs */}
       <div className="border-b border-gray-200 flex gap-1">
         <button

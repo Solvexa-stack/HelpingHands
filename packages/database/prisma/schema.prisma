@@ -335,6 +335,13 @@ model User {
   notifications Notification[]
   organizationMemberships OrganizationMembership[]
   roleAssignments         RoleAssignment[]
+  assignedSections  StudySection[]    @relation("SectionAssignedUser")
+  assignedTasks     ProjectTask[]     @relation("TaskAssignedUser")
+  createdStudies    ProjectStudy[]    @relation("StudyCreatedByUser")
+  approvedStudies   ProjectStudy[]    @relation("StudyApprovedByUser")
+  approvedDonations ProjectDonation[] @relation("DonationApprovedByUser")
+  boardDecisions    BoardDecision[]   @relation("BoardDecisionDecidedBy")
+  governanceVotes   Vote[]            @relation("VoteUser")
 
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
@@ -384,6 +391,13 @@ model Project {
   donations        ProjectDonation[]
   study            ProjectStudy?
   onlineDonations  OnlineDonation[]
+  stepsRef         ProjectStep[]        @relation("StepProjectRef")
+  phasesRef        ProjectPhase[]       @relation("PhaseProjectRef")
+  tasksRef         ProjectTask[]        @relation("TaskProjectRef")
+  budgetsRef       ProjectBudget[]      @relation("BudgetProjectRef")
+  expensesRef      ProjectExpense[]     @relation("ExpenseProjectRef")
+  transactionsRef  ProjectTransaction[] @relation("TransactionProjectRef")
+  milestonesRef    ProjectMilestone[]   @relation("MilestoneProjectRef")
 
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
@@ -412,6 +426,10 @@ model ProjectDonation {
 
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
+
+  // W2-E2 (D2 repair): User-FK twin beside the legacy Admin-FK
+  approvedByUserId Int?  @map("approved_by_user_id")
+  approvedByUser   User? @relation("DonationApprovedByUser", fields: [approvedByUserId], references: [id], onDelete: Restrict)
 
   @@index([projectId])
   @@index([participantId])
@@ -477,6 +495,12 @@ model ProjectStudy {
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
 
+  // W2-E2 (D2 repair): User-FK twins beside the legacy Admin-FKs
+  createdByUserId  Int?  @map("created_by_user_id")
+  createdByUser    User? @relation("StudyCreatedByUser", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  approvedByUserId Int?  @map("approved_by_user_id")
+  approvedByUser   User? @relation("StudyApprovedByUser", fields: [approvedByUserId], references: [id], onDelete: Restrict)
+
   @@map("project_studies")
 }
 
@@ -504,6 +528,10 @@ model StudySection {
 
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
+
+  // W2-E2 (D2 repair): User-FK twin beside the legacy Admin-FK
+  assignedToUserId Int?  @map("assigned_to_user_id")
+  assignedUser     User? @relation("SectionAssignedUser", fields: [assignedToUserId], references: [id], onDelete: Restrict)
 
   @@index([studyId])
   @@map("study_sections")
@@ -604,7 +632,12 @@ model ProjectStep {
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
 
+  // W2-E1 (D1 repair): real Project FK; legacy projectId still points at Block
+  projectRefId Int?     @map("project_ref_id")
+  projectRef   Project? @relation("StepProjectRef", fields: [projectRefId], references: [id], onDelete: Restrict)
+
   @@index([projectId])
+  @@index([projectRefId])
   @@map("project_steps")
 }
 
@@ -627,7 +660,12 @@ model ProjectPhase {
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
 
+  // W2-E1 (D1 repair): real Project FK; legacy projectId still points at Block
+  projectRefId Int?     @map("project_ref_id")
+  projectRef   Project? @relation("PhaseProjectRef", fields: [projectRefId], references: [id], onDelete: Restrict)
+
   @@index([projectId])
+  @@index([projectRefId])
   @@map("project_phases")
 }
 
@@ -652,8 +690,17 @@ model ProjectTask {
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
 
+  // W2-E1 (D1 repair): real Project FK; legacy projectId still points at Block
+  projectRefId Int?     @map("project_ref_id")
+  projectRef   Project? @relation("TaskProjectRef", fields: [projectRefId], references: [id], onDelete: Restrict)
+
+  // W2-E2 (D2 repair): User-FK twin beside the legacy Admin-FK
+  assignedToUserId Int?  @map("assigned_to_user_id")
+  assignedUser     User? @relation("TaskAssignedUser", fields: [assignedToUserId], references: [id], onDelete: Restrict)
+
   @@index([projectId])
   @@index([phaseId])
+  @@index([projectRefId])
   @@map("project_tasks")
 }
 
@@ -676,7 +723,12 @@ model ProjectBudget {
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
 
+  // W2-E1 (D1 repair): real Project FK; legacy projectId still points at Block
+  projectRefId Int?     @map("project_ref_id")
+  projectRef   Project? @relation("BudgetProjectRef", fields: [projectRefId], references: [id], onDelete: Restrict)
+
   @@index([projectId])
+  @@index([projectRefId])
   @@map("project_budgets")
 }
 
@@ -698,8 +750,13 @@ model ProjectExpense {
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
 
+  // W2-E1 (D1 repair): real Project FK; legacy projectId still points at Block
+  projectRefId Int?     @map("project_ref_id")
+  projectRef   Project? @relation("ExpenseProjectRef", fields: [projectRefId], references: [id], onDelete: Restrict)
+
   @@index([projectId])
   @@index([budgetId])
+  @@index([projectRefId])
   @@map("project_expenses")
 }
 
@@ -715,8 +772,13 @@ model ProjectTransaction {
 
   project Block @relation("TransactionProject", fields: [projectId], references: [id])
 
+  // W2-E1 (D1 repair): real Project FK; legacy projectId still points at Block
+  projectRefId Int?     @map("project_ref_id")
+  projectRef   Project? @relation("TransactionProjectRef", fields: [projectRefId], references: [id], onDelete: Restrict)
+
   @@index([projectId])
   @@index([referenceType, referenceId])
+  @@index([projectRefId])
   @@map("project_transactions")
 }
 
@@ -738,7 +800,12 @@ model ProjectMilestone {
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
 
+  // W2-E1 (D1 repair): real Project FK; legacy projectId still points at Block
+  projectRefId Int?     @map("project_ref_id")
+  projectRef   Project? @relation("MilestoneProjectRef", fields: [projectRefId], references: [id], onDelete: Restrict)
+
   @@index([projectId])
+  @@index([projectRefId])
   @@map("project_milestones")
 }
 
@@ -858,4 +925,90 @@ model RoleAssignment {
   @@index([scopeType, scopeId])
   @@index([userId])
   @@map("role_assignments")
+}
+
+// ─── Governance (W3-E1-S1, shapes: 03_DATA_MODEL.md §4) ──────────────────────
+// BoardDecision and Vote are IMMUTABLE by convention: application code must
+// never update or delete rows (no such service/endpoint exists; the one
+// compatibility exception is the legacy change-vote path on OPEN rounds,
+// retired in Wave 8). Corrections are new decisions, never edits.
+
+enum GovernanceSubjectType {
+  project
+  project_study
+  fund_allocation
+  organization
+  policy
+}
+
+enum BoardDecisionType {
+  approved
+  rejected
+  changes_requested
+}
+
+enum VoteRoundStatus {
+  open
+  closed
+}
+
+model BoardDecision {
+  id          Int                   @id @default(autoincrement())
+  subjectType GovernanceSubjectType @map("subject_type")
+  subjectId   Int                   @map("subject_id")
+  decision    BoardDecisionType
+  rationale   String                @db.Text
+  decidedById Int                   @map("decided_by_user_id")
+  decidedBy   User                  @relation("BoardDecisionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict)
+  decidedAt   DateTime              @default(now()) @map("decided_at")
+  sessionRef  String?               @map("session_ref") @db.VarChar(100)
+  voteRoundId Int?                  @map("vote_round_id")
+  voteRound   VoteRound?            @relation(fields: [voteRoundId], references: [id], onDelete: Restrict)
+  createdAt   DateTime              @default(now()) @map("created_at")
+
+  @@index([subjectType, subjectId])
+  @@index([decidedById])
+  @@map("board_decisions")
+}
+
+model VoteRound {
+  id          Int                   @id @default(autoincrement())
+  subjectType GovernanceSubjectType @map("subject_type")
+  subjectId   Int                   @map("subject_id")
+  status      VoteRoundStatus       @default(open)
+  opensAt     DateTime              @map("opens_at")
+  closesAt    DateTime?             @map("closes_at")
+  // Eligibility policy expression (07): default transcribes current study
+  // voting — any authenticated user. No electorate expansion in Wave 3.
+  eligibility Json                  @default("{\"type\": \"authenticated\"}")
+  // Quorum & threshold rules; empty = tally only (current behavior: humans decide)
+  rules       Json                  @default("{}")
+  // Tally + pass/fail recorded at close by the governance service
+  result      Json?
+  reminderSentAt DateTime?          @map("reminder_sent_at")
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+
+  votes     Vote[]
+  decisions BoardDecision[]
+
+  @@index([subjectType, subjectId])
+  @@index([status])
+  @@map("vote_rounds")
+}
+
+model Vote {
+  id          Int        @id @default(autoincrement())
+  voteRoundId Int        @map("vote_round_id")
+  voteRound   VoteRound  @relation(fields: [voteRoundId], references: [id], onDelete: Restrict)
+  userId      Int        @map("user_id")
+  user        User       @relation("VoteUser", fields: [userId], references: [id], onDelete: Restrict)
+  choice      VoteChoice
+  comment     String?    @db.Text
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@unique([voteRoundId, userId])
+  @@index([userId])
+  @@map("votes")
 }

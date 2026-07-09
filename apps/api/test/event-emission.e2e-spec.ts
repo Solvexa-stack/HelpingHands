@@ -196,12 +196,15 @@ describe('Domain event emission: projects, study, voting (W0-E2-S3)', () => {
       'study_section.assigned',
       ...Array(sectionCount).fill('study_section.completed'),
       'study.published',
+      'vote_round.opened', // W3: the round is the new voting representation
       'voting.opened',
       'vote.cast',
       'vote.cast',
       'vote.cast',
       'vote.cast',
+      'vote_round.closed', // W3: tally recorded on the round at close
       'voting.closed',
+      'board_decision.recorded', // W3-E4: approval routes through governance
       'study.approved',
       'project.updated',
       'donation.pledged', // funding step — donation events joined the stream in S4

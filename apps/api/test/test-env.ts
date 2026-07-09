@@ -30,6 +30,12 @@ export function applyTestEnv(): void {
   // simulated events with this same webhook secret.
   process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_e2e_dummy_key';
   process.env.STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_e2e_test_secret';
+
+  // Enforcement flags: the suite's baseline is flags-OFF (Wave 1 behavior);
+  // specs that exercise enforcement flip these per-suite. Pinning here keeps
+  // the root .env fallback (dev convenience in app.module) out of tests.
+  process.env.TENANCY_ENFORCED = process.env.TENANCY_ENFORCED || 'false';
+  process.env.POLICY_ENFORCED = process.env.POLICY_ENFORCED || 'false';
 }
 
 /** URL of the server-level maintenance DB, used to CREATE the test database. */

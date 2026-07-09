@@ -9,6 +9,9 @@ import { paginate, paginatedResponse } from '../../common/dto/pagination.dto';
 import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
+import * as bcrypt from 'bcryptjs';
+import { randomUUID } from 'crypto';
 import {
   AddMemberDto,
   CapabilitiesDto,
@@ -31,6 +34,7 @@ export class OrganizationsService {
   constructor(
     private prisma: PrismaService,
     private eventBus: EventBusService,
+    private emailService: EmailService,
   ) {}
 
   private enabledTypes(): Set<string> {
@@ -110,6 +114,10 @@ export class OrganizationsService {
     const organization = await this.prisma.organization.findUnique({ where: { id } });
     if (!organization) throw new NotFoundException(`Organization #${id} not found`);
 
+    // Activation (manual mode this wave) stamps the verification columns;
+    // self-service verification arrives with the engine (Wave 6).
+    const activating = dto.status === 'active' && organization.status !== 'active';
+
     const updated = await this.prisma.organization.update({
       where: { id },
       data: {
@@ -117,6 +125,7 @@ export class OrganizationsService {
         registrationNumber: dto.registrationNumber,
         contentBlockId: dto.contentBlockId,
         status: dto.status,
+        ...(activating ? { verifiedAt: new Date(), verifiedBy: actor.userId } : {}),
       },
     });
 
@@ -200,12 +209,127 @@ export class OrganizationsService {
     });
   }
 
+  /**
+   * W2-E6-S1: invite the first org_admin — account (reset flow for the
+   * password), membership and org_admin grant in one audited step.
+   */
+  async inviteFirstAdmin(
+    actor: ActorContext,
+    organizationId: number,
+    dto: { email: string; firstName: string; lastName: string },
+  ) {
+    const organization = await this.prisma.organization.findUnique({ where: { id: organizationId } });
+    if (!organization) throw new NotFoundException(`Organization #${organizationId} not found`);
+
+    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (existing) throw new ConflictException('Email already registered');
+
+    // Account is created deactivated-password: the invitee sets one via the
+    // password-reset flow linked from the invitation email.
+    const admin = await this.prisma.admin.create({
+      data: { firstName: dto.firstName, lastName: dto.lastName, role: 'employee' },
+    });
+    const user = await this.prisma.user.create({
+      data: {
+        referenceId: admin.id,
+        referenceType: 'admin',
+        email: dto.email,
+        password: await bcrypt.hash(randomUUID(), 12), // unusable until reset
+        isActive: true,
+        joiningDate: new Date(),
+      },
+    });
+    const membership = await this.prisma.organizationMembership.create({
+      data: { organizationId, userId: user.id },
+    });
+    const grant = await this.prisma.roleAssignment.create({
+      data: { userId: user.id, role: 'org_admin', scopeType: 'organization', scopeId: organizationId, grantedBy: actor.userId },
+    });
+
+    // Invitation email rides the existing reset-token flow (best-effort —
+    // dev environments usually have no SMTP, hence the dev fallback below)
+    const token = randomUUID();
+    await this.prisma.passwordResetToken.create({
+      data: { email: dto.email, token, expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000) },
+    });
+    this.emailService.sendPasswordResetEmail(dto.email, token).catch(() => null);
+
+    this.eventBus.publish({
+      event: 'membership.added',
+      actor,
+      subject: { type: 'organization_membership', id: membership.id },
+      data: { organizationId, userId: user.id, invitedAdmin: true },
+    });
+    this.eventBus.publish({
+      event: 'role.granted',
+      actor,
+      subject: { type: 'role_assignment', id: grant.id },
+      data: { userId: user.id, role: 'org_admin', scopeType: 'organization', scopeId: organizationId },
+    });
+
+    // Dev fallback: outside production the activation link is returned in
+    // the response so onboarding works without SMTP. Never exposed in prod.
+    const devFallback =
+      process.env.NODE_ENV === 'production'
+        ? {}
+        : { activationUrl: `/activate?token=${token}`, activationToken: token };
+
+    return { message: 'Invitation created', userId: user.id, membershipId: membership.id, ...devFallback };
+  }
+
+  /** W2-E5-S2: grant an org-scoped role from the catalog to a member. */
+  async grantRole(actor: ActorContext, organizationId: number, userId: number, role: string) {
+    const membership = await this.prisma.organizationMembership.findFirst({
+      where: { organizationId, userId, status: 'active' },
+    });
+    if (!membership) throw new NotFoundException('User is not a member of this organization');
+
+    const existing = await this.prisma.roleAssignment.findFirst({
+      where: { userId, role, scopeType: 'organization', scopeId: organizationId },
+    });
+    if (existing) throw new ConflictException('Role already granted');
+
+    const grant = await this.prisma.roleAssignment.create({
+      data: { userId, role, scopeType: 'organization', scopeId: organizationId, grantedBy: actor.userId },
+    });
+
+    this.eventBus.publish({
+      event: 'role.granted',
+      actor,
+      subject: { type: 'role_assignment', id: grant.id },
+      data: { userId, role, scopeType: 'organization', scopeId: organizationId },
+    });
+    return grant;
+  }
+
+  async revokeRole(actor: ActorContext, organizationId: number, userId: number, role: string) {
+    const grant = await this.prisma.roleAssignment.findFirst({
+      where: { userId, role, scopeType: 'organization', scopeId: organizationId },
+    });
+    if (!grant) throw new NotFoundException('Grant not found');
+
+    await this.prisma.roleAssignment.delete({ where: { id: grant.id } });
+    this.eventBus.publish({
+      event: 'role.revoked',
+      actor,
+      subject: { type: 'role_assignment', id: grant.id },
+      data: { userId, role, scopeType: 'organization', scopeId: organizationId },
+    });
+  }
+
   async listMembers(organizationId: number) {
     await this.findById(organizationId);
-    return this.prisma.organizationMembership.findMany({
+    const members = await this.prisma.organizationMembership.findMany({
       where: { organizationId },
       include: { user: { select: { id: true, email: true, referenceType: true } } },
       orderBy: { id: 'asc' },
     });
+    const grants = await this.prisma.roleAssignment.findMany({
+      where: { scopeType: 'organization', scopeId: organizationId },
+    });
+    return members.map((m) => ({
+      ...m,
+      roles: grants.filter((g) => g.userId === m.userId).map((g) => g.role),
+    }));
   }
 }

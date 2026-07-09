@@ -12,6 +12,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { ActorContext } from '../../events/actor-context';
 import { ActorContextService } from '../../events/actor-context.storage';
 import { EventBusService } from '../../events/event-bus.service';
+import { TenancyRepository } from '../policy/tenancy.repository';
 
 @Injectable()
 export class ProjectsService {
@@ -19,6 +20,7 @@ export class ProjectsService {
     private prisma: PrismaService,
     private eventBus: EventBusService,
     private actorContext: ActorContextService,
+    private tenancy: TenancyRepository,
   ) {}
 
   async findAll(query: ProjectQueryDto, userRole?: string, financialOfficerId?: number) {
@@ -54,9 +56,11 @@ export class ProjectsService {
       progression: { progression: sortOrder },
     };
 
+    const scopedWhere = await this.tenancy.enforcedProjectWhere(where); // W2-E3-S1
+
     const [data, total] = await Promise.all([
       this.prisma.project.findMany({
-        where,
+        where: scopedWhere,
         skip,
         take,
         orderBy: validSortFields[sortBy] || { createdAt: sortOrder },
@@ -72,7 +76,7 @@ export class ProjectsService {
           study: { select: { id: true, status: true } },
         },
       }),
-      this.prisma.project.count({ where }),
+      this.prisma.project.count({ where: scopedWhere }),
     ]);
 
     const mapped = data.map(({ study, ...project }) => ({
@@ -85,6 +89,7 @@ export class ProjectsService {
   }
 
   async findById(id: number, lang?: string) {
+    await this.tenancy.assertProjectVisible(id); // W2-E3-S1
     const project = await this.prisma.project.findUnique({
       where: { id },
       include: {
@@ -135,9 +140,10 @@ export class ProjectsService {
         expectedStartDate: dto.expectedStartDate ? new Date(dto.expectedStartDate) : undefined,
         dateOfCompletion: dto.dateOfCompletion ? new Date(dto.dateOfCompletion) : undefined,
         financialOfficerId: dto.financialOfficerId,
-        // W1-E3: all projects are organization-owned; platform creates go to
-        // the default org until Wave 2 introduces org-scoped creation.
-        ownerOrganizationId: await this.getDefaultOrganizationId(),
+        // W2 isolation: ownership follows the actor's active workspace — never
+        // the request body. Actors without an org context (system/backfill)
+        // fall back to the default org.
+        ownerOrganizationId: actor.activeOrgId ?? (await this.getDefaultOrganizationId()),
       },
       include: {
         block: { include: { translations: true } },
@@ -156,6 +162,7 @@ export class ProjectsService {
   }
 
   async update(actor: ActorContext, id: number, dto: UpdateProjectDto) {
+    await this.tenancy.assertProjectVisible(id); // W2 isolation: writes are org-scoped too
     const project = await this.prisma.project.findUnique({ where: { id } });
     if (!project) throw new NotFoundException(`Project #${id} not found`);
     if (project.isCompleted) throw new BadRequestException('Completed projects cannot be modified');
@@ -186,6 +193,7 @@ export class ProjectsService {
   }
 
   async remove(actor: ActorContext, id: number) {
+    await this.tenancy.assertProjectVisible(id); // W2 isolation: writes are org-scoped too
     const project = await this.prisma.project.findUnique({ where: { id } });
     if (!project) throw new NotFoundException(`Project #${id} not found`);
     await this.prisma.project.delete({ where: { id } });

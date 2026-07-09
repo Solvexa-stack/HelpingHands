@@ -5,38 +5,45 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, FolderKanban, Heart, Users, UserCheck,
   FileText, Newspaper, CalendarDays, Info, Globe, Heart as HeartIcon,
-  ChevronRight, FlaskConical, BarChart3, ScrollText,
+  ChevronRight, FlaskConical, BarChart3, ScrollText, Building2, Landmark,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
 
+// `platformOnly` marks platform-administration pages: they need a platform
+// (Board) grant on top of the legacy role — org workspaces never see them.
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, tKey: 'nav.dashboard', roles: ['administrator', 'employee', 'financial_officer'] },
   { href: '/donations', icon: Heart, tKey: 'nav.donations', roles: ['administrator', 'employee', 'financial_officer'] },
   { href: '/projects', icon: FolderKanban, tKey: 'nav.projects', roles: ['administrator', 'employee', 'financial_officer'] },
   { href: '/studies', icon: FlaskConical, tKey: 'nav.studies', roles: ['administrator', 'employee', 'financial_officer'] },
   { href: '/participants', icon: Users, tKey: 'nav.participants', roles: ['administrator', 'employee'] },
-  { href: '/employees', icon: UserCheck, tKey: 'nav.employees', roles: ['administrator'] },
+  { href: '/employees', icon: UserCheck, tKey: 'nav.employees', roles: ['administrator'], platformOnly: true },
   { label: 'separator' },
   { href: '/content/blogs', icon: FileText, tKey: 'nav.blogs', roles: ['administrator', 'employee'] },
   { href: '/content/news', icon: Newspaper, tKey: 'nav.news', roles: ['administrator', 'employee'] },
   { href: '/content/events', icon: CalendarDays, tKey: 'nav.events', roles: ['administrator', 'employee'] },
   { href: '/content/about', icon: Info, tKey: 'nav.about', roles: ['administrator', 'employee'] },
   { label: 'separator' },
-  { href: '/languages', icon: Globe, tKey: 'nav.languages', roles: ['administrator'] },
+  { href: '/languages', icon: Globe, tKey: 'nav.languages', roles: ['administrator'], platformOnly: true },
   { href: '/reports', icon: BarChart3, tKey: 'nav.reports', roles: ['administrator', 'financial_officer'] },
-  { href: '/audit', icon: ScrollText, tKey: 'nav.audit', roles: ['administrator'] },
+  { href: '/audit', icon: ScrollText, tKey: 'nav.audit', roles: ['administrator'], platformOnly: true },
+  { href: '/organizations', icon: Building2, tKey: 'nav.organizations', roles: ['administrator'], platformOnly: true },
+  { href: '/board', icon: Landmark, tKey: 'nav.board', roles: ['administrator'], boardOnly: true },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, hasBoardWorkspace, contexts, activeOrgId } = useAuth();
   const { t } = useLanguage();
   const role = user?.admin?.role || '';
+  const activeOrg = contexts.find((c) => c.id === activeOrgId) ?? (contexts.length === 1 ? contexts[0] : null);
 
-  const visible = navItems.filter((item) => {
+  const visible = navItems.filter((item: any) => {
     if (item.label === 'separator') return true;
+    if (item.boardOnly && !hasBoardWorkspace) return false;
+    if (item.platformOnly && !hasBoardWorkspace) return false;
     return item.roles?.includes(role);
   });
 
@@ -50,9 +57,16 @@ export function Sidebar() {
           <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
             <HeartIcon className="w-4 h-4 text-white fill-white" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-white font-bold text-sm">HelpingHands</p>
             <p className="text-blue-400 text-xs">{t('sidebar.adminPanel')}</p>
+            {/* W2 isolation: unambiguous workspace identity */}
+            {activeOrg && (
+              <p className="text-blue-300 text-xs truncate mt-0.5" title={activeOrg.name}>
+                <Building2 className="w-3 h-3 inline mr-1 align-[-1px]" />
+                {activeOrg.name}
+              </p>
+            )}
           </div>
         </div>
       </div>
