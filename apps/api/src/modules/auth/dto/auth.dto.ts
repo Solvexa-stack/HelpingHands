@@ -42,8 +42,8 @@ export class RegisterDto {
   @ApiProperty({ example: 'SecurePass@123' })
   @IsString()
   @MinLength(8)
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/, {
-    message: 'Password must contain uppercase, lowercase, number and special character',
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/, {
+    message: 'Password must contain uppercase, lowercase, a number and a special character',
   })
   password: string;
 
@@ -75,8 +75,8 @@ export class ResetPasswordDto {
   @ApiProperty({ example: 'NewSecurePass@123' })
   @IsString()
   @MinLength(8)
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/, {
-    message: 'Password must contain uppercase, lowercase, number and special character',
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/, {
+    message: 'Password must contain uppercase, lowercase, a number and a special character',
   })
   password: string;
 }
@@ -103,8 +103,8 @@ export class ActivateInviteDto {
   @ApiProperty({ example: 'NewSecurePass@123' })
   @IsString()
   @MinLength(8)
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/, {
-    message: 'Password must contain uppercase, lowercase, number and special character',
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/, {
+    message: 'Password must contain uppercase, lowercase, a number and a special character',
   })
   password: string;
 }
@@ -118,8 +118,8 @@ export class ChangePasswordDto {
   @ApiProperty()
   @IsString()
   @MinLength(8)
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/, {
-    message: 'Password must contain uppercase, lowercase, number and special character',
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/, {
+    message: 'Password must contain uppercase, lowercase, a number and a special character',
   })
   newPassword: string;
 }

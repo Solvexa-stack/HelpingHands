@@ -22,6 +22,7 @@ import {
   AddMemberDto,
   CapabilitiesDto,
   CreateOrganizationDto,
+  InviteMemberDto,
   OrganizationQueryDto,
   UpdateOrganizationDto,
 } from './dto/organization.dto';
@@ -89,10 +90,10 @@ export class OrganizationsController {
   }
 
   @Post(':id/invite-admin')
-  @ApiOperation({ summary: 'Invite the first org_admin (account + membership + grant, audited)' })
+  @ApiOperation({ summary: 'Invite or directly create a workspace member (account + membership + role grant, audited)' })
   inviteFirstAdmin(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: { email: string; firstName: string; lastName: string },
+    @Body() dto: InviteMemberDto,
     @CurrentActor() actor: ActorContext,
   ) {
     return this.organizationsService.inviteFirstAdmin(actor, id, dto);

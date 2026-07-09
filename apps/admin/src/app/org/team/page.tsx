@@ -18,8 +18,9 @@ export default function OrgTeamPage() {
   const { activeOrgId } = useAuth();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
-  const [invite, setInvite] = useState({ email: '', firstName: '', lastName: '' });
+  const [invite, setInvite] = useState({ email: '', firstName: '', lastName: '', password: '', role: 'staff' });
   const [activationUrl, setActivationUrl] = useState<string | null>(null);
+  const [createdLogin, setCreatedLogin] = useState<string | null>(null);
   const [roleByUser, setRoleByUser] = useState<Record<number, string>>({});
 
   const { data: members, error } = useQuery({
@@ -30,14 +31,26 @@ export default function OrgTeamPage() {
   });
 
   const refresh = () => qc.invalidateQueries({ queryKey: ['org-team'] });
-  const onError = (err: any) => toastError(err?.response?.data?.message || 'Failed');
+  const onError = (err: any) => {
+    const data = err?.response?.data;
+    const details = Array.isArray(data?.errors) ? `: ${data.errors.join('; ')}` : '';
+    toastError(`${data?.message || 'Failed'}${details}`);
+  };
 
   const inviteMutation = useMutation({
-    mutationFn: () => organizationsApi.inviteFirstAdmin(activeOrgId!, invite),
+    mutationFn: () =>
+      organizationsApi.inviteFirstAdmin(activeOrgId!, {
+        email: invite.email.trim(),
+        firstName: invite.firstName.trim(),
+        lastName: invite.lastName.trim(),
+        role: invite.role,
+        ...(invite.password ? { password: invite.password } : {}),
+      }),
     onSuccess: (data: any) => {
-      success('Invitation sent');
-      setInvite({ email: '', firstName: '', lastName: '' });
-      setActivationUrl(data?.activationUrl ?? null); // dev-only field
+      success(data?.message ?? 'Invitation sent');
+      setCreatedLogin(invite.password ? invite.email : null); // direct-credentials mode
+      setActivationUrl(data?.activationUrl ?? null); // dev-only field (link mode)
+      setInvite({ email: '', firstName: '', lastName: '', password: '', role: 'staff' });
       refresh();
     },
     onError,
@@ -52,6 +65,19 @@ export default function OrgTeamPage() {
     onSuccess: () => { success('Role revoked'); refresh(); },
     onError,
   });
+
+
+  // client-side mirror of the server rules — problems shown before submitting
+  const inviteProblems: string[] = [];
+  if (invite.email && !/^\S+@\S+\.\S+$/.test(invite.email))
+    inviteProblems.push('Email must be a full address like name@domain.com');
+  if (
+    invite.password &&
+    !(invite.password.length >= 8 && /[a-z]/.test(invite.password) && /[A-Z]/.test(invite.password) && /\d/.test(invite.password) && /[^A-Za-z0-9]/.test(invite.password))
+  )
+    inviteProblems.push('Password needs 8+ characters incl. uppercase, lowercase, a number and a special character');
+  const inviteReady =
+    Boolean(invite.email.trim() && invite.firstName.trim() && invite.lastName.trim()) && inviteProblems.length === 0;
 
   const restricted = (error as any)?.response?.status === 403;
 
@@ -74,15 +100,41 @@ export default function OrgTeamPage() {
           {/* Invite */}
           <div className="card p-5 space-y-2">
             <div className="text-xs font-semibold text-gray-500 uppercase">Invite a member</div>
-            <div className="grid sm:grid-cols-4 gap-2">
+            <div className="grid sm:grid-cols-3 gap-2">
               <input className="input" placeholder="Email" value={invite.email} onChange={(e) => setInvite({ ...invite, email: e.target.value })} />
               <input className="input" placeholder="First name" value={invite.firstName} onChange={(e) => setInvite({ ...invite, firstName: e.target.value })} />
               <input className="input" placeholder="Last name" value={invite.lastName} onChange={(e) => setInvite({ ...invite, lastName: e.target.value })} />
-              <button className="btn-primary btn-md gap-1" disabled={!invite.email || inviteMutation.isPending} onClick={() => inviteMutation.mutate()}>
-                <UserPlus className="w-4 h-4" /> Invite
+            </div>
+            <div className="grid sm:grid-cols-3 gap-2">
+              <select className="input" value={invite.role} onChange={(e) => setInvite({ ...invite, role: e.target.value })} title="Workspace role">
+                {ORG_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+              <input
+                className="input"
+                type="password"
+                placeholder="Password (optional — sets login now)"
+                value={invite.password}
+                onChange={(e) => setInvite({ ...invite, password: e.target.value })}
+              />
+              <button
+                className="btn-primary btn-md gap-1"
+                disabled={!inviteReady || inviteMutation.isPending}
+                onClick={() => inviteMutation.mutate()}
+              >
+                <UserPlus className="w-4 h-4" /> {invite.password ? 'Create member' : 'Send invite'}
               </button>
             </div>
-            <p className="text-xs text-gray-400">The invitee receives an email to set their password and joins this organization.</p>
+            {inviteProblems.map((msg) => (
+              <p key={msg} className="text-xs text-red-600">{msg}</p>
+            ))}
+            <p className="text-xs text-gray-400">
+              Email, first and last name are required. With a password (min 8, uppercase + lowercase + number + special, e.g. <code>Member@123</code>) the member can log in immediately; without one they receive an activation link to choose their own.
+            </p>
+            {createdLogin && !activationUrl && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-xs text-emerald-800">
+                <span className="font-medium">Member created.</span> They can log in right now at <code>/login</code> with <code>{createdLogin}</code> and the password you set.
+              </div>
+            )}
             {activationUrl && (
               <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-xs space-y-1">
                 <p className="font-medium text-emerald-800">Dev activation link (no SMTP configured):</p>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { FolderKanban, Heart, TrendingUp, Vote, ArrowRight } from 'lucide-react';
+import { FolderKanban, Heart, TrendingUp, Vote, ArrowRight, Plus, UserPlus } from 'lucide-react';
 import { dashboardApi } from '@/lib/api';
 import { useAuth } from '@/contexts/auth-context';
 import { formatDatetime } from '@/lib/utils';
@@ -41,6 +41,15 @@ export default function OrgDashboardPage() {
         <p className="text-emerald-100 text-sm mt-2">
           Welcome back{user?.admin?.firstName ? `, ${user.admin.firstName}` : ''} — everything on this page belongs to your organization only.
         </p>
+        {/* Quick actions: the two things a fresh workspace needs first */}
+        <div className="flex flex-wrap gap-2 mt-4">
+          <Link href="/org/projects/new" className="inline-flex items-center gap-1.5 bg-white/15 hover:bg-white/25 transition-colors rounded-lg px-3 py-1.5 text-sm font-medium">
+            <Plus className="w-4 h-4" /> New project
+          </Link>
+          <Link href="/org/team" className="inline-flex items-center gap-1.5 bg-white/15 hover:bg-white/25 transition-colors rounded-lg px-3 py-1.5 text-sm font-medium">
+            <UserPlus className="w-4 h-4" /> Invite team member
+          </Link>
+        </div>
       </div>
 
       {/* Org stats */}

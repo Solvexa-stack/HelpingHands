@@ -17,6 +17,7 @@ import {
   CapabilitiesDto,
   CreateOrganizationDto,
   DEFAULT_CAPABILITIES,
+  InviteMemberDto,
   OrganizationQueryDto,
   UpdateOrganizationDto,
 } from './dto/organization.dto';
@@ -213,19 +214,19 @@ export class OrganizationsService {
    * W2-E6-S1: invite the first org_admin — account (reset flow for the
    * password), membership and org_admin grant in one audited step.
    */
-  async inviteFirstAdmin(
-    actor: ActorContext,
-    organizationId: number,
-    dto: { email: string; firstName: string; lastName: string },
-  ) {
+  async inviteFirstAdmin(actor: ActorContext, organizationId: number, dto: InviteMemberDto) {
     const organization = await this.prisma.organization.findUnique({ where: { id: organizationId } });
     if (!organization) throw new NotFoundException(`Organization #${organizationId} not found`);
 
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Email already registered');
 
-    // Account is created deactivated-password: the invitee sets one via the
-    // password-reset flow linked from the invitation email.
+    // Two onboarding modes: with dto.password the workspace owner sets the
+    // credentials and the member can log in immediately; without it the
+    // account starts with an unusable password and the invitee activates via
+    // the reset-flow link.
+    const directCredentials = Boolean(dto.password);
+
     const admin = await this.prisma.admin.create({
       data: { firstName: dto.firstName, lastName: dto.lastName, role: 'employee' },
     });
@@ -234,7 +235,7 @@ export class OrganizationsService {
         referenceId: admin.id,
         referenceType: 'admin',
         email: dto.email,
-        password: await bcrypt.hash(randomUUID(), 12), // unusable until reset
+        password: await bcrypt.hash(directCredentials ? dto.password! : randomUUID(), 12),
         isActive: true,
         joiningDate: new Date(),
       },
@@ -242,17 +243,21 @@ export class OrganizationsService {
     const membership = await this.prisma.organizationMembership.create({
       data: { organizationId, userId: user.id },
     });
+    const memberRole = dto.role ?? 'org_admin';
     const grant = await this.prisma.roleAssignment.create({
-      data: { userId: user.id, role: 'org_admin', scopeType: 'organization', scopeId: organizationId, grantedBy: actor.userId },
+      data: { userId: user.id, role: memberRole, scopeType: 'organization', scopeId: organizationId, grantedBy: actor.userId },
     });
 
-    // Invitation email rides the existing reset-token flow (best-effort —
-    // dev environments usually have no SMTP, hence the dev fallback below)
-    const token = randomUUID();
-    await this.prisma.passwordResetToken.create({
-      data: { email: dto.email, token, expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000) },
-    });
-    this.emailService.sendPasswordResetEmail(dto.email, token).catch(() => null);
+    // Activation-link mode only: invitation email rides the existing
+    // reset-token flow (best-effort — dev environments usually have no SMTP,
+    // hence the dev fallback below)
+    const token = directCredentials ? null : randomUUID();
+    if (token) {
+      await this.prisma.passwordResetToken.create({
+        data: { email: dto.email, token, expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000) },
+      });
+      this.emailService.sendPasswordResetEmail(dto.email, token).catch(() => null);
+    }
 
     this.eventBus.publish({
       event: 'membership.added',
@@ -267,6 +272,15 @@ export class OrganizationsService {
       data: { userId: user.id, role: 'org_admin', scopeType: 'organization', scopeId: organizationId },
     });
 
+    if (directCredentials) {
+      return {
+        message: 'Member created — they can log in immediately with the credentials you set',
+        userId: user.id,
+        membershipId: membership.id,
+        role: memberRole,
+      };
+    }
+
     // Dev fallback: outside production the activation link is returned in
     // the response so onboarding works without SMTP. Never exposed in prod.
     const devFallback =
@@ -274,7 +288,7 @@ export class OrganizationsService {
         ? {}
         : { activationUrl: `/activate?token=${token}`, activationToken: token };
 
-    return { message: 'Invitation created', userId: user.id, membershipId: membership.id, ...devFallback };
+    return { message: 'Invitation created', userId: user.id, membershipId: membership.id, role: memberRole, ...devFallback };
   }
 
   /** W2-E5-S2: grant an org-scoped role from the catalog to a member. */

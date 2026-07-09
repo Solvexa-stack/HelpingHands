@@ -2,13 +2,17 @@ import { ApiProperty, ApiPropertyOptional, PartialType, PickType } from '@nestjs
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsEmail,
   IsEnum,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   Min,
+  MinLength,
 } from 'class-validator';
 import { MembershipStatus, OrganizationStatus, OrganizationType } from '@prisma/client';
 
@@ -51,6 +55,46 @@ export class CapabilitiesDto {
   @ApiProperty() @IsBoolean() canOpenDonations: boolean;
   @ApiProperty() @IsBoolean() isGovernmentEntity: boolean;
   @ApiProperty() @IsBoolean() requiresBoardOversight: boolean;
+}
+
+/**
+ * Workspace member invitation/creation. Two modes:
+ *  - without `password`: invitation — the invitee sets their own password via
+ *    the activation link (email / dev fallback);
+ *  - with `password`: the workspace owner sets credentials directly and the
+ *    member can log in immediately.
+ * `role` comes from the organization role catalog (default org_admin).
+ */
+export class InviteMemberDto {
+  @ApiProperty({ example: 'member@example.com' })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  firstName: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  lastName: string;
+
+  @ApiPropertyOptional({ description: 'Set credentials directly; omit to send an activation link' })
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/, {
+    message: 'Password must contain uppercase, lowercase, a number and a special character',
+  })
+  password?: string;
+
+  @ApiPropertyOptional({ enum: ['org_admin', 'project_manager', 'staff', 'org_accountant', 'viewer'], default: 'org_admin' })
+  @IsOptional()
+  @IsIn(['org_admin', 'project_manager', 'staff', 'org_accountant', 'viewer'])
+  role?: string;
 }
 
 export class AddMemberDto {

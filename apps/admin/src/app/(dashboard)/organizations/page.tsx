@@ -24,8 +24,9 @@ export default function OrganizationsPage() {
   const [selected, setSelected] = useState<any>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ type: 'ngo', name: '', registrationNumber: '' });
-  const [invite, setInvite] = useState({ email: '', firstName: '', lastName: '' });
+  const [invite, setInvite] = useState({ email: '', firstName: '', lastName: '', password: '', role: 'org_admin' });
   const [activationUrl, setActivationUrl] = useState<string | null>(null);
+  const [createdLogin, setCreatedLogin] = useState<string | null>(null);
   const [memberId, setMemberId] = useState('');
   const [roleByUser, setRoleByUser] = useState<Record<number, string>>({});
 
@@ -40,7 +41,11 @@ export default function OrganizationsPage() {
     qc.invalidateQueries({ queryKey: ['organizations'] });
     qc.invalidateQueries({ queryKey: ['org-members'] });
   };
-  const onError = (err: any) => toastError(err?.response?.data?.message || 'Failed');
+  const onError = (err: any) => {
+    const data = err?.response?.data;
+    const details = Array.isArray(data?.errors) ? `: ${data.errors.join('; ')}` : '';
+    toastError(`${data?.message || 'Failed'}${details}`);
+  };
 
   const createMutation = useMutation({
     mutationFn: () => organizationsApi.create(form),
@@ -48,11 +53,19 @@ export default function OrganizationsPage() {
     onError,
   });
   const inviteMutation = useMutation({
-    mutationFn: () => organizationsApi.inviteFirstAdmin(selected.id, invite),
+    mutationFn: () =>
+      organizationsApi.inviteFirstAdmin(selected.id, {
+        email: invite.email.trim(),
+        firstName: invite.firstName.trim(),
+        lastName: invite.lastName.trim(),
+        role: invite.role,
+        ...(invite.password ? { password: invite.password } : {}),
+      }),
     onSuccess: (data: any) => {
-      success('Invitation sent');
-      setInvite({ email: '', firstName: '', lastName: '' });
-      setActivationUrl(data?.activationUrl ?? null); // dev-only field
+      success(data?.message ?? 'Invitation sent');
+      setCreatedLogin(invite.password ? invite.email : null);
+      setActivationUrl(data?.activationUrl ?? null); // dev-only field (link mode)
+      setInvite({ email: '', firstName: '', lastName: '', password: '', role: 'org_admin' });
       refresh();
     },
     onError,
@@ -86,6 +99,19 @@ export default function OrganizationsPage() {
     },
     onError,
   });
+
+
+  // client-side mirror of the server rules — problems shown before submitting
+  const inviteProblems: string[] = [];
+  if (invite.email && !/^\S+@\S+\.\S+$/.test(invite.email))
+    inviteProblems.push('Email must be a full address like name@domain.com');
+  if (
+    invite.password &&
+    !(invite.password.length >= 8 && /[a-z]/.test(invite.password) && /[A-Z]/.test(invite.password) && /\d/.test(invite.password) && /[^A-Za-z0-9]/.test(invite.password))
+  )
+    inviteProblems.push('Password needs 8+ characters incl. uppercase, lowercase, a number and a special character');
+  const inviteReady =
+    Boolean(invite.email.trim() && invite.firstName.trim() && invite.lastName.trim()) && inviteProblems.length === 0;
 
   const organizations = data?.data || [];
 
@@ -204,17 +230,44 @@ export default function OrganizationsPage() {
               </div>
             </div>
 
-            {/* Invite first admin */}
+            {/* Invite / create workspace member */}
             <div className="space-y-2">
-              <div className="text-xs font-semibold text-gray-500 uppercase">Invite first org admin</div>
+              <div className="text-xs font-semibold text-gray-500 uppercase">Add workspace member</div>
               <div className="grid grid-cols-3 gap-2">
                 <input className="input" placeholder="Email" value={invite.email} onChange={(e) => setInvite({ ...invite, email: e.target.value })} />
                 <input className="input" placeholder="First name" value={invite.firstName} onChange={(e) => setInvite({ ...invite, firstName: e.target.value })} />
                 <input className="input" placeholder="Last name" value={invite.lastName} onChange={(e) => setInvite({ ...invite, lastName: e.target.value })} />
               </div>
-              <button className="btn-secondary btn-sm gap-1" disabled={!invite.email} onClick={() => inviteMutation.mutate()}>
-                <UserPlus className="w-3 h-3" /> Invite
+              <div className="grid grid-cols-3 gap-2">
+                <select className="input" value={invite.role} onChange={(e) => setInvite({ ...invite, role: e.target.value })} title="Workspace role">
+                  {ORG_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+                <input
+                  className="input col-span-2"
+                  type="password"
+                  placeholder="Password (optional — member can log in immediately)"
+                  value={invite.password}
+                  onChange={(e) => setInvite({ ...invite, password: e.target.value })}
+                />
+              </div>
+              <button
+                className="btn-secondary btn-sm gap-1"
+                disabled={!inviteReady || inviteMutation.isPending}
+                onClick={() => inviteMutation.mutate()}
+              >
+                <UserPlus className="w-3 h-3" /> {invite.password ? 'Create member' : 'Send invite'}
               </button>
+              {inviteProblems.map((msg) => (
+                <p key={msg} className="text-xs text-red-600">{msg}</p>
+              ))}
+              <p className="text-xs text-gray-400">
+                Email and both names are required; password (optional) needs 8+ chars with uppercase, lowercase, number and special character.
+              </p>
+              {createdLogin && !activationUrl && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-xs text-emerald-800">
+                  <span className="font-medium">Member created.</span> They can log in right now with <code>{createdLogin}</code> and the password you set.
+                </div>
+              )}
               {activationUrl && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-xs space-y-1">
                   <p className="font-medium text-emerald-800">Dev activation link (no SMTP configured):</p>

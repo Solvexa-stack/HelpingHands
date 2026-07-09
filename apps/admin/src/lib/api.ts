@@ -300,6 +300,8 @@ export const organizationsApi = {
     api.post('/organizations', data).then((r) => r.data.data),
   update: (id: number, data: { name?: string; registrationNumber?: string; status?: string }) =>
     api.put(`/organizations/${id}`, data).then((r) => r.data.data),
-  inviteFirstAdmin: (id: number, data: { email: string; firstName: string; lastName: string }) =>
-    api.post(`/organizations/${id}/invite-admin`, data).then((r) => r.data.data),
+  inviteFirstAdmin: (
+    id: number,
+    data: { email: string; firstName: string; lastName: string; password?: string; role?: string },
+  ) => api.post(`/organizations/${id}/invite-admin`, data).then((r) => r.data.data),
 };

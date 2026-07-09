@@ -163,6 +163,55 @@ describe('Invite activation flow (org onboarding)', () => {
     await http().get(`/api/v1/organizations/${orgId}/members`).set('Authorization', inviteeAuth).expect(200);
   });
 
+  describe('direct-credentials mode (owner sets email + password)', () => {
+    it('creates a member who can log in immediately — no activation link involved', async () => {
+      const res = await http()
+        .post(`/api/v1/organizations/${orgId}/invite-admin`)
+        .set('Authorization', platformAdmin)
+        .send({
+          email: 'direct.member@example.com',
+          firstName: 'Direct',
+          lastName: 'Member',
+          password: 'Direct@1234',
+          role: 'staff',
+        })
+        .expect(201);
+      expect(res.body.data.message).toContain('log in immediately');
+      expect(res.body.data.role).toBe('staff');
+      expect(res.body.data.activationUrl).toBeUndefined();
+      expect(res.body.data.activationToken).toBeUndefined();
+
+      // no invitation token exists — there is nothing to activate
+      const token = await prisma.passwordResetToken.findFirst({ where: { email: 'direct.member@example.com' } });
+      expect(token).toBeNull();
+
+      // the credentials the owner set work right away, scoped to the workspace
+      const login = await http()
+        .post('/api/v1/auth/login')
+        .send({ email: 'direct.member@example.com', password: 'Direct@1234' })
+        .expect(200);
+      expect(jwtPayload(login.body.data.accessToken).activeOrgId).toBe(orgId);
+
+      // the chosen catalog role was granted (not the org_admin default)
+      const grants = await prisma.roleAssignment.findMany({ where: { userId: res.body.data.userId } });
+      expect(grants).toHaveLength(1);
+      expect(grants[0]).toMatchObject({ role: 'staff', scopeType: 'organization', scopeId: orgId });
+    });
+
+    it('rejects weak passwords and roles outside the catalog', async () => {
+      await http()
+        .post(`/api/v1/organizations/${orgId}/invite-admin`)
+        .set('Authorization', platformAdmin)
+        .send({ email: 'weak.member@example.com', firstName: 'W', lastName: 'M', password: 'weak' })
+        .expect(400);
+      await http()
+        .post(`/api/v1/organizations/${orgId}/invite-admin`)
+        .set('Authorization', platformAdmin)
+        .send({ email: 'rogue.member@example.com', firstName: 'R', lastName: 'M', role: 'board_chair' })
+        .expect(400); // platform roles are not grantable through the workspace form
+    });
+  });
+
   it('the invitee cannot reach platform surfaces', async () => {
     await http().get('/api/v1/governance/queue').set('Authorization', inviteeAuth).expect(403);
     await http().get('/api/v1/governance/decisions').set('Authorization', inviteeAuth).expect(403);
