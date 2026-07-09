@@ -64,6 +64,24 @@ export class EventBusService {
   }
 
   /**
+   * W4: emit and AWAIT async subscribers (workflow effects need their
+   * side-effects — e.g. round creation — complete before the caller
+   * continues, matching the ordering of the legacy synchronous calls).
+   * Subscriber errors are still contained, never propagated.
+   */
+  async publishAndWait<TData>(input: DomainEventInput<TData>): Promise<DomainEvent<TData>> {
+    const envelope = this.buildEnvelope(input);
+    try {
+      await this.emitter.emitAsync(envelope.event, envelope);
+    } catch (err) {
+      this.logger.error(
+        `Subscriber error for awaited event ${envelope.event}: ${err instanceof Error ? err.message : err}`,
+      );
+    }
+    return envelope;
+  }
+
+  /**
    * Emit-after-commit helper. `work` receives a buffer to collect events
    * while it runs (typically inside `prisma.$transaction`); the buffer is
    * flushed only if `work` resolves. If it throws — Prisma has rolled the

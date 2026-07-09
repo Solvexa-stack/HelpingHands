@@ -16,6 +16,8 @@ import { TenancyRepository } from '../policy/tenancy.repository';
 import { PolicyService } from '../policy/policy.service';
 import { policyEnforced } from '../policy/policy.guard';
 import { GovernanceService } from '../governance/governance.service';
+import { WorkflowService } from '../workflow/workflow.service';
+import { workflowEnforced } from '../workflow/workflow.types';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ChangeStudyStatusDto } from './dto/change-study-status.dto';
@@ -60,7 +62,19 @@ export class StudyService {
     private tenancy: TenancyRepository,
     private policy: PolicyService,
     private governance: GovernanceService,
+    private workflow: WorkflowService,
   ) {}
+
+  /** W4-E4-S2: legacy status→engine action map (transcription of VALID_TRANSITIONS). */
+  private static readonly ACTION_MAP: Record<string, string> = {
+    'draft>in_review': 'submit',
+    'in_review>draft': 'revise',
+    'in_review>published': 'publish',
+    'published>voting_open': 'open_voting',
+    'voting_open>voting_open': 'extend_voting',
+    'voting_open>voting_closed': 'close_voting',
+    'voting_closed>in_review': 'reopen_review',
+  };
 
   // ─── Create ───────────────────────────────────────────────────────────────────
 
@@ -236,10 +250,13 @@ export class StudyService {
     if (!section) throw new NotFoundException(`Section #${sectionId} not found`);
     await this.tenancy.assertProjectVisible(section.study.projectId); // W2 isolation
 
-    // W2-E2-S2: assignee check reads the User-FK twin
+    // W2-E2-S2: assignee check reads the User-FK twin. Besides the assignee,
+    // platform administrators and org_admins of the project's owning
+    // organization have full section control.
     if (
       requestingRole !== AdminRole.administrator &&
-      section.assignedToUserId !== actor.userId
+      section.assignedToUserId !== actor.userId &&
+      !(await this.isOwningOrgAdmin(actor.userId, section.study.projectId))
     ) {
       throw new ForbiddenException('You are not assigned to this section');
     }
@@ -282,14 +299,33 @@ export class StudyService {
       });
 
       if (pendingRequired === 0) {
-        await this.prisma.projectStudy.update({
-          where: { id: section.studyId },
-          data: { status: StudyStatus.in_review },
-        });
-        await this.prisma.project.update({
-          where: { id: section.study.projectId },
-          data: { studyStatus: StudyStatus.in_review },
-        });
+        if (workflowEnforced('study')) {
+          await this.workflow.ensurePositionedInstance(
+            { subjectType: 'project', subjectId: section.study.projectId },
+            StudyStatus.draft,
+          );
+          await this.workflow.execute(
+            actor,
+            { subjectType: 'project', subjectId: section.study.projectId },
+            'submit',
+            {
+              note: 'all required sections completed',
+              sync: async (tx) => {
+                await tx.projectStudy.update({ where: { id: section.studyId }, data: { status: StudyStatus.in_review } });
+                await tx.project.update({ where: { id: section.study.projectId }, data: { studyStatus: StudyStatus.in_review } });
+              },
+            },
+          );
+        } else {
+          await this.prisma.projectStudy.update({
+            where: { id: section.studyId },
+            data: { status: StudyStatus.in_review },
+          });
+          await this.prisma.project.update({
+            where: { id: section.study.projectId },
+            data: { studyStatus: StudyStatus.in_review },
+          });
+        }
       }
     }
 
@@ -311,6 +347,26 @@ export class StudyService {
     }
 
     return updated;
+  }
+
+  /**
+   * Does the user hold an org_admin grant for the project's owning
+   * organization? Platform-owned projects (no owning org) never match — a
+   * null org must not fall through to holdsAnyGrant, which treats a missing
+   * scope as "any organization".
+   */
+  private async isOwningOrgAdmin(userId: number | null | undefined, projectId: number): Promise<boolean> {
+    if (userId == null) return false;
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { ownerOrganizationId: true },
+    });
+    if (project?.ownerOrganizationId == null) return false;
+    return this.policy.holdsAnyGrant(
+      userId,
+      [{ scope: 'organization', roles: ['org_admin'] }],
+      { organizationId: project.ownerOrganizationId },
+    );
   }
 
   // ─── Files ────────────────────────────────────────────────────────────────────
@@ -431,23 +487,48 @@ export class StudyService {
     if (dto.status === StudyStatus.voting_closed) updateData.votingEndsAt = new Date();
     if (dto.rejectionReason) updateData.rejectionReason = dto.rejectionReason;
 
-    // Keep Project.studyStatus mirrored
-    const [updatedStudy] = await this.prisma.$transaction([
-      this.prisma.projectStudy.update({ where: { id: studyId }, data: updateData }),
-      this.prisma.project.update({
-        where: { id: study.projectId },
-        data: { studyStatus: dto.status },
-      }),
-    ]);
+    let updatedStudy: typeof study;
+    if (workflowEnforced('study')) {
+      // W4-E4-S2: the engine drives the transition; the legacy columns are
+      // synced inside the engine transaction (bridge). Effects the service
+      // still emits itself (exact legacy payloads) are suppressed;
+      // vote_round.create/close stay live and drive the round subscriber.
+      const action = StudyService.ACTION_MAP[`${study.status}>${dto.status}`];
+      await this.workflow.ensurePositionedInstance(
+        { subjectType: 'project', subjectId: study.projectId },
+        study.status,
+      );
+      await this.workflow.execute(actor, { subjectType: 'project', subjectId: study.projectId }, action, {
+        payload: updateData.votingEndsAt ? { votingEndsAt: updateData.votingEndsAt } : undefined,
+        suppressEffects: ['study.published', 'voting.opened', 'voting.closed'],
+        sync: async (tx) => {
+          await tx.projectStudy.update({ where: { id: studyId }, data: updateData });
+          await tx.project.update({ where: { id: study.projectId }, data: { studyStatus: dto.status } });
+        },
+      });
+      updatedStudy = (await this.prisma.projectStudy.findUnique({ where: { id: studyId } }))!;
+    } else {
+      // Keep Project.studyStatus mirrored
+      [updatedStudy] = await this.prisma.$transaction([
+        this.prisma.projectStudy.update({ where: { id: studyId }, data: updateData }),
+        this.prisma.project.update({
+          where: { id: study.projectId },
+          data: { studyStatus: dto.status },
+        }),
+      ]);
+    }
 
     // W3: voting transitions keep their contract; the VoteRound is the new
-    // representation (opened on voting_open, closed+tallied on voting_closed)
-    await this.governance.syncRoundOnStudyStatus(
-      actor,
-      updatedStudy,
-      dto.status,
-      dto.status === StudyStatus.voting_open ? (updatedStudy.votingEndsAt ?? undefined) : undefined,
-    );
+    // representation. Engine mode: the vote_round.create/close effects drive
+    // the round subscriber instead of this direct call.
+    if (!workflowEnforced('study')) {
+      await this.governance.syncRoundOnStudyStatus(
+        actor,
+        updatedStudy,
+        dto.status,
+        dto.status === StudyStatus.voting_open ? (updatedStudy.votingEndsAt ?? undefined) : undefined,
+      );
+    }
 
     // Emit after the transaction committed
     this.fireStatusEvent(actor, dto, updatedStudy, study.projectId);

@@ -16,7 +16,9 @@
     "organizations": "Organisations",
     "board": "Conseil",
     "team": "Équipe",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "workflow": "Flux de travail",
+    "funds": "Fonds"
   },
   "execution": {
     "title": "Exécution du projet",
@@ -261,6 +263,7 @@
     "colCreated": "Créé le",
     "section": {
       "notFound": "Section introuvable",
+      "notAssigned": "Cette section ne vous est pas assignée, elle est donc en lecture seule.",
       "save": "Enregistrer",
       "content": "Contenu",
       "guidance": "Conseils",

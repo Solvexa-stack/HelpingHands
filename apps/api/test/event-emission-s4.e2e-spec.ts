@@ -304,7 +304,7 @@ describe('Domain event emission: donations, payments, execution, financial, mile
     expect(completed[0].actor.referenceType).toBe('anonymous');
     expect(completed[0].actor.userId).toBeNull();
     expect(completed[0].requestId).toBe('wh-trace-s4');
-    expect(completed[0].data).toEqual({ projectId, provider: 'stripe', amount: 2500 });
+    expect(completed[0].data).toEqual({ projectId, fundId: null, provider: 'stripe', amount: 2500 });
 
     // Replay: payment already completed → deduped → no second event
     await postStripeWebhook(payload).expect(201);
@@ -357,8 +357,10 @@ describe('Domain event emission: donations, payments, execution, financial, mile
   it('the run produced exactly the expected ordered sequence with envelope invariants', () => {
     expect(names()).toEqual([
       'project.created',
+      'workflow_instance.started', // W4: every project lives on the engine from birth
       'donation.pledged',
       'donation.approved',
+      'ledger.posted', // W5: Treasury posts the money fact
       'donation.pledged',
       'donation.rejected',
       'donation.pledged', // cancelled pledge — cancel itself is silent
@@ -370,6 +372,7 @@ describe('Domain event emission: donations, payments, execution, financial, mile
       'task.completed',
       'expense.submitted',
       'expense.approved',
+      'ledger.posted', // W5: Treasury posts the money fact
       'expense.submitted',
       'expense.rejected',
       'milestone.created',
@@ -377,8 +380,10 @@ describe('Domain event emission: donations, payments, execution, financial, mile
       'milestone.created',
       'milestone.missed',
       'payment.completed',
+      'ledger.posted', // W5: Treasury posts the money fact
       'payment.failed',
       'payment.completed',
+      'ledger.posted', // W5: Treasury posts the money fact
       'project.closed',
     ]);
 

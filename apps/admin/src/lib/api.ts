@@ -266,6 +266,35 @@ export const auditApi = {
   get: (id: number) => api.get(`/audit/${id}`).then((r) => r.data.data),
 };
 
+// ─── Funds & treasury (W5-E7) ─────────────────────────────────────────────────
+export const fundsApi = {
+  list: () => api.get('/funds').then((r) => r.data.data),
+  detail: (id: number) => api.get(`/funds/${id}`).then((r) => r.data.data),
+  dashboard: (id: number) => api.get(`/funds/${id}/dashboard`).then((r) => r.data.data),
+  create: (data: { name: string; purpose?: string }) => api.post('/funds', data).then((r) => r.data.data),
+  update: (id: number, data: { name?: string; purpose?: string; status?: string }) =>
+    api.put(`/funds/${id}`, data).then((r) => r.data.data),
+  addOfficer: (id: number, userId: number, role: string) =>
+    api.post(`/funds/${id}/officers`, { userId, role }).then((r) => r.data.data),
+  removeOfficer: (id: number, userId: number, role: string) =>
+    api.delete(`/funds/${id}/officers/${userId}/${role}`),
+  propose: (id: number, data: { projectId: number; amount: number; note?: string }) =>
+    api.post(`/funds/${id}/allocations`, data).then((r) => r.data.data),
+  approve: (allocationId: number) => api.post(`/funds/allocations/${allocationId}/approve`).then((r) => r.data.data),
+  disburse: (allocationId: number, amount: number) =>
+    api.post(`/funds/allocations/${allocationId}/disburse`, { amount }).then((r) => r.data.data),
+  reconcile: (allocationId: number) => api.post(`/funds/allocations/${allocationId}/reconcile`).then((r) => r.data.data),
+  close: (allocationId: number) => api.post(`/funds/allocations/${allocationId}/close`).then((r) => r.data.data),
+};
+
+// ─── Workflow engine (W4-E5) ──────────────────────────────────────────────────
+export const workflowApi = {
+  definitions: () => api.get('/workflow/definitions').then((r) => r.data.data),
+  definition: (id: number) => api.get(`/workflow/definitions/${id}`).then((r) => r.data.data),
+  projectInstance: (projectId: number) =>
+    api.get(`/workflow/projects/${projectId}`).then((r) => r.data.data),
+};
+
 // ─── Governance (W3-E5) ───────────────────────────────────────────────────────
 export const governanceApi = {
   queue: () => api.get('/governance/queue').then((r) => r.data.data),

@@ -5,10 +5,17 @@ import { PaymentProvider } from '@prisma/client';
 export { PaymentProvider };
 
 export class CreateCheckoutDto {
-  @ApiProperty()
+  @ApiPropertyOptional({ description: 'Target project (exactly one of projectId | fundId)' })
+  @IsOptional()
   @IsInt()
   @Min(1)
-  projectId: number;
+  projectId?: number;
+
+  @ApiPropertyOptional({ description: 'W5: fund-directed donation target' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  fundId?: number;
 
   @ApiProperty()
   @IsNumber()

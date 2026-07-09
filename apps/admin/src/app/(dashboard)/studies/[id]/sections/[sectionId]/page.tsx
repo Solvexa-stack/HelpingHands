@@ -10,6 +10,7 @@ import { studiesApi } from '@/lib/api';
 import { cn, formatDate } from '@/lib/utils';
 import { useToast } from '@/components/ui/toaster';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuth } from '@/contexts/auth-context';
 
 const SECTION_STATUSES = ['pending', 'in_progress', 'completed', 'needs_revision'];
 
@@ -53,6 +54,15 @@ export default function SectionEditPage({
   });
 
   const section = study?.sections?.find((s: any) => s.id === sectionId);
+
+  // Backend allows section updates by platform administrators, org_admins of
+  // the owning organization, and the assigned admin
+  const { user, activeOrg, workspaceType } = useAuth();
+  const isAdmin = user?.admin?.role === 'administrator';
+  // Org-workspace tenancy only surfaces the org's own studies, so the active
+  // org is the study's owning org there
+  const isOrgAdmin = workspaceType === 'organization' && (activeOrg?.roles?.includes('org_admin') ?? false);
+  const canEdit = isAdmin || isOrgAdmin || (!!section?.assignedTo && section.assignedTo === user?.referenceId);
 
   useEffect(() => {
     if (section && !dirty) {
@@ -123,7 +133,7 @@ export default function SectionEditPage({
         </div>
         <button
           onClick={() => saveMutation.mutate()}
-          disabled={saveMutation.isPending || !dirty}
+          disabled={saveMutation.isPending || !dirty || !canEdit}
           className="btn-primary btn-md gap-2"
         >
           {saveMutation.isPending ? (
@@ -141,6 +151,15 @@ export default function SectionEditPage({
         <div className="card p-5 space-y-4">
           <h2 className="font-semibold text-gray-900">{t('studies.section.content')}</h2>
 
+          {!canEdit && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700 leading-relaxed">
+              {t('studies.section.notAssigned')}
+              {section.assignedAdmin && (
+                <span className="font-medium"> — {section.assignedAdmin.firstName} {section.assignedAdmin.lastName}</span>
+              )}
+            </div>
+          )}
+
           {secDesc(section) && (
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-700 leading-relaxed">
               <p className="font-medium mb-1">{t('studies.section.guidance')}</p>
@@ -154,6 +173,7 @@ export default function SectionEditPage({
             <select
               value={status}
               onChange={(e) => { setStatus(e.target.value); setDirty(true); }}
+              disabled={!canEdit}
               className="input"
             >
               {SECTION_STATUSES.map((s) => (
@@ -168,7 +188,8 @@ export default function SectionEditPage({
             <textarea
               value={content}
               onChange={(e) => { setContent(e.target.value); setDirty(true); }}
-              onBlur={() => { if (dirty) saveMutation.mutate(); }}
+              onBlur={() => { if (dirty && canEdit) saveMutation.mutate(); }}
+              readOnly={!canEdit}
               rows={18}
               className="input resize-none font-mono text-sm"
               placeholder={t('studies.section.contentPlaceholder')}

@@ -22,6 +22,9 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { StudyModule } from './modules/study/study.module';
 import { VotingModule } from './modules/voting/voting.module';
 import { GovernanceModule } from './modules/governance/governance.module';
+import { WorkflowModule } from './modules/workflow/workflow.module';
+import { TreasuryModule } from './modules/treasury/treasury.module';
+import { FundsModule } from './modules/funds/funds.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ExecutionModule } from './modules/execution/execution.module';
@@ -72,6 +75,9 @@ import { ReportsModule } from './modules/reports/reports.module';
     StudyModule,
     VotingModule,
     GovernanceModule,
+    WorkflowModule,
+    TreasuryModule,
+    FundsModule,
     PaymentsModule,
     NotificationsModule,
     ExecutionModule,

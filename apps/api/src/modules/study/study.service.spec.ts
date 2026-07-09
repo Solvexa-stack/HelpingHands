@@ -9,6 +9,7 @@ import { EventBusService } from '../../events/event-bus.service';
 import { TenancyRepository } from '../policy/tenancy.repository';
 import { PolicyService } from '../policy/policy.service';
 import { GovernanceService } from '../governance/governance.service';
+import { WorkflowService } from '../workflow/workflow.service';
 
 const mockPrisma = {
   project: {
@@ -45,12 +46,24 @@ const mockEventBus = { publish: jest.fn() };
 
 // flag-off default: tenancy scoping is a no-op in unit tests
 // W3 governance collaborators (unit tests run flags-off: legacy role gate applies)
-const mockPolicy = { can: jest.fn().mockResolvedValue({ allow: true, reason: 'granted:test' }) };
+const mockPolicy = {
+  can: jest.fn().mockResolvedValue({ allow: true, reason: 'granted:test' }),
+  holdsAnyGrant: jest.fn().mockResolvedValue(false),
+};
 const mockGovernance = {
   decideStudy: jest.fn(),
   syncRoundOnStudyStatus: jest.fn().mockResolvedValue(undefined),
   latestRoundForStudy: jest.fn().mockResolvedValue({ id: 77 }),
   decisionsForStudy: jest.fn().mockResolvedValue([]),
+};
+
+// W4: engine collaborator — unit tests run flags-off (legacy path)
+const mockWorkflow = {
+  execute: jest.fn().mockResolvedValue({ toState: 'x' }),
+  start: jest.fn().mockResolvedValue({ id: 1 }),
+  instanceFor: jest.fn().mockResolvedValue(null),
+  ensurePositionedInstance: jest.fn().mockResolvedValue({ id: 1 }),
+  availableTransitions: jest.fn().mockResolvedValue([]),
 };
 
 const mockTenancy = {
@@ -84,6 +97,7 @@ describe('StudyService', () => {
         { provide: TenancyRepository, useValue: mockTenancy },
         { provide: PolicyService, useValue: mockPolicy },
         { provide: GovernanceService, useValue: mockGovernance },
+        { provide: WorkflowService, useValue: mockWorkflow },
       ],
     }).compile();
 
@@ -267,6 +281,31 @@ describe('StudyService', () => {
       await expect(
         service.updateSection(actor, 1, { content: 'updated' }, 1, AdminRole.administrator),
       ).resolves.not.toThrow();
+    });
+
+    it('allows org_admin of the owning organization to update unassigned sections', async () => {
+      const mockSection = {
+        id: 1,
+        studyId: 1,
+        assignedTo: null,
+        assignedToUserId: null,
+        study: { id: 1, projectId: 5, status: StudyStatus.draft },
+      };
+
+      mockPrisma.studySection.findUnique.mockResolvedValue(mockSection);
+      mockPrisma.project.findUnique.mockResolvedValue({ ownerOrganizationId: 7 });
+      mockPrisma.studySection.update.mockResolvedValue({ ...mockSection, content: 'updated' });
+      mockPrisma.studySection.count.mockResolvedValue(1);
+      mockPolicy.holdsAnyGrant.mockResolvedValueOnce(true);
+
+      await expect(
+        service.updateSection(actor, 1, { content: 'updated' }, 2, AdminRole.employee),
+      ).resolves.not.toThrow();
+      expect(mockPolicy.holdsAnyGrant).toHaveBeenCalledWith(
+        actor.userId,
+        [{ scope: 'organization', roles: ['org_admin'] }],
+        { organizationId: 7 },
+      );
     });
   });
 

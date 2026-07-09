@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, FolderKanban, Heart, Users, UserCheck,
   FileText, Newspaper, CalendarDays, Info, Globe, Heart as HeartIcon,
-  ChevronRight, FlaskConical, BarChart3, ScrollText, Building2, Landmark,
+  ChevronRight, FlaskConical, BarChart3, ScrollText, Building2, Landmark, GitBranch, Banknote,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useLanguage } from '@/contexts/language-context';
@@ -30,6 +30,8 @@ const navItems = [
   { href: '/reports', icon: BarChart3, tKey: 'nav.reports', roles: ['administrator', 'financial_officer'] },
   { href: '/audit', icon: ScrollText, tKey: 'nav.audit', roles: ['administrator'], platformOnly: true },
   { href: '/organizations', icon: Building2, tKey: 'nav.organizations', roles: ['administrator'], platformOnly: true },
+  { href: '/workflow', icon: GitBranch, tKey: 'nav.workflow', roles: ['administrator'], platformOnly: true },
+  { href: '/funds', icon: Banknote, tKey: 'nav.funds', roles: ['administrator'], platformOnly: true },
   { href: '/board', icon: Landmark, tKey: 'nav.board', roles: ['administrator'], boardOnly: true },
 ];
 

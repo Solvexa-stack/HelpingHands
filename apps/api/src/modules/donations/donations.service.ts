@@ -15,6 +15,8 @@ import { paginate, paginatedResponse } from '../../common/dto/pagination.dto';
 import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
 import { TenancyRepository } from '../policy/tenancy.repository';
+import { WorkflowService } from '../workflow/workflow.service';
+import { workflowEnforced } from '../workflow/workflow.types';
 
 @Injectable()
 export class DonationsService {
@@ -26,6 +28,7 @@ export class DonationsService {
     private notificationsService: NotificationsService,
     private eventBus: EventBusService,
     private tenancy: TenancyRepository,
+    private workflow: WorkflowService,
   ) {}
 
   async findAll(query: DonationQueryDto, role?: string, adminId?: number, participantId?: number) {
@@ -119,6 +122,14 @@ export class DonationsService {
     if (project.isCompleted) {
       throw new BadRequestException('This project has reached its funding goal and is no longer accepting donations');
     }
+    // W4-E4-S4: donations-open gating reads the engine state (bridge keeps it
+    // equal to isCompleted; the guard is now declared, not just implied)
+    if (workflowEnforced('projects')) {
+      const instance = await this.workflow.instanceFor({ subjectType: 'project', subjectId: dto.projectId });
+      if (instance?.currentStateKey === 'completed') {
+        throw new BadRequestException('This project has reached its funding goal and is no longer accepting donations');
+      }
+    }
     if (!project.isCompleted) {
       const blockActive = await this.prisma.block.findFirst({
         where: { id: project.blockId, isActive: true },
@@ -200,7 +211,9 @@ export class DonationsService {
     });
 
     if (dto.status === DonationStatus.approved || dto.status === DonationStatus.rejected) {
-      this.eventBus.publish({
+      // W5: awaited — Treasury consumes donation.approved and posts the
+      // ledger credit (+ legacy dual-write) before this request continues
+      await this.eventBus.publishAndWait({
         event: dto.status === DonationStatus.approved ? 'donation.approved' : 'donation.rejected',
         actor,
         subject: { type: 'donation', id },
@@ -213,22 +226,8 @@ export class DonationsService {
       await this.projectsService.recalculateProgress(donation.projectId);
     }
 
-    // Create income transaction in ledger when donation is approved
-    if (dto.status === DonationStatus.approved) {
-      const project = await this.prisma.project.findUnique({ where: { id: donation.projectId } });
-      if (project) {
-        this.prisma.projectTransaction.create({
-          data: {
-            projectId: project.blockId,
-            projectRefId: donation.projectId, // W2-E1-S2 dual-write (D1)
-            type: 'income',
-            amount: donation.amount,
-            referenceType: 'donation',
-            referenceId: donation.id,
-          },
-        }).catch(() => null);
-      }
-    }
+    // W5: the income posting (ledger + legacy journal dual-write) now happens
+    // in TreasuryService via the awaited donation.approved event above.
 
     // Fire in-app notification + queue email for cash donation approval
     if (dto.status === DonationStatus.approved) {

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   ForbiddenException,
   NotFoundException,
@@ -37,13 +38,28 @@ export class PaymentsService {
   async createCheckout(dto: CreateCheckoutDto, participantId: number) {
     const currency = (dto.currency ?? 'USD').toUpperCase();
 
-    const project = await this.prisma.project.findUnique({
-      where: { id: dto.projectId },
-      include: { block: { include: { translations: true } } },
-    });
-    if (!project) throw new NotFoundException(`Project #${dto.projectId} not found`);
+    if ((dto.projectId == null) === (dto.fundId == null)) {
+      throw new BadRequestException('Provide exactly one of projectId or fundId');
+    }
 
-    if (project.studyStatus !== StudyStatus.approved) {
+    // W5-E5-S3: fund-directed donation — no project, credit goes to the fund
+    let fundName: string | null = null;
+    if (dto.fundId != null) {
+      const fund = await this.prisma.fund.findFirst({ where: { id: dto.fundId, deletedAt: null } });
+      if (!fund) throw new NotFoundException(`Fund #${dto.fundId} not found`);
+      if (fund.status !== 'active') throw new ForbiddenException(`Fund is ${fund.status}`);
+      fundName = fund.name;
+    }
+
+    const project = dto.projectId
+      ? await this.prisma.project.findUnique({
+          where: { id: dto.projectId },
+          include: { block: { include: { translations: true } } },
+        })
+      : null;
+    if (dto.projectId && !project) throw new NotFoundException(`Project #${dto.projectId} not found`);
+
+    if (project && project.studyStatus !== StudyStatus.approved) {
       throw new ForbiddenException(
         'Online donations are only accepted for projects with an approved study',
       );
@@ -55,26 +71,30 @@ export class PaymentsService {
     const cancelUrl =
       this.config.get<string>('payment.cancelUrl') ??
       'http://localhost:3200/en/donations/cancel';
-    const projectName = project.block.translations[0]?.name ?? `Project #${project.id}`;
+    const projectName = project
+      ? (project.block.translations[0]?.name ?? `Project #${project.id}`)
+      : `Fund: ${fundName}`;
 
     if (dto.provider === PaymentProvider.stripe) {
       const amountCents = Math.round(dto.amount * 100);
       const session = await this.stripeService.createCheckoutSession({
-        projectId: project.id,
+        projectId: project?.id ?? 0,
         projectName,
         amount: amountCents,
         currency: currency.toLowerCase(),
         successUrl: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl,
         metadata: {
-          projectId: String(project.id),
+          projectId: String(project?.id ?? ''),
+          fundId: String(dto.fundId ?? ''),
           participantId: String(participantId),
         },
       });
 
       const donation = await this.prisma.onlineDonation.create({
         data: {
-          projectId: project.id,
+          projectId: project?.id ?? null,
+          fundId: dto.fundId ?? null,
           participantId,
           amount: dto.amount,
           currency,
@@ -91,7 +111,7 @@ export class PaymentsService {
     // PayPal
     const amountCents = Math.round(dto.amount * 100);
     const order = await this.paypalService.createOrder({
-      projectId: project.id,
+      projectId: project?.id ?? 0,
       amount: amountCents,
       currency,
       description: `Donation to ${projectName}`,
@@ -99,7 +119,8 @@ export class PaymentsService {
 
     const donation = await this.prisma.onlineDonation.create({
       data: {
-        projectId: project.id,
+        projectId: project?.id ?? null,
+        fundId: dto.fundId ?? null,
         participantId,
         amount: dto.amount,
         currency,
@@ -175,7 +196,7 @@ export class PaymentsService {
       },
     });
     if (!donation) throw new NotFoundException(`Online donation #${donationId} not found`);
-    await this.tenancy.assertProjectVisible(donation.projectId); // W2 isolation
+    if (donation.projectId != null) await this.tenancy.assertProjectVisible(donation.projectId); // W2 isolation
 
     const isAdmin =
       user.referenceType === 'admin' &&
@@ -282,14 +303,14 @@ export class PaymentsService {
 
     // Webhook routes are public → the ALS actor is anonymous, but carries
     // the webhook request's requestId for correlation.
-    this.eventBus.publish({
+    await this.eventBus.publishAndWait({
       event: 'payment.completed',
       actor: this.actorContext.currentOrSystem(),
       subject: { type: 'online_donation', id: donation.id },
-      data: { projectId: donation.projectId, provider: donation.provider, amount: Number(donation.amount) },
+      data: { projectId: donation.projectId, fundId: (donation as { fundId?: number | null }).fundId ?? null, provider: donation.provider, amount: Number(donation.amount) },
     });
 
-    await this.updateProjectProgressionOnline(donation.projectId);
+    if (donation.projectId != null) await this.updateProjectProgressionOnline(donation.projectId);
 
     this.notificationsService
       .notify({ type: 'donation_online_confirmed', donationId: donation.id })

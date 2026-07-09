@@ -15,6 +15,8 @@ import { ChangeVoteDto } from './dto/change-vote.dto';
 import { VoteFiltersDto } from './dto/vote-filters.dto';
 import { TenancyRepository } from '../policy/tenancy.repository';
 import { GovernanceService } from '../governance/governance.service';
+import { WorkflowService } from '../workflow/workflow.service';
+import { workflowEnforced } from '../workflow/workflow.types';
 
 @Injectable()
 export class VotingService {
@@ -25,6 +27,7 @@ export class VotingService {
     private eventBus: EventBusService,
     private tenancy: TenancyRepository,
     private governance: GovernanceService,
+    private workflow: WorkflowService,
   ) {}
 
   /**
@@ -278,26 +281,47 @@ export class VotingService {
     const studyIds = expired.map((s) => s.id);
     const projectIds = expired.map((s) => s.projectId);
 
-    await this.prisma.$transaction([
-      this.prisma.projectStudy.updateMany({
-        where: { id: { in: studyIds } },
-        data: { status: StudyStatus.voting_closed },
-      }),
-      this.prisma.project.updateMany({
-        where: { id: { in: projectIds } },
-        data: { studyStatus: StudyStatus.voting_closed },
-      }),
-    ]);
-
     // Cron-triggered — no request context; one system actor per job run
     const actor = systemActor();
 
-    // W3: close the rounds too — tally + result recorded on each
-    for (const study of expired) {
-      const open = await this.prisma.voteRound.findFirst({
-        where: { subjectType: 'project_study', subjectId: study.id, status: 'open' },
-      });
-      if (open) await this.governance.closeRound(actor, open.id).catch(() => null);
+    if (workflowEnforced('voting')) {
+      // W4-E4-S3: the engine drives the close per study — round closing rides
+      // the vote_round.close effect, legacy columns ride the bridge sync
+      for (const study of expired) {
+        await this.workflow.ensurePositionedInstance(
+          { subjectType: 'project', subjectId: study.projectId },
+          StudyStatus.voting_open,
+        );
+        await this.workflow
+          .execute(actor, { subjectType: 'project', subjectId: study.projectId }, 'close_voting', {
+            note: 'voting window expired (auto-close)',
+            suppressEffects: ['voting.closed'],
+            sync: async (tx) => {
+              await tx.projectStudy.update({ where: { id: study.id }, data: { status: StudyStatus.voting_closed } });
+              await tx.project.update({ where: { id: study.projectId }, data: { studyStatus: StudyStatus.voting_closed } });
+            },
+          })
+          .catch((err) => this.logger.error(`engine auto-close failed for study ${study.id}: ${err.message}`));
+      }
+    } else {
+      await this.prisma.$transaction([
+        this.prisma.projectStudy.updateMany({
+          where: { id: { in: studyIds } },
+          data: { status: StudyStatus.voting_closed },
+        }),
+        this.prisma.project.updateMany({
+          where: { id: { in: projectIds } },
+          data: { studyStatus: StudyStatus.voting_closed },
+        }),
+      ]);
+
+      // W3: close the rounds too — tally + result recorded on each
+      for (const study of expired) {
+        const open = await this.prisma.voteRound.findFirst({
+          where: { subjectType: 'project_study', subjectId: study.id, status: 'open' },
+        });
+        if (open) await this.governance.closeRound(actor, open.id).catch(() => null);
+      }
     }
     for (const study of expired) {
       this.eventBus.publish({

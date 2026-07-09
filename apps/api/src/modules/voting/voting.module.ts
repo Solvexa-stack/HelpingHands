@@ -1,4 +1,5 @@
 import { GovernanceModule } from '../governance/governance.module';
+import { WorkflowModule } from '../workflow/workflow.module';
 import { Module } from '@nestjs/common';
 import { VotingController } from './voting.controller';
 import { VotingService } from './voting.service';
@@ -7,7 +8,7 @@ import { StudyModule } from '../study/study.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [StudyModule, NotificationsModule, GovernanceModule],
+  imports: [StudyModule, NotificationsModule, GovernanceModule, WorkflowModule],
   controllers: [VotingController],
   providers: [VotingService, VotingScheduler],
   exports: [VotingService],

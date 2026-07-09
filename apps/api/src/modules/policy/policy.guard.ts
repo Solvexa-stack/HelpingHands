@@ -167,6 +167,10 @@ export class PolicyGuard implements CanActivate {
     if (path.startsWith('/api/v1/organizations/') && params.id) {
       resource.organizationId = Number(params.id);
     }
+    // W5: fund routes scope fund-role grants to the fund in the path
+    if (path.startsWith('/api/v1/funds/') && params.id) {
+      (resource as { id?: number }).id = Number(params.id);
+    }
     return resource;
   }
 }

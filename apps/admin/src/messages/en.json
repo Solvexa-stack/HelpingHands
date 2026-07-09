@@ -16,7 +16,9 @@
     "organizations": "Organizations",
     "board": "Board",
     "team": "Team",
-    "settings": "Settings"
+    "settings": "Settings",
+    "workflow": "Workflows",
+    "funds": "Funds"
   },
   "execution": {
     "title": "Project Execution",
@@ -261,6 +263,7 @@
     "colCreated": "Created",
     "section": {
       "notFound": "Section not found",
+      "notAssigned": "This section is not assigned to you, so it is read-only.",
       "save": "Save",
       "content": "Content",
       "guidance": "Guidance",

@@ -192,6 +192,7 @@ describe('Domain event emission: projects, study, voting (W0-E2-S3)', () => {
   it('the full lifecycle produced exactly the expected event sequence', () => {
     expect(names()).toEqual([
       'project.created',
+      'workflow_instance.started', // W4: every project lives on the engine from birth
       'study.created',
       'study_section.assigned',
       ...Array(sectionCount).fill('study_section.completed'),
@@ -209,6 +210,7 @@ describe('Domain event emission: projects, study, voting (W0-E2-S3)', () => {
       'project.updated',
       'donation.pledged', // funding step — donation events joined the stream in S4
       'donation.approved',
+      'ledger.posted', // W5: Treasury posts the money fact
       'project.closed',
     ]);
 

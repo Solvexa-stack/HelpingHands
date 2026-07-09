@@ -6,6 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { EventBusService } from '../../events/event-bus.service';
 import { TenancyRepository } from '../policy/tenancy.repository';
 import { GovernanceService } from '../governance/governance.service';
+import { WorkflowService } from '../workflow/workflow.service';
 
 const mockPrisma = {
   projectStudy: {
@@ -42,6 +43,15 @@ const mockGovernance = {
   closeRound: jest.fn().mockResolvedValue(undefined),
 };
 
+// W4: engine collaborator — unit tests run flags-off (legacy path)
+const mockWorkflow = {
+  execute: jest.fn().mockResolvedValue({ toState: 'x' }),
+  start: jest.fn().mockResolvedValue({ id: 1 }),
+  instanceFor: jest.fn().mockResolvedValue(null),
+  ensurePositionedInstance: jest.fn().mockResolvedValue({ id: 1 }),
+  availableTransitions: jest.fn().mockResolvedValue([]),
+};
+
 const mockTenancy = {
   assertProjectVisible: jest.fn().mockResolvedValue(undefined),
   enforcedOrgId: jest.fn().mockResolvedValue(null),
@@ -64,6 +74,7 @@ describe('VotingService', () => {
         { provide: EventBusService, useValue: mockEventBus },
         { provide: TenancyRepository, useValue: mockTenancy },
         { provide: GovernanceService, useValue: mockGovernance },
+        { provide: WorkflowService, useValue: mockWorkflow },
       ],
     }).compile();
 

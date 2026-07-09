@@ -3,6 +3,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
 import { TenancyRepository } from '../policy/tenancy.repository';
+import { ActorContextService } from '../../events/actor-context.storage';
+import { TreasuryService } from '../treasury/treasury.service';
 import {
   CreateBudgetDto, UpdateBudgetDto,
   CreateExpenseDto, UpdateExpenseDto, UpdateExpenseStatusDto,
@@ -16,6 +18,8 @@ export class FinancialService {
     private prisma: PrismaService,
     private eventBus: EventBusService,
     private tenancy: TenancyRepository,
+    private treasury: TreasuryService,
+    private actorContext: ActorContextService,
   ) {}
 
   private async getProjectBlockId(projectId: number): Promise<number> {
@@ -163,32 +167,18 @@ export class FinancialService {
       data: { status: dto.status },
     });
 
-    if (dto.status === ExpenseStatus.approved) {
-      await this.prisma.$transaction([
-        this.prisma.projectTransaction.create({
-          data: {
-            projectId: projectBlockId,
-            projectRefId: projectId, // W2-E1-S2 dual-write (D1)
-            type: 'expense',
-            amount: expense.amount,
-            referenceType: 'expense',
-            referenceId: expenseId,
-          },
-        }),
-        ...(expense.budgetId
-          ? [
-              this.prisma.projectBudget.update({
-                where: { id: expense.budgetId },
-                data: { actualAmount: { increment: expense.amount } },
-              }),
-            ]
-          : []),
-      ]);
+    if (dto.status === ExpenseStatus.approved && expense.budgetId) {
+      // budgets are plans — the plan-tracking increment stays here; the money
+      // fact (ledger debit + legacy journal dual-write) posts in Treasury
+      await this.prisma.projectBudget.update({
+        where: { id: expense.budgetId },
+        data: { actualAmount: { increment: expense.amount } },
+      });
     }
 
-    // Emit after the ledger transaction has committed
     if (dto.status === ExpenseStatus.approved || dto.status === ExpenseStatus.rejected) {
-      this.eventBus.publish({
+      // W5: awaited — Treasury posts before this request continues
+      await this.eventBus.publishAndWait({
         event: dto.status === ExpenseStatus.approved ? 'expense.approved' : 'expense.rejected',
         actor,
         subject: { type: 'expense', id: expenseId },
@@ -212,23 +202,78 @@ export class FinancialService {
 
   async findTransactions(projectId: number) {
     const projectBlockId = await this.getProjectBlockId(projectId);
+
+    // W5-E8-S1: ledger-backed reads behind the cutover flag. The reconciliation
+    // gate + dual-write keep both representations identical; rollback = flip
+    // the flag (09 rule). Legacy journal reads retire in Wave 8.
+    if (process.env.TREASURY_LEDGER_READS === 'true') {
+      const account = await this.prisma.account.findFirst({
+        where: { ownerType: 'project', ownerId: projectId },
+      });
+      if (account) {
+        const entries = await this.prisma.ledgerEntry.findMany({
+          where: { accountId: account.id, transaction: { status: 'posted' } },
+          include: { transaction: true },
+          orderBy: { id: 'desc' },
+        });
+        // legacy row shape, sourced from the ledger
+        return entries.map((e) => ({
+          id: e.id,
+          projectId: projectBlockId,
+          projectRefId: projectId,
+          type:
+            e.direction === 'credit'
+              ? ('income' as const)
+              : ('expense' as const),
+          amount: e.amount,
+          referenceType: e.transaction.referenceType,
+          referenceId: e.transaction.referenceId,
+          notes: e.transaction.description,
+          createdAt: e.transaction.timestamp,
+        }));
+      }
+    }
+
     return this.prisma.projectTransaction.findMany({
       where: { projectRefId: projectId },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
+  /** W5: manual journal entries post through Treasury (ledger + legacy dual-write). */
+  // eslint-disable-next-line require-actor-context -- actor resolved from ALS (currentOrSystem); endpoint signature kept for contract parity
   async createTransaction(projectId: number, dto: CreateTransactionDto) {
     const projectBlockId = await this.getProjectBlockId(projectId);
-    return this.prisma.projectTransaction.create({
-      data: {
-        projectId: projectBlockId,
-        projectRefId: projectId, // W2-E1-S2 dual-write (D1)
+    const actor = this.actorContext.currentOrSystem();
+    const [projectAccount, cash, external] = await Promise.all([
+      this.treasury.projectAccount(projectId),
+      this.treasury.platformAccount('cash'),
+      this.treasury.platformAccount('external'),
+    ]);
+    const inbound = dto.type === 'income' || dto.type === 'adjustment';
+    const counterparty = inbound ? cash : dto.type === 'refund' ? cash : external;
+    const { transaction } = await this.treasury.post(actor, {
+      description: dto.notes || `Manual ${dto.type} entry for project #${projectId}`,
+      entries: inbound
+        ? [
+            { accountId: counterparty.id, direction: 'debit', amount: dto.amount },
+            { accountId: projectAccount.id, direction: 'credit', amount: dto.amount },
+          ]
+        : [
+            { accountId: projectAccount.id, direction: 'debit', amount: dto.amount },
+            { accountId: counterparty.id, direction: 'credit', amount: dto.amount },
+          ],
+      legacyJournal: {
+        projectBlockId,
+        projectRefId: projectId,
         type: dto.type,
-        amount: dto.amount,
         notes: dto.notes,
       },
+    });
+    // legacy response shape: the journal row this posting appended
+    return this.prisma.projectTransaction.findFirst({
+      where: { projectRefId: projectId },
+      orderBy: { id: 'desc' },
     });
   }
 

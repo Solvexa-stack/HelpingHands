@@ -145,7 +145,7 @@ export class PolicyService {
       if (grant.scopeType === 'project') {
         return resource.projectId == null || grant.scopeId === resource.projectId;
       }
-      return grant.scopeId == null || grant.scopeId === resource.id;
+      return grant.scopeId == null || (resource as { id?: number }).id == null || grant.scopeId === (resource as { id?: number }).id;
     });
   }
 
@@ -159,6 +159,29 @@ export class PolicyService {
     const handler = this.conditionHandlers[name];
     if (!handler) return false;
     return handler(arg, actor, resource, orgId);
+  }
+
+  /**
+   * W4 guard delegation — does the user hold any of the given grants?
+   * Organization-scoped requirements match against `organizationId` (the
+   * workflow subject's owning org); platform grants are global.
+   */
+  async holdsAnyGrant(
+    userId: number,
+    requirements: Array<{ scope: 'platform' | 'organization' | 'fund'; roles: string[] }>,
+    scopeIds: { organizationId?: number | null; fundId?: number | null },
+  ): Promise<boolean> {
+    const grants = await this.grantsOf(userId);
+    return requirements.some((req) =>
+      Boolean(
+        this.matchGrant(
+          grants,
+          { scopeType: req.scope, roles: req.roles } as GrantRequirement,
+          req.scope === 'fund' ? { id: scopeIds.fundId ?? undefined } : {},
+          req.scope === 'organization' ? (scopeIds.organizationId ?? null) : null,
+        ),
+      ),
+    );
   }
 
   private async grantsOf(userId: number): Promise<RoleAssignment[]> {

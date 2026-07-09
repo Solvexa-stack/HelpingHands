@@ -335,14 +335,19 @@ export class OrganizationsService {
     await this.findById(organizationId);
     const members = await this.prisma.organizationMembership.findMany({
       where: { organizationId },
-      include: { user: { select: { id: true, email: true, referenceType: true } } },
+      include: { user: { select: { id: true, email: true, referenceType: true, referenceId: true } } },
       orderBy: { id: 'asc' },
     });
     const grants = await this.prisma.roleAssignment.findMany({
       where: { scopeType: 'organization', scopeId: organizationId },
     });
+    const admins = await this.prisma.admin.findMany({
+      where: { id: { in: members.filter((m) => m.user.referenceType === 'admin').map((m) => m.user.referenceId) } },
+      select: { id: true, firstName: true, lastName: true },
+    });
     return members.map((m) => ({
       ...m,
+      admin: m.user.referenceType === 'admin' ? (admins.find((a) => a.id === m.user.referenceId) ?? null) : null,
       roles: grants.filter((g) => g.userId === m.userId).map((g) => g.role),
     }));
   }

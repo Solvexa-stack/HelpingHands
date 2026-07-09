@@ -16,7 +16,9 @@
     "organizations": "المنظمات",
     "board": "المجلس",
     "team": "الفريق",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "workflow": "مسارات العمل",
+    "funds": "الصناديق"
   },
   "execution": {
     "title": "تنفيذ المشروع",
@@ -261,6 +263,7 @@
     "colCreated": "تاريخ الإنشاء",
     "section": {
       "notFound": "القسم غير موجود",
+      "notAssigned": "هذا القسم غير مُسند إليك، لذا فهو للقراءة فقط.",
       "save": "حفظ",
       "content": "المحتوى",
       "guidance": "إرشادات",

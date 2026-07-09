@@ -4,6 +4,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
 import { TenancyRepository } from '../policy/tenancy.repository';
+import { WorkflowService } from '../workflow/workflow.service';
+import { workflowEnforced } from '../workflow/workflow.types';
 import {
   CreateStepDto, UpdateStepDto, UpdateProgressDto,
   CreatePhaseDto, UpdatePhaseDto,
@@ -16,7 +18,20 @@ export class ExecutionService {
     private prisma: PrismaService,
     private eventBus: EventBusService,
     private tenancy: TenancyRepository,
+    private workflow: WorkflowService,
   ) {}
+
+  /** W4-E4-S4: the first execution phase moves donations_open → executing. */
+  private async markExecuting(actor: ActorContext, projectId: number): Promise<void> {
+    if (!workflowEnforced('execution')) return;
+    const instance = await this.workflow.instanceFor({ subjectType: 'project', subjectId: projectId });
+    if (instance?.currentStateKey !== 'donations_open') return; // legacy allows phases at any stage
+    await this.workflow
+      .execute(actor, { subjectType: 'project', subjectId: projectId }, 'begin_execution', {
+        note: 'first execution phase created',
+      })
+      .catch(() => null);
+  }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -160,6 +175,7 @@ export class ExecutionService {
       data: { projectId, order: phase.order },
     });
 
+    await this.markExecuting(actor, projectId);
     return phase;
   }
 

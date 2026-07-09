@@ -338,7 +338,7 @@ export class NotificationsProcessor {
     });
     if (!donation?.participant?.user) return;
 
-    const projectName = donation.project.block.translations[0]?.name ?? `Project #${donation.projectId}`;
+    const projectName = donation.project?.block.translations[0]?.name ?? (donation.projectId ? `Project #${donation.projectId}` : 'a fund');
     const user = donation.participant.user;
     const name = `${donation.participant.firstName} ${donation.participant.lastName}`;
 

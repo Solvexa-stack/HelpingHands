@@ -14,5 +14,7 @@ module.exports = {
   rules: {
     'require-actor-context': 'error',
     'no-unscoped-org-reads': 'error',
+    'no-direct-status-writes': 'error',
+    'treasury-only-ledger-writes': 'error',
   },
 };

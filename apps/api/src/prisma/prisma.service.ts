@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/commo
 import { PrismaClient } from '@prisma/client';
 import { createSoftDeleteMiddleware } from './soft-delete.middleware';
 import { createStudyVoteFreezeMiddleware } from './study-vote-freeze.middleware';
+import { createProjectTransactionFreezeMiddleware } from './project-transaction-freeze.middleware';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -16,6 +17,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     this.$use(createSoftDeleteMiddleware());
     // W3-E3-S2: StudyVote frozen read-only after the VoteRound/Vote cutover
     this.$use(createStudyVoteFreezeMiddleware());
+    // W5-E4-S3: ProjectTransaction frozen — treasury dual-write only
+    this.$use(createProjectTransactionFreezeMiddleware());
   }
 
   async onModuleInit() {

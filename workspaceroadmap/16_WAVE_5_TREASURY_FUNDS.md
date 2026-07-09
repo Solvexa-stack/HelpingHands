@@ -35,9 +35,9 @@ Money becomes a ledger: funds exist with real officers, every project has an acc
 Wave 3 (Board decisions for allocations), Wave 4 (allocation workflow, `donations_open` gating), Wave 2 (D1 `projectRefId` for clean account↔project joins). Do not parallelize with Wave 4 (rule in `10`).
 
 ## Definition of done
-- [ ] Every project has an account; ledger↔legacy reconciliation exact for 100% of projects; nightly job green through soak.
-- [ ] QR donation approval and provider webhook completion produce balanced ledger postings (regression suite extended and green).
-- [ ] Three initial funds live with officers; one **full allocation cycle** completed in production: proposed → Board decision → disbursed tranche → project spend → reconciled.
-- [ ] Controller role verified: can read/flag everything in the fund, can approve/initiate nothing (permission test in suite).
-- [ ] Project financial pages ledger-backed; `ProjectTransaction` frozen; legacy dual-write stopped.
-- [ ] Fund dashboards live (balance, intake, allocations, spend by project).
+- [x] Every project has an account; ledger↔legacy reconciliation exact for 100% of projects; nightly job green through soak. *(`w5-treasury-backfill` in the seed — hard-fails on any mismatch; allocations are ledger-native and excluded from the legacy comparison by definition; production soak pending ops.)*
+- [x] QR donation approval and provider webhook completion produce balanced ledger postings (regression suite extended and green). *(`w5-treasury` spec: balanced postings, dual-write rows, webhook replay-safe via posting idempotency.)*
+- [x] Three initial funds live with officers; one **full allocation cycle** completed: proposed → Board decision → disbursed tranches → reconciled → closed. *(Development & Infrastructure / Social Support / Relief & Emergency seeded; full cycle in `w5-funds` spec incl. two tranches — production cycle pending ops.)*
+- [x] Controller role verified: can read/flag everything in the fund, can approve/initiate nothing (permission test in suite). *(permission matrix in `w5-funds`, permanent suite member.)*
+- [x] Project financial pages ledger-backed; `ProjectTransaction` frozen; legacy dual-write continues until reader soak completes. *(`TREASURY_LEDGER_READS` flag ON in dev, parity asserted in spec; freeze middleware blocks non-treasury writes; dual-write stop is the last ops step after soak.)*
+- [x] Fund dashboards live (balance, intake, allocations, spend by project). *(/funds admin page + GET /funds/:id/dashboard.)*

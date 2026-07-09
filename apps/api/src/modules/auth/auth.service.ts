@@ -251,8 +251,15 @@ export class AuthService {
     const boardGrant = await this.prisma.roleAssignment.findFirst({
       where: { userId, scopeType: 'platform' },
     });
+    const orgGrants = await this.prisma.roleAssignment.findMany({
+      where: { userId, scopeType: 'organization', scopeId: { in: memberships.map((m) => m.organization.id) } },
+      select: { scopeId: true, role: true },
+    });
     return {
-      organizations: memberships.map((m) => m.organization),
+      organizations: memberships.map((m) => ({
+        ...m.organization,
+        roles: orgGrants.filter((g) => g.scopeId === m.organization.id).map((g) => g.role),
+      })),
       hasBoardWorkspace: boardGrant !== null,
     };
   }

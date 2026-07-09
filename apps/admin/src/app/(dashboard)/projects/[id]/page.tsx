@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { projectsApi, donationsApi } from '@/lib/api';
 import { formatCurrency, formatDate, getTranslation, STATUS_COLORS, cn } from '@/lib/utils';
+import { WorkflowTimeline } from '@/components/workflow/workflow-timeline';
 
 export default function ProjectDetailPage({ params }: { params: { id: string } }) {
   const id = Number(params.id);
@@ -189,6 +190,9 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
               </Link>
             ))}
           </div>
+
+          {/* W4: engine lifecycle — state, timeline, availableTransitions */}
+          <WorkflowTimeline projectId={Number(id)} studyId={project.studyId ?? null} />
 
           {/* Financial Officer */}
           {project.financialOfficer && (

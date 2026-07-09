@@ -13,6 +13,8 @@ import { ActorContext } from '../../events/actor-context';
 import { ActorContextService } from '../../events/actor-context.storage';
 import { EventBusService } from '../../events/event-bus.service';
 import { TenancyRepository } from '../policy/tenancy.repository';
+import { WorkflowService } from '../workflow/workflow.service';
+import { workflowEnforced } from '../workflow/workflow.types';
 
 @Injectable()
 export class ProjectsService {
@@ -21,6 +23,7 @@ export class ProjectsService {
     private eventBus: EventBusService,
     private actorContext: ActorContextService,
     private tenancy: TenancyRepository,
+    private workflow: WorkflowService,
   ) {}
 
   async findAll(query: ProjectQueryDto, userRole?: string, financialOfficerId?: number) {
@@ -105,6 +108,7 @@ export class ProjectsService {
           where: { status: 'approved' },
           select: { amount: true },
         },
+        study: { select: { id: true, status: true } },
       },
     });
     if (!project) throw new NotFoundException(`Project #${id} not found`);
@@ -114,7 +118,8 @@ export class ProjectsService {
       0,
     );
 
-    return { ...project, collectedAmount };
+    const { study, ...rest } = project;
+    return { ...rest, collectedAmount, studyId: study?.id ?? null, studyStatus: study?.status ?? null };
   }
 
   async create(actor: ActorContext, dto: CreateProjectDto) {
@@ -158,6 +163,12 @@ export class ProjectsService {
       data: { blockId: project.blockId, category: project.category, value: Number(project.value) },
     });
 
+    // W4: every project lives on the engine from birth (draft state — the
+    // study machine's initial; instances for older projects were backfilled)
+    await this.workflow
+      .start(actor, { subjectType: 'project', subjectId: project.id }, 'project-lifecycle')
+      .catch(() => null); // never block creation on the lifecycle record
+
     return project;
   }
 
@@ -196,6 +207,14 @@ export class ProjectsService {
     await this.tenancy.assertProjectVisible(id); // W2 isolation: writes are org-scoped too
     const project = await this.prisma.project.findUnique({ where: { id } });
     if (!project) throw new NotFoundException(`Project #${id} not found`);
+    // W4: the lifecycle instance is part of the aggregate
+    const instance = await this.prisma.workflowInstance.findUnique({
+      where: { subjectType_subjectId: { subjectType: 'project', subjectId: id } },
+    });
+    if (instance) {
+      await this.prisma.workflowStepLog.deleteMany({ where: { instanceId: instance.id } });
+      await this.prisma.workflowInstance.delete({ where: { id: instance.id } });
+    }
     await this.prisma.project.delete({ where: { id } });
 
     this.eventBus.publish({
@@ -257,6 +276,16 @@ export class ProjectsService {
         subject: { type: 'project', id: projectId },
         data: { value, collected, progression },
       });
+
+      // W4-E4-S4: closure runs through the engine — 'complete' is reachable
+      // from every non-terminal state (funding can finish at any stage)
+      if (workflowEnforced('execution')) {
+        await this.workflow
+          .execute(this.actorContext.currentOrSystem(), { subjectType: 'project', subjectId: projectId }, 'complete', {
+            note: `funding goal reached (${collected}/${value})`,
+          })
+          .catch(() => null); // bridge keeps isCompleted authoritative; parity job watches drift
+      }
     }
   }
 

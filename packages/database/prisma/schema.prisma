@@ -342,6 +342,7 @@ model User {
   approvedDonations ProjectDonation[] @relation("DonationApprovedByUser")
   boardDecisions    BoardDecision[]   @relation("BoardDecisionDecidedBy")
   governanceVotes   Vote[]            @relation("VoteUser")
+  fundMemberships   FundMembership[]
 
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
@@ -398,6 +399,8 @@ model Project {
   expensesRef      ProjectExpense[]     @relation("ExpenseProjectRef")
   transactionsRef  ProjectTransaction[] @relation("TransactionProjectRef")
   milestonesRef    ProjectMilestone[]   @relation("MilestoneProjectRef")
+
+  allocations FundAllocation[]
 
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
@@ -568,8 +571,10 @@ model StudyVote {
 
 model OnlineDonation {
   id                Int             @id @default(autoincrement())
-  projectId         Int             @map("project_id")
-  project           Project         @relation(fields: [projectId], references: [id])
+  // W5: fund-directed donations — exactly one of projectId | fundId is set
+  projectId         Int?            @map("project_id")
+  project           Project?        @relation(fields: [projectId], references: [id])
+  fundId            Int?            @map("fund_id")
   participantId     Int?            @map("participant_id")
   participant       Participant?    @relation(fields: [participantId], references: [id])
   amount            Decimal         @db.Decimal(15, 2)
@@ -870,6 +875,7 @@ model Organization {
   contentBlock  Block?                   @relation(fields: [contentBlockId], references: [id], onDelete: Restrict)
   memberships   OrganizationMembership[]
   ownedProjects Project[]                @relation("OrganizationProjects")
+  managedFunds  Fund[]
 
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
@@ -966,6 +972,8 @@ model BoardDecision {
   voteRound   VoteRound?            @relation(fields: [voteRoundId], references: [id], onDelete: Restrict)
   createdAt   DateTime              @default(now()) @map("created_at")
 
+  approvedAllocations FundAllocation[]
+
   @@index([subjectType, subjectId])
   @@index([decidedById])
   @@map("board_decisions")
@@ -1011,4 +1019,242 @@ model Vote {
   @@unique([voteRoundId, userId])
   @@index([userId])
   @@map("votes")
+}
+
+// ─── Workflow engine (W4-E1-S1, shapes: 04_WORKFLOW_ENGINE.md) ───────────────
+// Definitions/states/transitions are versioned data; instances pin their
+// definition (and thereby its version). WorkflowStepLog is append-only: the
+// engine only inserts, never updates or deletes (lifecycle audit).
+
+enum WorkflowStateKind {
+  initial
+  normal
+  terminal
+}
+
+model WorkflowDefinition {
+  id          Int      @id @default(autoincrement())
+  key         String   @db.VarChar(100)
+  version     Int
+  subjectType String   @map("subject_type") @db.VarChar(50)
+  isActive    Boolean  @default(false) @map("is_active")
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  states      WorkflowState[]
+  transitions WorkflowTransition[]
+  instances   WorkflowInstance[]
+
+  @@unique([key, version])
+  @@map("workflow_definitions")
+}
+
+model WorkflowState {
+  id           Int                @id @default(autoincrement())
+  definitionId Int                @map("definition_id")
+  definition   WorkflowDefinition @relation(fields: [definitionId], references: [id], onDelete: Restrict)
+  key          String             @db.VarChar(100)
+  kind         WorkflowStateKind  @default(normal)
+  metadata     Json               @default("{}")
+
+  @@unique([definitionId, key])
+  @@map("workflow_states")
+}
+
+model WorkflowTransition {
+  id           Int                @id @default(autoincrement())
+  definitionId Int                @map("definition_id")
+  definition   WorkflowDefinition @relation(fields: [definitionId], references: [id], onDelete: Restrict)
+  fromStateKey String             @map("from_state_key") @db.VarChar(100)
+  toStateKey   String             @map("to_state_key") @db.VarChar(100)
+  actionKey    String             @map("action_key") @db.VarChar(100)
+  // list of named guard refs + params, e.g. [{"type":"board_decision","decision":"approved"}]
+  guards       Json               @default("[]")
+  // domain-event names emitted on success, e.g. ["vote_round.create"]
+  effects      Json               @default("[]")
+
+  @@unique([definitionId, fromStateKey, actionKey])
+  @@map("workflow_transitions")
+}
+
+model WorkflowInstance {
+  id              Int                @id @default(autoincrement())
+  definitionId    Int                @map("definition_id")
+  definition      WorkflowDefinition @relation(fields: [definitionId], references: [id], onDelete: Restrict)
+  subjectType     String             @map("subject_type") @db.VarChar(50)
+  subjectId       Int                @map("subject_id")
+  currentStateKey String             @map("current_state_key") @db.VarChar(100)
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+
+  stepLogs WorkflowStepLog[]
+
+  @@unique([subjectType, subjectId])
+  @@map("workflow_instances")
+}
+
+model WorkflowStepLog {
+  id           Int              @id @default(autoincrement())
+  instanceId   Int              @map("instance_id")
+  instance     WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Restrict)
+  fromStateKey String?          @map("from_state_key") @db.VarChar(100)
+  toStateKey   String           @map("to_state_key") @db.VarChar(100)
+  actionKey    String           @map("action_key") @db.VarChar(100)
+  actorUserId  Int?             @map("actor_user_id")
+  note         String?          @db.Text
+  payload      Json?
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  @@index([instanceId])
+  @@map("workflow_step_logs")
+}
+
+// ─── Funds & treasury (W5-E1, shapes: 03_DATA_MODEL.md §3) ───────────────────
+// LedgerTransaction and LedgerEntry are IMMUTABLE: the treasury module only
+// inserts; corrections are reversing transactions, never edits or deletes.
+// Balances are always derived from entries.
+
+enum FundStatus {
+  active
+  frozen
+  closed
+}
+
+enum AccountOwnerType {
+  fund
+  project
+  provider_clearing
+  external
+}
+
+enum AccountKind {
+  asset
+  liability
+  income
+  expense
+}
+
+enum LedgerDirection {
+  debit
+  credit
+}
+
+enum LedgerTransactionStatus {
+  pending
+  posted
+  reversed
+}
+
+enum FundAllocationStatus {
+  proposed
+  board_approved
+  disbursing
+  reconciled
+  closed
+  rejected
+}
+
+model Fund {
+  id                     Int           @id @default(autoincrement())
+  name                   String        @db.VarChar(255)
+  purpose                String?       @db.Text
+  status                 FundStatus    @default(active)
+  managingOrganizationId Int?          @map("managing_organization_id")
+  managingOrganization   Organization? @relation(fields: [managingOrganizationId], references: [id], onDelete: Restrict)
+  // { dualApprovalThreshold, spendingLimit, allowedCategories }
+  policy                 Json          @default("{}")
+  createdAt              DateTime      @default(now()) @map("created_at")
+  updatedAt              DateTime      @updatedAt @map("updated_at")
+
+  memberships FundMembership[]
+  allocations FundAllocation[]
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
+
+  @@map("funds")
+}
+
+model FundMembership {
+  id        Int      @id @default(autoincrement())
+  fundId    Int      @map("fund_id")
+  fund      Fund     @relation(fields: [fundId], references: [id], onDelete: Restrict)
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([fundId, userId])
+  @@index([userId])
+  @@map("fund_memberships")
+}
+
+model Account {
+  id        Int              @id @default(autoincrement())
+  ownerType AccountOwnerType @map("owner_type")
+  ownerId   Int?             @map("owner_id")
+  name      String           @db.VarChar(255)
+  currency  String           @default("USD") @db.VarChar(10)
+  kind      AccountKind      @default(asset)
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  entries LedgerEntry[]
+
+  @@unique([ownerType, name, currency])
+  @@index([ownerType, ownerId])
+  @@map("accounts")
+}
+
+model LedgerTransaction {
+  id            Int                     @id @default(autoincrement())
+  timestamp     DateTime                @default(now())
+  actorUserId   Int?                    @map("actor_user_id")
+  description   String                  @db.Text
+  referenceType String?                 @map("reference_type") @db.VarChar(50)
+  referenceId   Int?                    @map("reference_id")
+  // idempotency event discriminator, e.g. 'donation.approved'
+  event         String?                 @db.VarChar(100)
+  status        LedgerTransactionStatus @default(posted)
+  createdAt     DateTime                @default(now()) @map("created_at")
+
+  entries LedgerEntry[]
+
+  @@unique([referenceType, referenceId, event])
+  @@index([referenceType, referenceId])
+  @@map("ledger_transactions")
+}
+
+model LedgerEntry {
+  id            Int               @id @default(autoincrement())
+  transactionId Int               @map("transaction_id")
+  transaction   LedgerTransaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  accountId     Int               @map("account_id")
+  account       Account           @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  direction     LedgerDirection
+  amount        Decimal           @db.Decimal(14, 2)
+  currency      String            @default("USD") @db.VarChar(10)
+
+  @@index([accountId])
+  @@index([transactionId])
+  @@map("ledger_entries")
+}
+
+model FundAllocation {
+  id                   Int                  @id @default(autoincrement())
+  fundId               Int                  @map("fund_id")
+  fund                 Fund                 @relation(fields: [fundId], references: [id], onDelete: Restrict)
+  projectId            Int                  @map("project_id")
+  project              Project              @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  amount               Decimal              @db.Decimal(14, 2)
+  status               FundAllocationStatus @default(proposed)
+  approvedByDecisionId Int?                 @map("approved_by_decision_id")
+  approvedByDecision   BoardDecision?       @relation(fields: [approvedByDecisionId], references: [id], onDelete: Restrict)
+  note                 String?              @db.Text
+  createdByUserId      Int?                 @map("created_by_user_id")
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
+
+  @@index([fundId])
+  @@index([projectId])
+  @@map("fund_allocations")
 }

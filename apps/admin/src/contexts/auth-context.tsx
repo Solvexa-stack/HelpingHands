@@ -18,6 +18,8 @@ export interface OrgContext {
   name: string;
   type: string;
   status: string;
+  /** Org-scoped RBAC roles the user holds here (e.g. org_admin, staff). */
+  roles?: string[];
 }
 
 /**

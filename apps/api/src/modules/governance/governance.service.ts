@@ -18,6 +18,8 @@ import { EventBusService } from '../../events/event-bus.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CastRoundVoteDto, DecisionQueryDto, OpenRoundDto, RecordDecisionDto } from './dto/governance.dto';
+import { WorkflowService } from '../workflow/workflow.service';
+import { workflowEnforced } from '../workflow/workflow.types';
 
 /** Roles that may cast a vote in a board-eligibility round (07: secretary/auditor do not vote). */
 const BOARD_VOTING_ROLES = ['board_chair', 'board_member'];
@@ -43,6 +45,7 @@ export class GovernanceService {
     private prisma: PrismaService,
     private eventBus: EventBusService,
     private notificationsService: NotificationsService,
+    private workflow: WorkflowService,
   ) {}
 
   // ─── Decisions (W3-E2-S1 / W3-E4) ─────────────────────────────────────────────
@@ -135,8 +138,14 @@ export class GovernanceService {
       legacySync.rejectionReason = rationale;
     }
 
-    const [decision, updatedStudy] = await this.prisma.$transaction([
-      this.prisma.boardDecision.create({
+    let decision: Prisma.BoardDecisionGetPayload<object>;
+    let updatedStudy: ProjectStudy;
+    if (workflowEnforced('study')) {
+      // W4-E4-S2: the decision row lands first (it is the transition's
+      // board_decision guard input), then the engine moves the state with the
+      // legacy sync riding the same transaction. Approval chains into
+      // open_donations — 'approved' is transient, matching the backfill rule.
+      decision = await this.prisma.boardDecision.create({
         data: {
           subjectType: 'project_study',
           subjectId: studyId,
@@ -146,13 +155,50 @@ export class GovernanceService {
           sessionRef: opts.sessionRef,
           voteRoundId: round,
         },
-      }),
-      this.prisma.projectStudy.update({ where: { id: studyId }, data: legacySync }),
-      this.prisma.project.update({
-        where: { id: study.projectId },
-        data: { studyStatus: targetStatus },
-      }),
-    ]).then(([d, s]) => [d, s] as const);
+      });
+      const action =
+        decisionType === 'approved' ? 'approve' : decisionType === 'rejected' ? 'reject' : 'request_changes';
+      await this.workflow.ensurePositionedInstance(
+        { subjectType: 'project', subjectId: study.projectId },
+        study.status,
+      );
+      await this.workflow.execute(actor, { subjectType: 'project', subjectId: study.projectId }, action, {
+        note: `board decision #${decision.id}`,
+        suppressEffects: ['study.approved', 'study.rejected'],
+        sync: async (tx) => {
+          await tx.projectStudy.update({ where: { id: studyId }, data: legacySync });
+          await tx.project.update({ where: { id: study.projectId }, data: { studyStatus: targetStatus } });
+        },
+      });
+      if (decisionType === 'approved') {
+        await this.workflow.execute(
+          actor,
+          { subjectType: 'project', subjectId: study.projectId },
+          'open_donations',
+          { note: 'donations were never study-gated in v1 — approval opens them' },
+        );
+      }
+      updatedStudy = (await this.prisma.projectStudy.findUnique({ where: { id: studyId } }))!;
+    } else {
+      [decision, updatedStudy] = await this.prisma.$transaction([
+        this.prisma.boardDecision.create({
+          data: {
+            subjectType: 'project_study',
+            subjectId: studyId,
+            decision: decisionType,
+            rationale,
+            decidedById: actor.userId!,
+            sessionRef: opts.sessionRef,
+            voteRoundId: round,
+          },
+        }),
+        this.prisma.projectStudy.update({ where: { id: studyId }, data: legacySync }),
+        this.prisma.project.update({
+          where: { id: study.projectId },
+          data: { studyStatus: targetStatus },
+        }),
+      ]).then(([d, s]) => [d, s] as const);
+    }
 
     this.emitDecisionRecorded(actor, decision);
 

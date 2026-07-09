@@ -35,6 +35,52 @@ export const POLICY_REGISTRY: Record<string, PolicyEntry> = {
     sensitive: true,
   },
 
+  // ─── W5 fund action class (06/08: segregation of duties is structural) ─────
+  'fund.manage': {
+    anyGrants: [{ scopeType: 'platform', roles: ['board_chair'] }],
+    sensitive: true,
+  },
+  'fund.read': {
+    anyGrants: [
+      { scopeType: 'platform', roles: ['board_chair', 'board_member', 'board_secretary', 'platform_auditor'] },
+      { scopeType: 'fund', roles: ['fund_director', 'fund_deputy', 'fund_secretary', 'fund_accountant', 'fund_controller'] },
+    ],
+  },
+  'allocation.propose': {
+    anyGrants: [
+      { scopeType: 'fund', roles: ['fund_director', 'fund_deputy'] },
+      { scopeType: 'platform', roles: ['board_chair'] },
+    ],
+    sensitive: true,
+  },
+  'allocation.decide': {
+    anyGrants: [{ scopeType: 'platform', roles: ['board_chair', 'board_member'] }],
+    sensitive: true,
+  },
+  'allocation.disburse': {
+    anyGrants: [
+      { scopeType: 'fund', roles: ['fund_director', 'fund_deputy'] },
+      { scopeType: 'platform', roles: ['board_chair'] },
+    ],
+    sensitive: true,
+  },
+  'allocation.reconcile': {
+    anyGrants: [
+      { scopeType: 'fund', roles: ['fund_director', 'fund_deputy', 'fund_accountant'] },
+      { scopeType: 'platform', roles: ['board_chair'] },
+    ],
+    sensitive: true,
+  },
+  // controller = read + flag ONLY: this is the sole fund action the
+  // fund_controller role appears in besides fund.read
+  'ledger.flag': {
+    anyGrants: [
+      { scopeType: 'fund', roles: ['fund_controller', 'fund_director', 'fund_deputy', 'fund_secretary', 'fund_accountant'] },
+      { scopeType: 'platform', roles: ['board_chair', 'board_member', 'platform_auditor'] },
+    ],
+    sensitive: true,
+  },
+
   // ─── W3 governance action class (07: board roles, all sensitive) ────────────
   'governance.decide': {
     anyGrants: [{ scopeType: 'platform', roles: ['board_chair', 'board_member'] }],
@@ -91,6 +137,21 @@ export const ROUTE_ACTION_MAP: Record<string, string> = {
   'GET /api/v1/organizations': 'organization.manage',
   'GET /api/v1/audit': 'governance.read',
   'GET /api/v1/audit/:id': 'governance.read',
+  // W5 funds & treasury
+  'POST /api/v1/funds': 'fund.manage',
+  'PUT /api/v1/funds/:id': 'fund.manage',
+  'POST /api/v1/funds/:id/officers': 'fund.manage',
+  'DELETE /api/v1/funds/:id/officers/:userId/:role': 'fund.manage',
+  'GET /api/v1/funds': 'fund.read',
+  'GET /api/v1/funds/:id': 'fund.read',
+  'GET /api/v1/funds/:id/dashboard': 'fund.read',
+  'POST /api/v1/funds/:id/allocations': 'allocation.propose',
+  'POST /api/v1/funds/allocations/:allocationId/approve': 'allocation.decide',
+  'POST /api/v1/funds/allocations/:allocationId/reject': 'allocation.decide',
+  'POST /api/v1/funds/allocations/:allocationId/disburse': 'allocation.disburse',
+  'POST /api/v1/funds/allocations/:allocationId/reconcile': 'allocation.reconcile',
+  'POST /api/v1/funds/allocations/:allocationId/close': 'allocation.reconcile',
+  'POST /api/v1/treasury/transactions/:id/flag': 'ledger.flag',
   // W3 governance
   'POST /api/v1/governance/decisions': 'governance.decide',
   'GET /api/v1/governance/decisions': 'governance.read',

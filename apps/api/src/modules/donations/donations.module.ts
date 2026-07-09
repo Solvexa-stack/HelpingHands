@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
+import { WorkflowModule } from '../workflow/workflow.module';
 import { DonationsController } from './donations.controller';
 import { DonationsService } from './donations.service';
 import { ProjectsModule } from '../projects/projects.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [ProjectsModule, NotificationsModule],
+  imports: [ProjectsModule, NotificationsModule, WorkflowModule],
   controllers: [DonationsController],
   providers: [DonationsService],
   exports: [DonationsService],

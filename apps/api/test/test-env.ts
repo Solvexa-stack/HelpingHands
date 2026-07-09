@@ -36,6 +36,8 @@ export function applyTestEnv(): void {
   // the root .env fallback (dev convenience in app.module) out of tests.
   process.env.TENANCY_ENFORCED = process.env.TENANCY_ENFORCED || 'false';
   process.env.POLICY_ENFORCED = process.env.POLICY_ENFORCED || 'false';
+  process.env.WORKFLOW_ENFORCED = process.env.WORKFLOW_ENFORCED || 'false';
+  process.env.TREASURY_LEDGER_READS = process.env.TREASURY_LEDGER_READS || 'false';
 }
 
 /** URL of the server-level maintenance DB, used to CREATE the test database. */

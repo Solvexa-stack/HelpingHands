@@ -8,7 +8,7 @@ import {
   Users, Pencil, AlertTriangle, ChevronRight, Vote, ExternalLink,
   ThumbsUp, ThumbsDown, RotateCcw, XCircle, Timer,
 } from 'lucide-react';
-import { studiesApi, projectsApi, adminsApi, votingApi } from '@/lib/api';
+import { studiesApi, projectsApi, adminsApi, votingApi, organizationsApi } from '@/lib/api';
 import { formatDate, getTranslation, cn } from '@/lib/utils';
 import { StudyStatusBadge } from '@/components/study/study-status-badge';
 import { ChangeStudyStatusModal } from '@/components/study/change-study-status-modal';
@@ -465,7 +465,7 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
   const id = Number(params.id);
   const qc = useQueryClient();
   const { success, error: toastError } = useToast();
-  const { user } = useAuth();
+  const { user, activeOrg, workspaceType } = useAuth();
   const { t, locale } = useLanguage();
 
   const secName = (sec: any) =>
@@ -479,6 +479,9 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
     sec.description;
   const role = user?.admin?.role || '';
   const isAdmin = role === 'administrator';
+  // Org-workspace tenancy only surfaces the org's own studies, so org_admin
+  // of the active org has full control here
+  const isOrgAdmin = workspaceType === 'organization' && (activeOrg?.roles?.includes('org_admin') ?? false);
   const isReadOnly = role === 'financial_officer';
   const [statusModal, setStatusModal] = useState(false);
   const [approvalBanner, setApprovalBanner] = useState(false);
@@ -495,13 +498,23 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
     enabled: !!study?.projectId,
   });
 
+  // GET /admins is administrator-only; employees would just 403
   const { data: adminsData } = useQuery({
     queryKey: ['admins-list'],
     queryFn: () => adminsApi.list({ limit: 100 }),
-    enabled: !isReadOnly,
+    enabled: isAdmin,
   });
 
-  const admins = adminsData || [];
+  // Org admins assign from their own team instead of the platform admins list
+  const { data: orgMembers } = useQuery({
+    queryKey: ['org-members', activeOrg?.id],
+    queryFn: () => organizationsApi.members(activeOrg!.id),
+    enabled: isOrgAdmin && !!activeOrg,
+  });
+
+  const admins = isOrgAdmin
+    ? (orgMembers || []).filter((m: any) => m.admin).map((m: any) => m.admin)
+    : (adminsData || []);
 
   const changeStatusMutation = useMutation({
     mutationFn: ({ status, extraData }: { status: string; extraData?: Record<string, any> }) =>

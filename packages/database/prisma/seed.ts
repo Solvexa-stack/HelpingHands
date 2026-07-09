@@ -2,6 +2,9 @@ import { PrismaClient, AdminRole, BlockCategory, ProjectCategory, Representation
 import bcrypt from 'bcryptjs';
 import { backfillIdentity } from './backfills/w1-identity-backfill';
 import { backfillGovernance } from './backfills/w3-governance-backfill';
+import { seedWorkflowDefinitions } from './seeds/w4-workflow-definitions';
+import { backfillWorkflowInstances } from './backfills/w4-workflow-backfill';
+import { backfillTreasury } from './backfills/w5-treasury-backfill';
 
 const prisma = new PrismaClient();
 
@@ -258,6 +261,32 @@ async function main() {
     throw new Error(`W3 governance backfill verification failed: ${governance.verification.mismatches.join('; ')}`);
   }
   console.log(`✅ Governance backfill (${governance.roundsCreated} rounds, ${governance.votesCopied} votes, ${governance.decisionsCreated} decisions; tallies verified)`);
+
+  // ─── W4 workflow definitions + instance backfill (idempotent) ───────────────
+  const definitions = await seedWorkflowDefinitions(prisma);
+  const workflow = await backfillWorkflowInstances(prisma);
+  if (workflow.verification.mismatches.length > 0) {
+    throw new Error(`W4 workflow backfill verification failed: ${workflow.verification.mismatches.join('; ')}`);
+  }
+  console.log(`✅ Workflow engine (${definitions.seeded} definitions; ${workflow.instancesCreated} instances backfilled; census ${workflow.census.length} combos mapped; derivation verified)`);
+
+  // ─── W5 initial funds (Board-created; launch ceiling threshold=0) ──────────
+  const initialFunds = ['Development & Infrastructure', 'Social Support', 'Relief & Emergency'];
+  let fundsCreated = 0;
+  for (const name of initialFunds) {
+    const existing = await prisma.fund.findFirst({ where: { name } });
+    if (!existing) {
+      await prisma.fund.create({ data: { name, policy: { dualApprovalThreshold: 0 } } });
+      fundsCreated += 1;
+    }
+  }
+
+  // ─── W5 treasury backfill: accounts + ledger reconstruction + gate ─────────
+  const treasury = await backfillTreasury(prisma);
+  if (treasury.reconciliation.mismatches.length > 0) {
+    throw new Error(`W5 reconciliation gate failed: ${treasury.reconciliation.mismatches.join('; ')}`);
+  }
+  console.log(`✅ Treasury (${fundsCreated} funds created; ${treasury.accountsCreated} accounts; ${treasury.transactionsReconstructed} legacy rows reconstructed; reconciliation exact for ${treasury.reconciliation.projectsChecked} projects)`);
 
   // ─── Study Department Templates ───────────────────────────────────────────────
   const sharedSections = [
