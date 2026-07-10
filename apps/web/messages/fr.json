@@ -134,7 +134,13 @@
       "transactionId": "ID de transaction",
       "emailSent": "Un e-mail de confirmation a été envoyé.",
       "viewDonations": "Voir vos dons",
-      "backToProjects": "Retour aux projets"
+      "backToProjects": "Retour aux projets",
+      "missingReference": "Référence de don manquante.",
+      "confirmFailed": "Impossible de confirmer le statut du don. Veuillez vérifier votre tableau de bord.",
+      "confirming": "Confirmation de votre don…",
+      "verifyFailedTitle": "Impossible de vérifier le paiement",
+      "unknownStatus": "Statut du don inconnu.",
+      "viewDashboard": "Voir le tableau de bord"
     },
     "cancel": {
       "title": "Paiement annulé",
@@ -259,7 +265,8 @@
       "date": "Date",
       "status": "Statut",
       "approvedAt": "Approuvé le",
-      "notes": "Notes"
+      "notes": "Notes",
+      "provider": "Fournisseur"
     }
   }
 }

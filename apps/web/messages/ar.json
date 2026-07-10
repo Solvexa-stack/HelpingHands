@@ -134,7 +134,13 @@
       "transactionId": "رقم المعاملة",
       "emailSent": "تم إرسال بريد إلكتروني للتأكيد.",
       "viewDonations": "عرض تبرعاتك",
-      "backToProjects": "العودة إلى المشاريع"
+      "backToProjects": "العودة إلى المشاريع",
+      "missingReference": "مرجع التبرع مفقود.",
+      "confirmFailed": "تعذر تأكيد حالة التبرع. يرجى مراجعة لوحة التحكم الخاصة بك.",
+      "confirming": "جارٍ تأكيد تبرعك…",
+      "verifyFailedTitle": "تعذر التحقق من الدفع",
+      "unknownStatus": "حالة التبرع غير معروفة.",
+      "viewDashboard": "عرض لوحة التحكم"
     },
     "cancel": {
       "title": "تم إلغاء الدفع",
@@ -259,7 +265,8 @@
       "date": "التاريخ",
       "status": "الحالة",
       "approvedAt": "تاريخ الموافقة",
-      "notes": "ملاحظات"
+      "notes": "ملاحظات",
+      "provider": "مزود الخدمة"
     }
   }
 }

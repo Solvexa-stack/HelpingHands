@@ -134,7 +134,13 @@
       "transactionId": "Transaction ID",
       "emailSent": "A confirmation email has been sent.",
       "viewDonations": "View your donations",
-      "backToProjects": "Back to projects"
+      "backToProjects": "Back to projects",
+      "missingReference": "Missing donation reference.",
+      "confirmFailed": "Could not confirm donation status. Please check your dashboard.",
+      "confirming": "Confirming your donation…",
+      "verifyFailedTitle": "Could not verify payment",
+      "unknownStatus": "Donation status unknown.",
+      "viewDashboard": "View Dashboard"
     },
     "cancel": {
       "title": "Payment was cancelled",
@@ -259,7 +265,8 @@
       "date": "Date",
       "status": "Status",
       "approvedAt": "Approved At",
-      "notes": "Notes"
+      "notes": "Notes",
+      "provider": "Provider"
     }
   }
 }

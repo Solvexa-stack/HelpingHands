@@ -10,6 +10,7 @@ import { formatCurrency, getTranslation } from '@/lib/utils';
 
 export default function PaymentSuccessPage() {
   const t = useTranslations('payment.success');
+  const tDonations = useTranslations('donations');
   const locale = useLocale();
   const searchParams = useSearchParams();
 
@@ -22,14 +23,14 @@ export default function PaymentSuccessPage() {
 
   useEffect(() => {
     if (!donationId) {
-      setError('Missing donation reference.');
+      setError(t('missingReference'));
       setLoading(false);
       return;
     }
     paymentsApi
       .getDonationStatus(Number(donationId))
       .then((d) => setDonation(d))
-      .catch(() => setError('Could not confirm donation status. Please check your dashboard.'))
+      .catch(() => setError(t('confirmFailed')))
       .finally(() => setLoading(false));
   }, [donationId]);
 
@@ -38,7 +39,7 @@ export default function PaymentSuccessPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center space-y-3">
           <Loader2 className="w-10 h-10 text-primary-600 animate-spin mx-auto" />
-          <p className="text-gray-500">Confirming your donation…</p>
+          <p className="text-gray-500">{t('confirming')}</p>
         </div>
       </div>
     );
@@ -49,14 +50,14 @@ export default function PaymentSuccessPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="card p-8 max-w-md w-full text-center space-y-4">
           <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto" />
-          <h1 className="text-xl font-bold text-gray-900">Could not verify payment</h1>
-          <p className="text-gray-500 text-sm">{error || 'Donation status unknown.'}</p>
+          <h1 className="text-xl font-bold text-gray-900">{t('verifyFailedTitle')}</h1>
+          <p className="text-gray-500 text-sm">{error || t('unknownStatus')}</p>
           <div className="flex gap-3 justify-center pt-2">
             <Link href={`/${locale}/dashboard`} className="btn-primary text-sm py-2 px-5">
-              View Dashboard
+              {t('viewDashboard')}
             </Link>
             <Link href={`/${locale}/projects`} className="btn-secondary text-sm py-2 px-5">
-              Back to Projects
+              {t('backToProjects')}
             </Link>
           </div>
         </div>
@@ -82,19 +83,19 @@ export default function PaymentSuccessPage() {
 
         <div className="bg-gray-50 rounded-xl p-4 text-left space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-500">Project</span>
+            <span className="text-gray-500">{tDonations('fields.project')}</span>
             <span className="font-semibold text-gray-900 text-right max-w-[180px] truncate">{projectName}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Amount</span>
+            <span className="text-gray-500">{tDonations('fields.amount')}</span>
             <span className="font-bold text-gray-900">{formatCurrency(Number(donation.amount), donation.currency)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Provider</span>
+            <span className="text-gray-500">{tDonations('fields.provider')}</span>
             <span className="font-semibold capitalize text-gray-900">{donation.provider}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Status</span>
+            <span className="text-gray-500">{tDonations('fields.status')}</span>
             <span className={`badge capitalize ${isConfirmed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
               {donation.status}
             </span>
