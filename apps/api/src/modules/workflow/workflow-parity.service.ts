@@ -28,8 +28,15 @@ export class WorkflowParityService {
 
   static derive(studyStatus: string | null, isCompleted: boolean): string[] {
     if (isCompleted) return ['completed'];
-    if (studyStatus === null) return ['donations_open', 'executing'];
+    // studyStatus null covers two generations: backfilled pre-engine projects
+    // (positioned donations_open/executing) AND engine-born projects that
+    // have not created a study yet (sitting at the initial draft state) —
+    // both are legitimate, not drift (W6 fix of a W4 false positive).
+    if (studyStatus === null) return ['draft', 'donations_open', 'executing'];
     if (studyStatus === 'approved') return ['approved', 'donations_open', 'executing'];
+    // W6: v2's board_review station has no legacy column equivalent — the
+    // study stays voting_closed while the Board holds the project.
+    if (studyStatus === 'voting_closed') return ['voting_closed', 'board_review'];
     return [studyStatus];
   }
 
@@ -59,11 +66,15 @@ export class WorkflowParityService {
     for (const project of projects) {
       const instance = await this.prisma.workflowInstance.findUnique({
         where: { subjectType_subjectId: { subjectType: 'project', subjectId: project.id } },
+        include: { definition: { select: { key: true } } },
       });
       if (!instance) {
         drift.push({ projectId: project.id, problem: 'no workflow instance' });
         continue;
       }
+      // W6: engine-native definitions (emergency-relief) have no legacy
+      // column semantics — nothing to compare against.
+      if (instance.definition.key !== 'project-lifecycle') continue;
       const acceptable = WorkflowParityService.derive(project.studyStatus as string | null, project.isCompleted);
       if (!acceptable.includes(instance.currentStateKey)) {
         drift.push({

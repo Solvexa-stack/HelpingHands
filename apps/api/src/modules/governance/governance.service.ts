@@ -156,12 +156,25 @@ export class GovernanceService {
           voteRoundId: round,
         },
       });
-      const action =
+      let action =
         decisionType === 'approved' ? 'approve' : decisionType === 'rejected' ? 'reject' : 'request_changes';
       await this.workflow.ensurePositionedInstance(
         { subjectType: 'project', subjectId: study.projectId },
         study.status,
       );
+      // W6-E4-S1: v2 (oversight orgs) inserts an explicit board_review station
+      // between voting_closed and the decision; legacy study statuses have no
+      // equivalent, so the hop happens here, inside the single decision path.
+      const instance = await this.workflow.instanceFor({ subjectType: 'project', subjectId: study.projectId });
+      const isV2 = instance?.definition.key === 'project-lifecycle' && instance.definition.version >= 2;
+      if (isV2 && instance!.currentStateKey === 'voting_closed') {
+        await this.workflow.execute(actor, { subjectType: 'project', subjectId: study.projectId }, 'send_to_board', {
+          note: `board decision #${decision.id}`,
+        });
+      }
+      if (isV2 && decisionType === 'changes_requested' && instance!.currentStateKey === 'in_review') {
+        action = 'revise'; // v2 carries request_changes only from board_review
+      }
       await this.workflow.execute(actor, { subjectType: 'project', subjectId: study.projectId }, action, {
         note: `board decision #${decision.id}`,
         suppressEffects: ['study.approved', 'study.rejected'],
@@ -170,12 +183,16 @@ export class GovernanceService {
           await tx.project.update({ where: { id: study.projectId }, data: { studyStatus: targetStatus } });
         },
       });
-      if (decisionType === 'approved') {
+      if (decisionType === 'approved' && (!isV2 || (await this.orgCanOpenDonations(study.projectId)))) {
         await this.workflow.execute(
           actor,
           { subjectType: 'project', subjectId: study.projectId },
           'open_donations',
-          { note: 'donations were never study-gated in v1 — approval opens them' },
+          {
+            note: isV2
+              ? 'owner org holds canOpenDonations — approval opens donations'
+              : 'donations were never study-gated in v1 — approval opens them',
+          },
         );
       }
       updatedStudy = (await this.prisma.projectStudy.findUnique({ where: { id: studyId } }))!;
@@ -417,7 +434,7 @@ export class GovernanceService {
     return tally;
   }
 
-  // ─── Review queue (W3-E5-S1 backend) ─────────────────────────────────────────
+  // ─── Review queue (W3-E5-S1 backend; W6 adds verifications) ─────────────────
 
   /** Cross-org Board inbox: studies awaiting review, in voting, or awaiting decision. */
   async reviewQueue() {
@@ -429,6 +446,7 @@ export class GovernanceService {
           select: {
             id: true,
             category: true,
+            categoryNode: { select: { key: true, name: true } },
             value: true,
             ownerOrganization: { select: { id: true, name: true, type: true } },
             block: { select: { translations: { select: { languageCode: true, name: true } } } },
@@ -444,7 +462,7 @@ export class GovernanceService {
       status: s.status,
       projectId: s.project.id,
       projectName: s.project.block.translations[0]?.name ?? `#${s.project.id}`,
-      category: s.project.category,
+      category: s.project.categoryNode?.key ?? s.project.category,
       organization: s.project.ownerOrganization,
       votingEndsAt: s.votingEndsAt,
       ageDays: Math.floor((now - s.updatedAt.getTime()) / 86_400_000),
@@ -452,7 +470,50 @@ export class GovernanceService {
     }));
   }
 
+  /** W6-E3-S2: pending registrations for the Board queue, with workflow state. */
+  async verificationQueue() {
+    const pending = await this.prisma.organization.findMany({
+      where: { status: 'pending_verification', deletedAt: null },
+      orderBy: { createdAt: 'asc' },
+    });
+    const now = Date.now();
+    const items = [] as Array<Record<string, unknown>>;
+    for (const org of pending) {
+      const instance = await this.prisma.workflowInstance.findUnique({
+        where: { subjectType_subjectId: { subjectType: 'organization', subjectId: org.id } },
+      });
+      const documents = org.contentBlockId
+        ? await this.prisma.file.count({
+            where: { referenceType: 'organization', referenceId: org.contentBlockId, isActive: true },
+          })
+        : 0;
+      items.push({
+        type: 'verification' as const,
+        organizationId: org.id,
+        name: org.name,
+        orgType: org.type,
+        registrationNumber: org.registrationNumber,
+        workflowState: instance?.currentStateKey ?? null,
+        documentsOnFile: documents,
+        ageDays: Math.floor((now - org.createdAt.getTime()) / 86_400_000),
+        waitingSince: org.createdAt,
+      });
+    }
+    return items;
+  }
+
   // ─── Internals ────────────────────────────────────────────────────────────────
+
+  /** W6-E4-S1: the v2 open_donations chain is capability-gated. */
+  private async orgCanOpenDonations(projectId: number): Promise<boolean> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { ownerOrganization: { select: { capabilities: true } } },
+    });
+    return (
+      (project?.ownerOrganization.capabilities as Record<string, unknown> | null)?.canOpenDonations === true
+    );
+  }
 
   private emitDecisionRecorded(actor: ActorContext, decision: { id: number; subjectType: string; subjectId: number; decision: string; voteRoundId: number | null }) {
     this.eventBus.publish({

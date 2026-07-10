@@ -80,8 +80,29 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
               <div className="p-6">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <h1 className="text-2xl font-extrabold text-gray-900">{translation?.name}</h1>
-                  <span className="badge bg-primary-50 text-primary-700 capitalize whitespace-nowrap">{project.category}</span>
+                  {/* W6-E2: locale-aware civic category label (legacy enum as fallback) */}
+                  <span className="badge bg-primary-50 text-primary-700 capitalize whitespace-nowrap">
+                    {(locale === 'ar' && project.categoryNode?.nameAr) ||
+                      (locale === 'fr' && project.categoryNode?.nameFr) ||
+                      project.categoryNode?.name ||
+                      project.category}
+                  </span>
                 </div>
+
+                {/* W6-E5-S2: participating organizations (joint projects, additive) */}
+                {(project.participations ?? []).filter((p: any) => p.status === 'active').length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2 mb-4 text-sm text-gray-600">
+                    <span className="text-gray-400">Implemented with:</span>
+                    {project.participations
+                      .filter((p: any) => p.status === 'active')
+                      .map((p: any) => (
+                        <span key={p.id} className="badge bg-emerald-50 text-emerald-700 whitespace-nowrap">
+                          {p.organization?.name}
+                          <span className="text-emerald-400 ml-1">· {String(p.role).replace(/_/g, ' ')}</span>
+                        </span>
+                      ))}
+                  </div>
+                )}
 
                 {translation?.brief && (
                   <p className="text-gray-600 text-lg mb-4 leading-relaxed">{translation.brief}</p>

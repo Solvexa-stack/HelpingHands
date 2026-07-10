@@ -33,9 +33,37 @@ export class CreateProjectDto {
   @Min(1)
   value: number;
 
-  @ApiProperty({ enum: ProjectCategory })
+  // W6-E2: the taxonomy node is the category truth. The legacy enum value is
+  // still accepted from old clients and resolved to its node — the enum
+  // column itself is frozen and never written.
+  @ApiPropertyOptional({ description: 'Category node id (civic taxonomy)' })
+  @IsOptional()
+  @IsInt()
+  categoryId?: number;
+
+  @ApiPropertyOptional({ description: 'Category node key, e.g. "water" or "agricultural"' })
+  @IsOptional()
+  @IsString()
+  categoryKey?: string;
+
+  @ApiPropertyOptional({ enum: ProjectCategory, description: 'Legacy category (resolved to its node)' })
+  @IsOptional()
   @IsEnum(ProjectCategory)
-  category: ProjectCategory;
+  category?: ProjectCategory;
+
+  @ApiPropertyOptional({
+    description: 'Lifecycle definition: default project-lifecycle; "emergency-relief" is Board-only',
+  })
+  @IsOptional()
+  @IsString()
+  lifecycle?: 'project-lifecycle' | 'emergency-relief';
+
+  // W6 addendum — fund of record: identity attribution (chosen at creation,
+  // locked after Board approval), distinct from FundAllocation financing.
+  @ApiPropertyOptional({ description: 'Fund of record — the fund this project is administratively attributed to' })
+  @IsOptional()
+  @IsInt()
+  fundId?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -51,10 +79,15 @@ export class CreateProjectDto {
 export class UpdateProjectDto extends PartialType(CreateProjectDto) {}
 
 export class ProjectQueryDto {
-  @ApiPropertyOptional({ enum: ProjectCategory })
+  @ApiPropertyOptional({ enum: ProjectCategory, description: 'Legacy enum filter (resolved to its node)' })
   @IsOptional()
   @IsEnum(ProjectCategory)
   category?: ProjectCategory;
+
+  @ApiPropertyOptional({ description: 'Category node key filter — matches the node and its descendants' })
+  @IsOptional()
+  @IsString()
+  categoryKey?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

@@ -49,10 +49,25 @@ export class TenancyRepository {
     return actor.activeOrgId;
   }
 
-  /** Flag-gated list filter incl. the audited Board read-bypass. */
+  /**
+   * Flag-gated list filter incl. the audited Board read-bypass. W6-E5: a
+   * workspace sees its own projects PLUS projects it actively participates in
+   * PLUS projects the user holds a project-scope grant on — each admits
+   * exactly that project, nothing else (joint-project leak rule).
+   */
   async enforcedProjectWhere<T extends object>(where: T = {} as T, auditSubject = 'project.list'): Promise<T> {
     const orgId = await this.enforcedOrgId(auditSubject);
-    return orgId == null ? where : { ...where, ownerOrganizationId: orgId };
+    if (orgId == null) return where;
+    const userId = this.actorContext.current()?.userId;
+    const grantedProjectIds = userId == null ? [] : await this.projectGrantIds(userId);
+    return {
+      ...where,
+      OR: [
+        { ownerOrganizationId: orgId },
+        { participations: { some: { organizationId: orgId, status: 'active', deletedAt: null } } },
+        ...(grantedProjectIds.length > 0 ? [{ id: { in: grantedProjectIds } }] : []),
+      ],
+    };
   }
 
   /**
@@ -84,12 +99,32 @@ export class TenancyRepository {
     if (!project) return; // let the caller produce its own 404
     if (project.ownerOrganizationId === actor.activeOrgId) return;
 
+    // W6-E5: joint projects — an actively participating org, or a user
+    // holding a project-scope grant, sees exactly this project.
+    const participation = await this.prisma.projectParticipation.findFirst({
+      where: { projectId, organizationId: actor.activeOrgId, status: 'active', deletedAt: null },
+    });
+    if (participation) return;
+    const projectGrant = await this.prisma.roleAssignment.findFirst({
+      where: { userId: actor.userId, scopeType: 'project', scopeId: projectId, deletedAt: null },
+    });
+    if (projectGrant) return;
+
     if (await this.hasBoardReadBypass(actor.userId)) {
       this.auditBypass(`project.read:${projectId}`);
       return;
     }
     // Cross-org access reads as nonexistence — no information leak
     throw new NotFoundException(`Project #${projectId} not found`);
+  }
+
+  /** Projects this user is individually admitted to (W6-E5 project-scope grants). */
+  private async projectGrantIds(userId: number): Promise<number[]> {
+    const grants = await this.prisma.roleAssignment.findMany({
+      where: { userId, scopeType: 'project', scopeId: { not: null }, deletedAt: null },
+      select: { scopeId: true },
+    });
+    return [...new Set(grants.map((g) => g.scopeId!))];
   }
 
   private async hasBoardReadBypass(userId: number): Promise<boolean> {

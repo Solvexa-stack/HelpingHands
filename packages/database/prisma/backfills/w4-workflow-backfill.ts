@@ -39,9 +39,12 @@ export interface WorkflowBackfillResult {
 }
 
 export async function backfillWorkflowInstances(prisma: PrismaClient): Promise<WorkflowBackfillResult> {
+  // Pinned to v1 explicitly: projects that predate the engine were governed
+  // by the legacy machine v1 transcribes. v2 (W6) applies only to NEW
+  // projects of oversight-flagged orgs — never retroactively (engine
+  // versioning rule, 04).
   const definition = await prisma.workflowDefinition.findFirst({
-    where: { key: 'project-lifecycle', isActive: true },
-    orderBy: { version: 'desc' },
+    where: { key: 'project-lifecycle', version: 1, isActive: true },
   });
   if (!definition) throw new Error('W4 backfill: active project-lifecycle definition missing — seed definitions first');
 

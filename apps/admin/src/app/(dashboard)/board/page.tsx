@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, FileEdit, Gavel, History, Landmark, ListTodo, Megaphone, X, XCircle } from 'lucide-react';
-import { governanceApi, projectsApi, studiesApi, votingApi } from '@/lib/api';
+import { BadgeCheck, CheckCircle2, FileEdit, FileText, Gavel, History, Landmark, ListTodo, Megaphone, X, XCircle } from 'lucide-react';
+import { governanceApi, orgReportsApi, projectsApi, studiesApi, verificationApi, votingApi } from '@/lib/api';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/components/ui/toaster';
 import { cn, formatDatetime } from '@/lib/utils';
+import { VerificationsTab } from './verifications-tab';
+import { ReportsTab } from './reports-tab';
 
 /**
  * W3-E5 — Board workspace: cross-org review queue, decision recording with
@@ -44,7 +46,7 @@ export default function BoardPage() {
   const { hasBoardWorkspace } = useAuth();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<'queue' | 'history' | 'projects'>('queue');
+  const [tab, setTab] = useState<'queue' | 'verifications' | 'reports' | 'history' | 'projects'>('queue');
   const [decide, setDecide] = useState<{ studyId: number; projectName: string; kind: 'approved' | 'rejected' | 'changes_requested' } | null>(null);
   const [rationale, setRationale] = useState('');
 
@@ -63,6 +65,19 @@ export default function BoardPage() {
     queryKey: ['board-projects'],
     queryFn: () => projectsApi.list({ limit: 100 }),
     enabled: hasBoardWorkspace && tab === 'projects',
+  });
+  // W6: badge counts for the new queues
+  const { data: verificationQueue } = useQuery({
+    queryKey: ['verification-queue'],
+    queryFn: () => verificationApi.queue(),
+    enabled: hasBoardWorkspace,
+    refetchInterval: 60_000,
+  });
+  const { data: reportQueue } = useQuery({
+    queryKey: ['org-reports-queue'],
+    queryFn: () => orgReportsApi.queue(),
+    enabled: hasBoardWorkspace,
+    refetchInterval: 60_000,
   });
 
   const refresh = () => {
@@ -113,26 +128,47 @@ export default function BoardPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-800">
-        {([['queue', 'Review queue', ListTodo], ['history', 'Decision history', History], ['projects', 'All projects', Gavel]] as const).map(
-          ([key, label, Icon]) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={cn(
-                'flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
-                tab === key
-                  ? 'border-primary-600 text-primary-700 dark:text-primary-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700',
-              )}
-            >
-              <Icon className="w-4 h-4" /> {label}
-              {key === 'queue' && items.length > 0 && (
-                <span className="badge bg-primary-100 text-primary-800 text-xs">{items.length}</span>
-              )}
-            </button>
-          ),
+        {([
+          ['queue', 'Review queue', ListTodo],
+          ['verifications', 'Verifications', BadgeCheck],
+          ['reports', 'Reports', FileText],
+          ['history', 'Decision history', History],
+          ['projects', 'All projects', Gavel],
+        ] as const).map(
+          ([key, label, Icon]) => {
+            const badge =
+              key === 'queue'
+                ? items.length
+                : key === 'verifications'
+                  ? (verificationQueue ?? []).length
+                  : key === 'reports'
+                    ? (reportQueue?.reports ?? []).length + (reportQueue?.overdue ?? []).length
+                    : 0;
+            return (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={cn(
+                  'flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
+                  tab === key
+                    ? 'border-primary-600 text-primary-700 dark:text-primary-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700',
+                )}
+              >
+                <Icon className="w-4 h-4" /> {label}
+                {badge > 0 && (
+                  <span className="badge bg-primary-100 text-primary-800 text-xs">{badge}</span>
+                )}
+              </button>
+            );
+          },
         )}
       </div>
+
+      {/* W6: org verification queue */}
+      {tab === 'verifications' && <VerificationsTab />}
+      {/* W6: report review queue + overdue flags */}
+      {tab === 'reports' && <ReportsTab />}
 
       {/* Review queue */}
       {tab === 'queue' && (

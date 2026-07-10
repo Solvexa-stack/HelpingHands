@@ -15,6 +15,18 @@ import { EventBusService } from '../../events/event-bus.service';
 import { TenancyRepository } from '../policy/tenancy.repository';
 import { WorkflowService } from '../workflow/workflow.service';
 import { workflowEnforced } from '../workflow/workflow.types';
+import { CategoriesService } from '../categories/categories.service';
+import { PolicyService } from '../policy/policy.service';
+
+/**
+ * W6 addendum — cutover flag for the fund-of-record requirement. OFF by
+ * default: existing projects and API consumers keep working through the
+ * nullable-column backfill window; flip to 'true' only after the backfill
+ * is verified (09_MIGRATION_AND_BACKWARD_COMPATIBILITY.md — "adding a truth").
+ */
+export function projectFundRequired(): boolean {
+  return process.env.PROJECT_FUND_REQUIRED === 'true';
+}
 
 @Injectable()
 export class ProjectsService {
@@ -24,14 +36,24 @@ export class ProjectsService {
     private actorContext: ActorContextService,
     private tenancy: TenancyRepository,
     private workflow: WorkflowService,
+    private categories: CategoriesService,
+    private policy: PolicyService,
   ) {}
 
   async findAll(query: ProjectQueryDto, userRole?: string, financialOfficerId?: number) {
-    const { page = 1, limit = 15, category, location, search, isCompleted, lang, sortBy = 'createdAt', sortOrder = 'desc' } = query;
+    const { page = 1, limit = 15, category, categoryKey, location, search, isCompleted, lang, sortBy = 'createdAt', sortOrder = 'desc' } = query;
     const { skip, take } = paginate(page, limit);
 
     const where: any = {};
-    if (category) where.category = category;
+    // W6-E2: category filters resolve through the taxonomy — a node matches
+    // itself and its descendants; the legacy enum param maps to its node.
+    if (categoryKey) {
+      const node = await this.categories.byKey(categoryKey);
+      where.categoryId = { in: await this.categories.selfAndDescendantIds(node.id) };
+    } else if (category) {
+      const node = await this.categories.resolveForWrite({ category });
+      where.categoryId = { in: await this.categories.selfAndDescendantIds(node) };
+    }
     if (location) where.location = { contains: location, mode: 'insensitive' };
     if (typeof isCompleted === 'boolean') where.isCompleted = isCompleted;
 
@@ -77,6 +99,8 @@ export class ProjectsService {
           financialOfficer: { select: { id: true, firstName: true, lastName: true } },
           _count: { select: { donations: true } },
           study: { select: { id: true, status: true } },
+          categoryNode: { select: { id: true, key: true, name: true, nameAr: true, nameFr: true, parentId: true } },
+          primaryFund: { select: { id: true, name: true } },
         },
       }),
       this.prisma.project.count({ where: scopedWhere }),
@@ -109,6 +133,14 @@ export class ProjectsService {
           select: { amount: true },
         },
         study: { select: { id: true, status: true } },
+        categoryNode: { select: { id: true, key: true, name: true, nameAr: true, nameFr: true, parentId: true } },
+        primaryFund: { select: { id: true, name: true } },
+        // W6-E1-S1 AC: the project detail API exposes participations
+        participations: {
+          where: { deletedAt: null },
+          orderBy: { id: 'asc' },
+          include: { organization: { select: { id: true, name: true, type: true, status: true } } },
+        },
       },
     });
     if (!project) throw new NotFoundException(`Project #${id} not found`);
@@ -136,23 +168,57 @@ export class ProjectsService {
       if (!officer) throw new NotFoundException(`Financial officer #${dto.financialOfficerId} not found`);
     }
 
+    // W6-E2: taxonomy node resolved from categoryId | categoryKey | legacy
+    // enum value; the frozen enum column is never written.
+    const categoryId = await this.categories.resolveForWrite(dto);
+
+    // W6-E4-S2: the emergency-relief fast track is Board-initiated only
+    if (dto.lifecycle === 'emergency-relief') {
+      const decision = await this.policy.can(actor, 'project.emergency.create', {});
+      if (!decision.allow) {
+        throw new ForbiddenException('Only the Board may initiate emergency-relief projects');
+      }
+    }
+
+    // W2 isolation: ownership follows the actor's active workspace — never
+    // the request body. Actors without an org context (system/backfill)
+    // fall back to the default org.
+    const ownerOrganizationId = actor.activeOrgId ?? (await this.getDefaultOrganizationId());
+
+    // W6 addendum — fund of record: identity attribution, validated the same
+    // way ownerOrganizationId's counterpart (the Fund) already is elsewhere —
+    // must exist and be active. Distinct from FundAllocation (financing,
+    // proposed later, many funds allowed); this is the single administrative
+    // fund a citizen-facing page attributes the project to.
+    let primaryFundId: number | undefined;
+    if (dto.fundId != null) {
+      const fund = await this.prisma.fund.findUnique({ where: { id: dto.fundId } });
+      if (!fund) throw new NotFoundException(`Fund #${dto.fundId} not found`);
+      if (fund.status !== 'active') {
+        throw new BadRequestException(`Fund is ${fund.status} — only active funds can be selected`);
+      }
+      primaryFundId = dto.fundId;
+    } else if (projectFundRequired()) {
+      throw new BadRequestException('A fund must be selected for new projects');
+    }
+
     const project = await this.prisma.project.create({
       data: {
         blockId: dto.blockId,
         location: dto.location,
         value: dto.value,
-        category: dto.category,
+        categoryId,
         expectedStartDate: dto.expectedStartDate ? new Date(dto.expectedStartDate) : undefined,
         dateOfCompletion: dto.dateOfCompletion ? new Date(dto.dateOfCompletion) : undefined,
         financialOfficerId: dto.financialOfficerId,
-        // W2 isolation: ownership follows the actor's active workspace — never
-        // the request body. Actors without an org context (system/backfill)
-        // fall back to the default org.
-        ownerOrganizationId: actor.activeOrgId ?? (await this.getDefaultOrganizationId()),
+        ownerOrganizationId,
+        primaryFundId,
       },
       include: {
         block: { include: { translations: true } },
         financialOfficer: { select: { id: true, firstName: true, lastName: true } },
+        categoryNode: { select: { id: true, key: true, name: true } },
+        primaryFund: { select: { id: true, name: true } },
       },
     });
 
@@ -160,16 +226,49 @@ export class ProjectsService {
       event: 'project.created',
       actor,
       subject: { type: 'project', id: project.id },
-      data: { blockId: project.blockId, category: project.category, value: Number(project.value) },
+      data: { blockId: project.blockId, category: project.categoryNode?.key ?? null, value: Number(project.value) },
     });
 
-    // W4: every project lives on the engine from birth (draft state — the
-    // study machine's initial; instances for older projects were backfilled)
+    // W4: every project lives on the engine from birth. W6-E4-S1: the
+    // definition is selected by owner-org capabilities — oversight-flagged
+    // orgs start on project-lifecycle v2 (board_review); everyone else stays
+    // on v1. Board-initiated emergency projects run the fast-track definition.
+    const definitionKey = dto.lifecycle === 'emergency-relief' ? 'emergency-relief' : 'project-lifecycle';
+    const version =
+      definitionKey === 'project-lifecycle'
+        ? (await this.requiresBoardOversight(ownerOrganizationId)) ? 2 : 1
+        : undefined;
     await this.workflow
-      .start(actor, { subjectType: 'project', subjectId: project.id }, 'project-lifecycle')
+      .start(actor, { subjectType: 'project', subjectId: project.id }, definitionKey, { version })
       .catch(() => null); // never block creation on the lifecycle record
 
     return project;
+  }
+
+  private async requiresBoardOversight(organizationId: number): Promise<boolean> {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { capabilities: true },
+    });
+    return (org?.capabilities as Record<string, unknown> | null)?.requiresBoardOversight === true;
+  }
+
+  /**
+   * W6 addendum — mirrors GuardRegistryService's board_decision subject
+   * resolution: a project with a study decides on that study; a study-less
+   * project (emergency-relief fast track) decides on itself.
+   */
+  private async hasApprovedBoardDecision(projectId: number): Promise<boolean> {
+    const study = await this.prisma.projectStudy.findUnique({
+      where: { projectId },
+      select: { id: true },
+    });
+    const decision = await this.prisma.boardDecision.findFirst({
+      where: study
+        ? { subjectType: 'project_study', subjectId: study.id, decision: 'approved' }
+        : { subjectType: 'project', subjectId: projectId, decision: 'approved' },
+    });
+    return decision != null;
   }
 
   async update(actor: ActorContext, id: number, dto: UpdateProjectDto) {
@@ -178,18 +277,47 @@ export class ProjectsService {
     if (!project) throw new NotFoundException(`Project #${id} not found`);
     if (project.isCompleted) throw new BadRequestException('Completed projects cannot be modified');
 
-    const { blockId, ...updateData } = dto;
+    // category/categoryKey/lifecycle/fundId are virtual inputs: the frozen
+    // enum column is never written; category changes resolve to categoryId;
+    // fundId maps onto the primaryFundId identity column.
+    const { blockId, category, categoryKey, categoryId: dtoCategoryId, lifecycle, fundId, ...updateData } = dto;
+    const categoryId =
+      dtoCategoryId != null || categoryKey || category
+        ? await this.categories.resolveForWrite({ categoryId: dtoCategoryId, categoryKey, category })
+        : undefined;
+
+    // W6 addendum — fund of record is locked once the project has an
+    // approved Board decision (same decision-subject resolution the workflow
+    // engine's board_decision guard uses: project_study if one exists, else
+    // the project itself). Everything else stays editable.
+    if (fundId !== undefined && fundId !== project.primaryFundId) {
+      if (await this.hasApprovedBoardDecision(id)) {
+        throw new ForbiddenException('Fund of record is locked after Board approval');
+      }
+    }
+    const primaryFundId = fundId;
+    if (primaryFundId != null) {
+      const fund = await this.prisma.fund.findUnique({ where: { id: primaryFundId } });
+      if (!fund) throw new NotFoundException(`Fund #${primaryFundId} not found`);
+      if (fund.status !== 'active') {
+        throw new BadRequestException(`Fund is ${fund.status} — only active funds can be selected`);
+      }
+    }
 
     const updated = await this.prisma.project.update({
       where: { id },
       data: {
         ...updateData,
+        categoryId,
+        primaryFundId,
         expectedStartDate: dto.expectedStartDate ? new Date(dto.expectedStartDate) : undefined,
         dateOfCompletion: dto.dateOfCompletion ? new Date(dto.dateOfCompletion) : undefined,
       },
       include: {
         block: { include: { translations: true } },
         financialOfficer: { select: { id: true, firstName: true, lastName: true } },
+        categoryNode: { select: { id: true, key: true, name: true } },
+        primaryFund: { select: { id: true, name: true } },
       },
     });
 

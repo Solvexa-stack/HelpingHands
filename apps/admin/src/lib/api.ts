@@ -334,3 +334,85 @@ export const organizationsApi = {
     data: { email: string; firstName: string; lastName: string; password?: string; role?: string },
   ) => api.post(`/organizations/${id}/invite-admin`, data).then((r) => r.data.data),
 };
+
+// ─── W6 — categories, participations, agreements, reporting, verification ────
+export const categoriesApi = {
+  tree: () => api.get('/categories').then((r) => r.data.data),
+};
+
+export const participationsApi = {
+  list: (projectId: number) => api.get(`/projects/${projectId}/participations`).then((r) => r.data.data),
+  add: (projectId: number, data: { organizationId: number; role: string; notes?: string }) =>
+    api.post(`/projects/${projectId}/participations`, data).then((r) => r.data.data),
+  end: (projectId: number, participationId: number) =>
+    api.post(`/projects/${projectId}/participations/${participationId}/end`).then((r) => r.data.data),
+  assignable: (projectId: number) =>
+    api.get(`/projects/${projectId}/participations/assignable-users`).then((r) => r.data.data),
+  grant: (projectId: number, data: { userId: number; role: string }) =>
+    api.post(`/projects/${projectId}/participations/grants`, data).then((r) => r.data.data),
+  revoke: (projectId: number, userId: number, role: string) =>
+    api.delete(`/projects/${projectId}/participations/grants/${userId}/${role}`),
+};
+
+export const agreementsApi = {
+  listForFund: (fundId: number) => api.get(`/funds/${fundId}/agreements`).then((r) => r.data.data),
+  listForOrg: (orgId: number) => api.get(`/organizations/${orgId}/agreements`).then((r) => r.data.data),
+  detail: (agreementId: number) => api.get(`/funds/agreements/${agreementId}`).then((r) => r.data.data),
+  create: (
+    fundId: number,
+    data: {
+      organizationId: number;
+      title: string;
+      terms?: Record<string, unknown>;
+      reportingSchedule?: Record<string, unknown>;
+      startsAt?: string;
+      endsAt?: string;
+    },
+  ) => api.post(`/funds/${fundId}/agreements`, data).then((r) => r.data.data),
+  sign: (agreementId: number) => api.post(`/funds/agreements/${agreementId}/sign`).then((r) => r.data.data),
+  setStatus: (agreementId: number, status: string) =>
+    api.patch(`/funds/agreements/${agreementId}/status`, { status }).then((r) => r.data.data),
+};
+
+export const orgReportsApi = {
+  listForOrg: (orgId: number, status?: string) =>
+    api.get(`/organizations/${orgId}/reports`, { params: { status } }).then((r) => r.data.data),
+  submit: (
+    orgId: number,
+    data: {
+      type: 'progress' | 'financial';
+      title: string;
+      projectId?: number;
+      fundingAgreementId?: number;
+      periodStart?: string;
+      periodEnd?: string;
+      payload?: Record<string, unknown>;
+    },
+  ) => api.post(`/organizations/${orgId}/reports`, data).then((r) => r.data.data),
+  resubmit: (reportId: number, data: Record<string, unknown>) =>
+    api.post(`/org-reports/${reportId}/resubmit`, data).then((r) => r.data.data),
+  queue: () => api.get('/org-reports/queue').then((r) => r.data.data),
+  beginReview: (reportId: number) => api.post(`/org-reports/${reportId}/begin-review`).then((r) => r.data.data),
+  accept: (reportId: number, note?: string) =>
+    api.post(`/org-reports/${reportId}/accept`, { note }).then((r) => r.data.data),
+  returnWithComments: (reportId: number, note: string) =>
+    api.post(`/org-reports/${reportId}/return`, { note }).then((r) => r.data.data),
+};
+
+export const verificationApi = {
+  register: (data: {
+    type: string;
+    name: string;
+    registrationNumber: string;
+    adminEmail: string;
+    adminFirstName: string;
+    adminLastName: string;
+    adminPassword: string;
+  }) => api.post('/organizations/register', data).then((r) => r.data.data),
+  status: (orgId: number) => api.get(`/organizations/${orgId}/verification`).then((r) => r.data.data),
+  queue: () => api.get('/governance/verification-queue').then((r) => r.data.data),
+  beginReview: (orgId: number) => api.post(`/organizations/${orgId}/verification/begin-review`).then((r) => r.data.data),
+  verify: (orgId: number) => api.post(`/organizations/${orgId}/verification/verify`).then((r) => r.data.data),
+  reject: (orgId: number) => api.post(`/organizations/${orgId}/verification/reject`).then((r) => r.data.data),
+  activate: (orgId: number) => api.post(`/organizations/${orgId}/verification/activate`).then((r) => r.data.data),
+};

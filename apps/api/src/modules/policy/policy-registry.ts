@@ -112,6 +112,67 @@ export const POLICY_REGISTRY: Record<string, PolicyEntry> = {
     anyGrants: [{ scopeType: 'organization', roles: ['org_admin', 'project_manager'] }],
     allConditions: ['org_has_capability:canOpenDonations'],
   },
+
+  // ─── W6 municipal integration ───────────────────────────────────────────────
+  // Joint projects: participations and project-scope grants are managed by
+  // the OWNER org (resource resolves projectId → owning organization) or the
+  // Board — a participating org cannot expand its own access.
+  'project.participation.manage': {
+    anyGrants: [
+      { scopeType: 'organization', roles: ['org_admin', 'project_manager'] },
+      { scopeType: 'platform', roles: ['board_chair', 'board_member'] },
+    ],
+    sensitive: true,
+  },
+  // Execution surfaces: owner-org staff plus individually admitted
+  // project-scope grant holders (contributor et al.) — the cross-org channel.
+  'project.execute': {
+    anyGrants: [
+      { scopeType: 'organization', roles: ['org_admin', 'project_manager', 'staff'] },
+      { scopeType: 'project', roles: ['project_lead', 'contributor'] },
+      { scopeType: 'platform', roles: ['board_chair'] },
+    ],
+  },
+  // Emergency-relief fast track is Board-initiated only (W6-E4-S2).
+  'project.emergency.create': {
+    anyGrants: [{ scopeType: 'platform', roles: ['board_chair', 'board_member'] }],
+    sensitive: true,
+  },
+  // Org verification transitions (W6-E3): Board only.
+  'organization.verify': {
+    anyGrants: [{ scopeType: 'platform', roles: ['board_chair', 'board_member'] }],
+    sensitive: true,
+  },
+  // Funding agreements: Board manages; fund officers read via fund.read; the
+  // counterpart org reads its own (resource organizationId).
+  'agreement.manage': {
+    anyGrants: [{ scopeType: 'platform', roles: ['board_chair'] }],
+    sensitive: true,
+  },
+  'agreement.read': {
+    anyGrants: [
+      { scopeType: 'platform', roles: ['board_chair', 'board_member', 'board_secretary', 'platform_auditor'] },
+      { scopeType: 'organization', roles: ['org_admin', 'project_manager', 'org_accountant', 'staff', 'viewer'] },
+    ],
+  },
+  // Reporting (W6-E1-S3/E6): orgs submit, the Board reviews.
+  'org.report.submit': {
+    anyGrants: [
+      { scopeType: 'organization', roles: ['org_admin', 'project_manager'] },
+      { scopeType: 'platform', roles: ['board_chair'] },
+    ],
+    sensitive: true,
+  },
+  'org.report.read': {
+    anyGrants: [
+      { scopeType: 'platform', roles: ['board_chair', 'board_member', 'board_secretary', 'platform_auditor'] },
+      { scopeType: 'organization', roles: ['org_admin', 'project_manager', 'org_accountant', 'staff', 'viewer'] },
+    ],
+  },
+  'report.review': {
+    anyGrants: [{ scopeType: 'platform', roles: ['board_chair', 'board_member'] }],
+    sensitive: true,
+  },
 };
 
 /**
@@ -156,9 +217,52 @@ export const ROUTE_ACTION_MAP: Record<string, string> = {
   'POST /api/v1/governance/decisions': 'governance.decide',
   'GET /api/v1/governance/decisions': 'governance.read',
   'GET /api/v1/governance/queue': 'governance.read',
+  'GET /api/v1/governance/verification-queue': 'governance.read',
   'POST /api/v1/governance/rounds': 'governance.round.manage',
   'GET /api/v1/governance/rounds': 'governance.read',
   'GET /api/v1/governance/rounds/:id': 'governance.read',
   'POST /api/v1/governance/rounds/:id/votes': 'governance.vote',
   'PATCH /api/v1/governance/rounds/:id/close': 'governance.round.manage',
+  // W6 joint projects: participation management is owner-org/Board; the
+  // working set (incl. project-scope grant holders) reads and executes.
+  'GET /api/v1/projects/:projectId/participations': 'project.execute',
+  'GET /api/v1/projects/:projectId/participations/assignable-users': 'project.execute',
+  'POST /api/v1/projects/:projectId/participations': 'project.participation.manage',
+  'POST /api/v1/projects/:projectId/participations/:participationId/end': 'project.participation.manage',
+  'POST /api/v1/projects/:projectId/participations/grants': 'project.participation.manage',
+  'DELETE /api/v1/projects/:projectId/participations/grants/:userId/:role': 'project.participation.manage',
+  // W6 cross-org execution: project-scope contributors work these surfaces
+  'GET /api/v1/projects/:projectId/execution/steps': 'project.execute',
+  'POST /api/v1/projects/:projectId/execution/steps': 'project.execute',
+  'PATCH /api/v1/projects/:projectId/execution/steps/:id': 'project.execute',
+  'PATCH /api/v1/projects/:projectId/execution/steps/:id/progress': 'project.execute',
+  'DELETE /api/v1/projects/:projectId/execution/steps/:id': 'project.execute',
+  'GET /api/v1/projects/:projectId/execution/phases': 'project.execute',
+  'POST /api/v1/projects/:projectId/execution/phases': 'project.execute',
+  'PATCH /api/v1/projects/:projectId/execution/phases/:id': 'project.execute',
+  'DELETE /api/v1/projects/:projectId/execution/phases/:id': 'project.execute',
+  'GET /api/v1/projects/:projectId/execution/tasks': 'project.execute',
+  'POST /api/v1/projects/:projectId/execution/tasks': 'project.execute',
+  'PATCH /api/v1/projects/:projectId/execution/tasks/:id': 'project.execute',
+  'DELETE /api/v1/projects/:projectId/execution/tasks/:id': 'project.execute',
+  // W6 org verification (Board)
+  'POST /api/v1/organizations/:id/verification/begin-review': 'organization.verify',
+  'POST /api/v1/organizations/:id/verification/verify': 'organization.verify',
+  'POST /api/v1/organizations/:id/verification/reject': 'organization.verify',
+  'POST /api/v1/organizations/:id/verification/activate': 'organization.verify',
+  // W6 funding agreements
+  'POST /api/v1/funds/:id/agreements': 'agreement.manage',
+  'GET /api/v1/funds/:id/agreements': 'fund.read',
+  'POST /api/v1/funds/agreements/:agreementId/sign': 'agreement.manage',
+  'PATCH /api/v1/funds/agreements/:agreementId/status': 'agreement.manage',
+  'GET /api/v1/funds/agreements/:agreementId': 'agreement.read',
+  'GET /api/v1/organizations/:id/agreements': 'agreement.read',
+  // W6 reporting
+  'POST /api/v1/organizations/:id/reports': 'org.report.submit',
+  'GET /api/v1/organizations/:id/reports': 'org.report.read',
+  'POST /api/v1/org-reports/:id/resubmit': 'org.report.submit',
+  'POST /api/v1/org-reports/:id/begin-review': 'report.review',
+  'POST /api/v1/org-reports/:id/accept': 'report.review',
+  'POST /api/v1/org-reports/:id/return': 'report.review',
+  'GET /api/v1/org-reports/queue': 'governance.read',
 };

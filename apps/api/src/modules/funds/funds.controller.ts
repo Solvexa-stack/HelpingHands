@@ -79,7 +79,7 @@ export class FundsController {
   @ApiOperation({ summary: 'Propose a fund→project allocation (starts the workflow)' })
   propose(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: { projectId: number; amount: number; note?: string },
+    @Body() dto: { projectId: number; amount: number; note?: string; fundingAgreementId?: number },
     @CurrentActor() actor: ActorContext,
   ) {
     return this.fundsService.proposeAllocation(actor, id, dto);

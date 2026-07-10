@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, FolderKanban, Heart, FlaskConical, Users, Settings,
-  ChevronRight, Building2,
+  ChevronRight, Building2, FileText,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useLanguage } from '@/contexts/language-context';
@@ -20,6 +20,8 @@ const navItems = [
   { href: '/org/projects', icon: FolderKanban, tKey: 'nav.projects' },
   { href: '/org/studies', icon: FlaskConical, tKey: 'nav.studies' },
   { href: '/org/donations', icon: Heart, tKey: 'nav.donations' },
+  // W6-E6: formal progress/financial reporting to the Board
+  { href: '/org/reports', icon: FileText, tKey: 'nav.reports' },
   { href: '/org/team', icon: Users, tKey: 'nav.team' },
   { href: '/org/settings', icon: Settings, tKey: 'nav.settings' },
 ];

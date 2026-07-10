@@ -81,26 +81,28 @@ describe('Organizations module (W1-E2)', () => {
     expect(audit!.actorUserId).toBe(adminUserId);
   });
 
-  it('org types beyond ngo|board are blocked behind the type flag', async () => {
-    for (const type of ['municipality', 'youth_team', 'initiative']) {
-      const res = await http()
+  it('org types are gated by the type flag (W6 GA enables municipality/youth_team)', async () => {
+    // pin the pre-W6 default explicitly — the dev .env now ships the GA list
+    process.env.ORG_TYPES_ENABLED = 'ngo,board';
+    try {
+      for (const type of ['municipality', 'youth_team', 'initiative']) {
+        const res = await http()
+          .post('/api/v1/organizations')
+          .set('Authorization', admin)
+          .send({ type, name: `Flagged ${type}` })
+          .expect(400);
+        expect(res.body.message).toContain('not enabled');
+      }
+
+      // board is enabled by default
+      await http()
         .post('/api/v1/organizations')
         .set('Authorization', admin)
-        .send({ type, name: `Flagged ${type}` })
-        .expect(400);
-      expect(res.body.message).toContain('not enabled');
-    }
+        .send({ type: 'board', name: 'Governance Board' })
+        .expect(201);
 
-    // board is enabled by default
-    await http()
-      .post('/api/v1/organizations')
-      .set('Authorization', admin)
-      .send({ type: 'board', name: 'Governance Board' })
-      .expect(201);
-
-    // enabling the flag opens the type up
-    process.env.ORG_TYPES_ENABLED = 'ngo,board,municipality';
-    try {
+      // enabling the flag opens the type up (the W6-E7-S2 GA path)
+      process.env.ORG_TYPES_ENABLED = 'ngo,board,municipality';
       await http()
         .post('/api/v1/organizations')
         .set('Authorization', admin)

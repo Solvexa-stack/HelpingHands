@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { createSoftDeleteMiddleware } from './soft-delete.middleware';
 import { createStudyVoteFreezeMiddleware } from './study-vote-freeze.middleware';
 import { createProjectTransactionFreezeMiddleware } from './project-transaction-freeze.middleware';
+import { createCategoryEnumFreezeMiddleware } from './category-enum-freeze.middleware';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -19,6 +20,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     this.$use(createStudyVoteFreezeMiddleware());
     // W5-E4-S3: ProjectTransaction frozen — treasury dual-write only
     this.$use(createProjectTransactionFreezeMiddleware());
+    // W6-E2-S1: legacy category enum columns frozen — categoryId is the truth
+    this.$use(createCategoryEnumFreezeMiddleware());
   }
 
   async onModuleInit() {

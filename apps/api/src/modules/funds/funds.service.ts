@@ -10,6 +10,7 @@ import { EventBusService } from '../../events/event-bus.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TreasuryService } from '../treasury/treasury.service';
 import { WorkflowService } from '../workflow/workflow.service';
+import { ReportingObligationsService } from '../org-reporting/reporting-obligations.service';
 
 export const FUND_ROLES = ['fund_director', 'fund_deputy', 'fund_secretary', 'fund_accountant', 'fund_controller'];
 
@@ -29,6 +30,7 @@ export class FundsService {
     private eventBus: EventBusService,
     private treasury: TreasuryService,
     private workflow: WorkflowService,
+    private reportingObligations: ReportingObligationsService,
   ) {}
 
   // ─── Fund CRUD (Board) ───────────────────────────────────────────────────────
@@ -168,7 +170,11 @@ export class FundsService {
 
   // ─── Allocations (fund → project, on the workflow engine) ────────────────────
 
-  async proposeAllocation(actor: ActorContext, fundId: number, dto: { projectId: number; amount: number; note?: string }) {
+  async proposeAllocation(
+    actor: ActorContext,
+    fundId: number,
+    dto: { projectId: number; amount: number; note?: string; fundingAgreementId?: number },
+  ) {
     const fund = await this.prisma.fund.findUnique({ where: { id: fundId } });
     if (!fund) throw new NotFoundException(`Fund #${fundId} not found`);
     if (fund.status !== 'active') {
@@ -178,12 +184,44 @@ export class FundsService {
     if (!project) throw new NotFoundException(`Project #${dto.projectId} not found`);
     if (dto.amount <= 0) throw new BadRequestException('Allocation amount must be positive');
 
+    // W6-E1-S2: allocations under an agreement must match its fund, be active,
+    // and finance a project the agreement org owns or executes.
+    if (dto.fundingAgreementId != null) {
+      const agreement = await this.prisma.fundingAgreement.findFirst({
+        where: { id: dto.fundingAgreementId, deletedAt: null },
+      });
+      if (!agreement) throw new NotFoundException(`Agreement #${dto.fundingAgreementId} not found`);
+      if (agreement.fundId !== fundId) {
+        throw new BadRequestException('Agreement belongs to a different fund');
+      }
+      if (agreement.status !== 'active') {
+        throw new BadRequestException(`Agreement is ${agreement.status} — no new allocations under it`);
+      }
+      const orgExecutes =
+        project.ownerOrganizationId === agreement.organizationId ||
+        (await this.prisma.projectParticipation.findFirst({
+          where: {
+            projectId: dto.projectId,
+            organizationId: agreement.organizationId,
+            role: 'executing_agency',
+            status: 'active',
+            deletedAt: null,
+          },
+        })) !== null;
+      if (!orgExecutes) {
+        throw new BadRequestException(
+          'The agreement organization neither owns nor executes this project',
+        );
+      }
+    }
+
     const allocation = await this.prisma.fundAllocation.create({
       data: {
         fundId,
         projectId: dto.projectId,
         amount: new Prisma.Decimal(dto.amount),
         note: dto.note,
+        fundingAgreementId: dto.fundingAgreementId,
         createdByUserId: actor.userId,
       },
     });
@@ -192,7 +230,7 @@ export class FundsService {
       event: 'allocation.proposed',
       actor,
       subject: { type: 'fund_allocation', id: allocation.id },
-      data: { fundId, projectId: dto.projectId, amount: dto.amount },
+      data: { fundId, projectId: dto.projectId, amount: dto.amount, fundingAgreementId: dto.fundingAgreementId ?? null },
     });
     return allocation;
   }
@@ -238,6 +276,27 @@ export class FundsService {
       throw new BadRequestException(`Fund is ${fund!.status} — disbursements blocked`);
     }
     if (amount <= 0) throw new BadRequestException('Tranche amount must be positive');
+
+    // W6-E1-S2: agreement terms can hold money back while reports are overdue
+    if (allocation.fundingAgreementId != null) {
+      const agreement = await this.prisma.fundingAgreement.findUnique({
+        where: { id: allocation.fundingAgreementId },
+      });
+      if (agreement && agreement.status !== 'active') {
+        throw new BadRequestException(`Agreement is ${agreement.status} — disbursements blocked`);
+      }
+      const blockOnOverdue =
+        ((agreement?.terms ?? {}) as { blockDisbursementsOnOverdueReports?: boolean })
+          .blockDisbursementsOnOverdueReports !== false; // default: block
+      if (agreement && blockOnOverdue) {
+        const overdue = (await this.reportingObligations.obligationsFor(agreement)).filter((o) => o.overdue);
+        if (overdue.length > 0) {
+          throw new BadRequestException(
+            `Disbursement blocked: ${overdue.length} overdue report(s) under agreement "${agreement.title}" — submit the outstanding reports first`,
+          );
+        }
+      }
+    }
 
     const disbursed = await this.disbursedAmount(allocationId);
     if (disbursed + amount > Number(allocation.amount)) {

@@ -56,8 +56,10 @@ describe('Two-org tenancy leak test (W2-E3)', () => {
     ({ projectId: projectOrg1 } = await createProjectViaApi(app, employee, 'leak-org1', { value: 1000 }));
     // Org 2 project created directly with its owner
     const block2 = await prisma.block.create({ data: { category: 'project' } });
+    // W6: the legacy enum column is frozen — fixtures carry the taxonomy node
+    const agriNode = await prisma.projectCategoryNode.findUnique({ where: { key: 'agricultural' } });
     const p2 = await prisma.project.create({
-      data: { blockId: block2.id, value: 2000, category: 'agricultural', ownerOrganizationId: org2.id },
+      data: { blockId: block2.id, value: 2000, categoryId: agriNode!.id, ownerOrganizationId: org2.id },
     });
     projectOrg2 = p2.id;
     await prisma.projectMilestone.create({ data: { projectId: block2.id, projectRefId: p2.id, blockId: block2.id } });

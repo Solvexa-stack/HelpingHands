@@ -12,7 +12,10 @@ export type GuardRef =
   | { type: 'vote_passed' }
   | { type: 'board_decision'; decision: 'approved' | 'rejected' | 'changes_requested' }
   | { type: 'sections_complete' }
-  | { type: 'window_open'; field: 'voting'; mustBeClosed?: boolean };
+  | { type: 'window_open'; field: 'voting'; mustBeClosed?: boolean }
+  // W6-E3: official documents on file (File rows on the subject) — the
+  // org-verification document guard
+  | { type: 'documents_present' };
 
 export interface GuardVerdict {
   pass: boolean;

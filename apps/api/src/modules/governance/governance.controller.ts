@@ -38,6 +38,12 @@ export class GovernanceController {
     return this.governanceService.reviewQueue();
   }
 
+  @Get('verification-queue')
+  @ApiOperation({ summary: 'W6: pending org registrations awaiting Board verification' })
+  verificationQueue() {
+    return this.governanceService.verificationQueue();
+  }
+
   @Post('rounds')
   @ApiOperation({ summary: 'Open a vote round on a subject' })
   openRound(@Body() dto: OpenRoundDto, @CurrentActor() actor: ActorContext) {

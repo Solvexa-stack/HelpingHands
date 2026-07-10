@@ -169,6 +169,41 @@ enum RoleScopeType {
   project
 }
 
+// ─── Wave 6 enums (17_WAVE_6_MUNICIPAL_INTEGRATION.md) ───────────────────────
+
+enum ParticipationRole {
+  owner
+  executing_agency
+  funding_partner
+  supervising
+  beneficiary_rep
+}
+
+enum ParticipationStatus {
+  active
+  ended
+}
+
+enum FundingAgreementStatus {
+  draft
+  active
+  suspended
+  completed
+  terminated
+}
+
+enum OrgReportType {
+  progress
+  financial
+}
+
+enum OrgReportStatus {
+  submitted
+  under_review
+  accepted
+  returned
+}
+
 // ─── Languages ────────────────────────────────────────────────────────────────
 
 model Language {
@@ -378,7 +413,11 @@ model Project {
   value               Decimal         @db.Decimal(15, 2)
   progression         Decimal         @default(0) @db.Decimal(5, 2)
   isCompleted         Boolean         @default(false) @map("is_completed")
-  category            ProjectCategory
+  // W6-E2 (category migration, 09 "adding a truth"): the enum column is
+  // FROZEN — nullable, never written by application code; categoryId is the
+  // truth. Column dropped in Wave 8.
+  category            ProjectCategory?
+  categoryId          Int?            @map("category_id")
   expectedStartDate   DateTime?       @map("expected_start_date")
   financialOfficerId  Int?            @map("financial_officer_id")
   studyStatus         StudyStatus?    @map("study_status")
@@ -389,6 +428,7 @@ model Project {
   block             Block         @relation(fields: [blockId], references: [id], onDelete: Restrict)
   financialOfficer  Admin?        @relation("FinancialOfficerProjects", fields: [financialOfficerId], references: [id])
   ownerOrganization Organization  @relation("OrganizationProjects", fields: [ownerOrganizationId], references: [id], onDelete: Restrict)
+  categoryNode      ProjectCategoryNode? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   donations        ProjectDonation[]
   study            ProjectStudy?
   onlineDonations  OnlineDonation[]
@@ -400,11 +440,23 @@ model Project {
   transactionsRef  ProjectTransaction[] @relation("TransactionProjectRef")
   milestonesRef    ProjectMilestone[]   @relation("MilestoneProjectRef")
 
-  allocations FundAllocation[]
+  allocations    FundAllocation[]
+  participations ProjectParticipation[]
+  orgReports     OrganizationReport[]
+
+  // W6 addendum — "fund of record": administrative fund attribution (like
+  // ownerOrganizationId, chosen at creation, locked once Board-approved).
+  // Distinct from FundAllocation, which stays many-to-many for actual
+  // financing/co-funding (03_DATA_MODEL.md:90). Nullable during backfill;
+  // see packages/database/prisma/backfills/w6-project-fund-backfill.ts.
+  primaryFundId Int?  @map("primary_fund_id")
+  primaryFund   Fund? @relation("ProjectPrimaryFund", fields: [primaryFundId], references: [id], onDelete: Restrict)
 
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
 
+  @@index([categoryId])
+  @@index([primaryFundId])
   @@map("projects")
 }
 
@@ -457,7 +509,12 @@ model PasswordResetToken {
 
 model StudyDepartmentTemplate {
   id            Int         @id @default(autoincrement())
-  projectType   ProjectType @map("project_type")
+  // W6-E2-S2: re-keyed to category nodes; the enum column is FROZEN (nullable,
+  // unwritten-to after cutover; dropped Wave 8). Civic templates carry only
+  // categoryNodeId.
+  projectType    ProjectType? @map("project_type")
+  categoryNodeId Int?         @map("category_node_id")
+  categoryNode   ProjectCategoryNode? @relation(fields: [categoryNodeId], references: [id], onDelete: Restrict)
   name          String      @db.VarChar(255)
   nameAr        String?     @db.VarChar(255) @map("name_ar")
   nameFr        String?     @db.VarChar(255) @map("name_fr")
@@ -470,6 +527,7 @@ model StudyDepartmentTemplate {
   createdAt     DateTime    @default(now()) @map("created_at")
   updatedAt     DateTime    @updatedAt @map("updated_at")
 
+  @@index([categoryNodeId])
   @@map("study_department_templates")
 }
 
@@ -876,6 +934,9 @@ model Organization {
   memberships   OrganizationMembership[]
   ownedProjects Project[]                @relation("OrganizationProjects")
   managedFunds  Fund[]
+  participations    ProjectParticipation[]
+  fundingAgreements FundingAgreement[]
+  orgReports        OrganizationReport[]
 
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
@@ -1169,6 +1230,10 @@ model Fund {
 
   memberships FundMembership[]
   allocations FundAllocation[]
+  agreements  FundingAgreement[]
+  // W6 addendum — projects whose fund of record is this fund (identity, not
+  // financing; see Project.primaryFundId).
+  primaryProjects Project[] @relation("ProjectPrimaryFund")
 
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
@@ -1249,6 +1314,11 @@ model FundAllocation {
   status               FundAllocationStatus @default(proposed)
   approvedByDecisionId Int?                 @map("approved_by_decision_id")
   approvedByDecision   BoardDecision?       @relation(fields: [approvedByDecisionId], references: [id], onDelete: Restrict)
+  // W6-E1-S2: municipal funding channel — allocations may reference the
+  // FundingAgreement whose terms govern them (reporting obligations,
+  // disbursement blocks).
+  fundingAgreementId   Int?                 @map("funding_agreement_id")
+  fundingAgreement     FundingAgreement?    @relation(fields: [fundingAgreementId], references: [id], onDelete: Restrict)
   note                 String?              @db.Text
   createdByUserId      Int?                 @map("created_by_user_id")
   createdAt            DateTime             @default(now()) @map("created_at")
@@ -1256,5 +1326,128 @@ model FundAllocation {
 
   @@index([fundId])
   @@index([projectId])
+  @@index([fundingAgreementId])
   @@map("fund_allocations")
+}
+
+// ─── Wave 6 — Municipal integration (17_WAVE_6_MUNICIPAL_INTEGRATION.md) ─────
+// ProjectParticipation: joint/cross-org projects. FundingAgreement: the
+// fund↔organization funding channel. OrganizationReport: formal progress/
+// financial reporting (one lifecycle, two types — see the W6 decision log).
+// ProjectCategoryNode: hierarchical civic taxonomy replacing both legacy
+// enums (ProjectCategory, ProjectType), which are frozen and dropped Wave 8.
+
+model ProjectParticipation {
+  id              Int                 @id @default(autoincrement())
+  projectId       Int                 @map("project_id")
+  project         Project             @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  organizationId  Int                 @map("organization_id")
+  organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  role            ParticipationRole
+  status          ParticipationStatus @default(active)
+  notes           String?             @db.Text
+  createdByUserId Int?                @map("created_by_user_id")
+  endedAt         DateTime?           @map("ended_at")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
+
+  @@unique([projectId, organizationId, role])
+  @@index([organizationId])
+  @@index([projectId])
+  @@map("project_participations")
+}
+
+model FundingAgreement {
+  id             Int                    @id @default(autoincrement())
+  fundId         Int                    @map("fund_id")
+  fund           Fund                   @relation(fields: [fundId], references: [id], onDelete: Restrict)
+  organizationId Int                    @map("organization_id")
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  title          String                 @db.VarChar(255)
+  // { blockDisbursementsOnOverdueReports?: boolean (default true),
+  //   graceDays?: number (default 0) }
+  terms          Json                   @default("{}")
+  // { frequency: 'monthly' | 'quarterly' | 'none',
+  //   reportTypes: ('progress' | 'financial')[] }
+  reportingSchedule Json                @default("{}") @map("reporting_schedule")
+  status         FundingAgreementStatus @default(draft)
+  signedAt       DateTime?              @map("signed_at")
+  startsAt       DateTime?              @map("starts_at")
+  endsAt         DateTime?              @map("ends_at")
+  createdByUserId Int?                  @map("created_by_user_id")
+  createdAt      DateTime               @default(now()) @map("created_at")
+  updatedAt      DateTime               @updatedAt @map("updated_at")
+
+  allocations FundAllocation[]
+  reports     OrganizationReport[]
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
+
+  @@index([fundId])
+  @@index([organizationId])
+  @@index([status])
+  @@map("funding_agreements")
+}
+
+model OrganizationReport {
+  id                 Int               @id @default(autoincrement())
+  type               OrgReportType
+  organizationId     Int               @map("organization_id")
+  organization       Organization      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  projectId          Int?              @map("project_id")
+  project            Project?          @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  fundingAgreementId Int?              @map("funding_agreement_id")
+  fundingAgreement   FundingAgreement? @relation(fields: [fundingAgreementId], references: [id], onDelete: Restrict)
+  title              String            @db.VarChar(500)
+  periodStart        DateTime?         @map("period_start")
+  periodEnd          DateTime?         @map("period_end")
+  // narrative/metrics; attachments ride the polymorphic File model
+  // (referenceType = 'organization_report')
+  payload            Json              @default("{}")
+  status             OrgReportStatus   @default(submitted)
+  submittedByUserId  Int?              @map("submitted_by_user_id")
+  submittedAt        DateTime          @default(now()) @map("submitted_at")
+  reviewedByUserId   Int?              @map("reviewed_by_user_id")
+  reviewedAt         DateTime?         @map("reviewed_at")
+  reviewNote         String?           @map("review_note") @db.Text
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy Int?      @map("deleted_by")
+
+  @@index([organizationId])
+  @@index([fundingAgreementId])
+  @@index([status])
+  @@map("organization_reports")
+}
+
+model ProjectCategoryNode {
+  id          Int     @id @default(autoincrement())
+  key         String  @unique @db.VarChar(100)
+  parentId    Int?    @map("parent_id")
+  parent      ProjectCategoryNode?  @relation("CategoryChildren", fields: [parentId], references: [id], onDelete: Restrict)
+  children    ProjectCategoryNode[] @relation("CategoryChildren")
+  name        String  @db.VarChar(255)
+  nameAr      String? @map("name_ar") @db.VarChar(255)
+  nameFr      String? @map("name_fr") @db.VarChar(255)
+  description String? @db.Text
+  order       Int     @default(0)
+  isActive    Boolean @default(true) @map("is_active")
+  // Deterministic enum→node mapping, recorded on the node itself so the
+  // backfill's derivation rule is reviewable data (W6-E2-S1 AC).
+  legacyCategory    ProjectCategory? @map("legacy_category")
+  legacyProjectType ProjectType?     @map("legacy_project_type")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  projects  Project[]
+  templates StudyDepartmentTemplate[]
+
+  @@index([parentId])
+  @@map("project_category_nodes")
 }

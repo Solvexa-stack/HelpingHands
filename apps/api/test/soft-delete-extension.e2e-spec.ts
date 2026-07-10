@@ -24,11 +24,13 @@ describe('Soft-delete Prisma middleware (W0-E4-S2)', () => {
 
     const block = await prisma.block.create({ data: { category: 'project' } });
     const defaultOrg = await prisma.organization.findFirst({ where: { type: 'ngo' } });
+    // W6: the legacy enum column is frozen — fixtures carry the taxonomy node
+    const agriNode = await prisma.projectCategoryNode.findUnique({ where: { key: 'agricultural' } });
     const project = await prisma.project.create({
       data: {
         blockId: block.id,
         value: 1000,
-        category: 'agricultural',
+        categoryId: agriNode!.id,
         ownerOrganizationId: defaultOrg!.id,
       },
     });

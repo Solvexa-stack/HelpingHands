@@ -40,6 +40,8 @@ export class GuardRegistryService {
         return this.sectionsComplete(subject, db);
       case 'window_open':
         return this.windowOpen(guard, subject, db);
+      case 'documents_present':
+        return this.documentsPresent(subject, db);
       default:
         return { pass: false, reason: `denied:unknown-guard:${(guard as { type: string }).type}` };
     }
@@ -96,15 +98,19 @@ export class GuardRegistryService {
     subject: WorkflowSubject,
     db: Db,
   ): Promise<GuardVerdict> {
-    // project subjects decide on their study; other subjects decide on themselves
-    let decisionSubject: { subjectType: string; subjectId: number } | null = null;
+    // project subjects decide on their study; study-less projects (W6
+    // emergency-relief fast track) decide on the project itself; other
+    // subjects decide on themselves
+    let decisionSubject: { subjectType: string; subjectId: number };
     if (subject.subjectType === 'project') {
       const studyId = await this.studyIdOf(subject, db);
-      if (studyId != null) decisionSubject = { subjectType: 'project_study', subjectId: studyId };
+      decisionSubject =
+        studyId != null
+          ? { subjectType: 'project_study', subjectId: studyId }
+          : { subjectType: 'project', subjectId: subject.subjectId };
     } else {
       decisionSubject = { subjectType: subject.subjectType, subjectId: subject.subjectId };
     }
-    if (!decisionSubject) return { pass: false, reason: `denied:board_decision:${guard.decision}:no-subject` };
 
     const decision = await db.boardDecision.findFirst({
       where: {
@@ -150,6 +156,32 @@ export class GuardRegistryService {
     return open
       ? { pass: true, reason: 'granted:window_open' }
       : { pass: false, reason: 'denied:window_open:closed' };
+  }
+
+  /**
+   * W6-E3: official documents uploaded for the subject. File.referenceId
+   * carries a hard FK to blocks, so organization documents anchor on the
+   * org's content block (created at registration) with
+   * referenceType='organization'.
+   */
+  private async documentsPresent(subject: WorkflowSubject, db: Db): Promise<GuardVerdict> {
+    let referenceId = subject.subjectId;
+    if (subject.subjectType === 'organization') {
+      const org = await db.organization.findUnique({
+        where: { id: subject.subjectId },
+        select: { contentBlockId: true },
+      });
+      if (org?.contentBlockId == null) {
+        return { pass: false, reason: 'denied:documents_present:no-documents-on-file' };
+      }
+      referenceId = org.contentBlockId;
+    }
+    const count = await db.file.count({
+      where: { referenceType: subject.subjectType, referenceId, isActive: true },
+    });
+    return count > 0
+      ? { pass: true, reason: `granted:documents_present:${count}` }
+      : { pass: false, reason: 'denied:documents_present:no-documents-on-file' };
   }
 
   // ─── Subject resolution ───────────────────────────────────────────────────────

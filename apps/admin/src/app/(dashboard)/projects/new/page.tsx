@@ -10,14 +10,13 @@ import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/components/ui/toaster';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { CategoryPicker } from '@/components/ui/category-picker';
 
 const LANGS = [
   { code: 'en', label: 'English' },
   { code: 'ar', label: 'Arabic' },
   { code: 'fr', label: 'French' },
 ];
-
-const CATEGORIES = ['agricultural', 'industrial', 'trading'];
 
 function slugify(text: string) {
   return text.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
@@ -35,7 +34,7 @@ export default function NewProjectPage() {
   });
 
   const [project, setProject] = useState({
-    category: 'agricultural',
+    categoryId: '' as number | '',
     value: '',
     location: '',
     expectedStartDate: '',
@@ -61,7 +60,7 @@ export default function NewProjectPage() {
       });
       return projectsApi.create({
         blockId: block.id,
-        category: project.category,
+        categoryId: Number(project.categoryId),
         value: Number(project.value),
         location: project.location || undefined,
         expectedStartDate: project.expectedStartDate || undefined,
@@ -150,9 +149,10 @@ export default function NewProjectPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="label">Category *</label>
-            <select className="input" value={project.category} onChange={(e) => setProject({ ...project, category: e.target.value })}>
-              {CATEGORIES.map((c) => <option key={c} value={c} className="capitalize">{c}</option>)}
-            </select>
+            <CategoryPicker
+              value={project.categoryId}
+              onChange={(categoryId) => setProject({ ...project, categoryId })}
+            />
           </div>
           <div>
             <label className="label">Target Amount ($) *</label>
@@ -188,7 +188,7 @@ export default function NewProjectPage() {
 
       <div className="flex justify-end gap-3">
         <Link href="/projects" className="btn-secondary btn-md">Cancel</Link>
-        <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !translations.en.name || !project.value}
+        <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !translations.en.name || !project.value || !project.categoryId}
           className="btn-primary btn-md gap-2">
           {mutation.isPending ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Save className="w-4 h-4" />}
           Create Project

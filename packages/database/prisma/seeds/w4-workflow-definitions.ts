@@ -131,14 +131,14 @@ export const WORKFLOW_DEFINITIONS: DefinitionSeed[] = [
     ],
   },
 
-  // ─── Authored, inactive (W4-E6-S1) ─────────────────────────────────────────
+  // ─── Activated in Wave 6 (authored W4-E6-S1) ───────────────────────────────
   {
     key: 'project-lifecycle',
     version: 2,
     subjectType: 'project',
-    isActive: false,
+    isActive: true, // ACTIVATED in Wave 6 (W6-E4-S1) — selected at start() for orgs with requiresBoardOversight
     description:
-      'v2 (INACTIVE — Wave 5/6 activation): board_review between voting_closed and approved; executing-org capability guard on execution.',
+      'v2 (ACTIVE — W6-E4-S1): board_review between voting_closed and approved; executing-org capability guard on execution. Selected for owner orgs with requiresBoardOversight; running instances stay pinned to v1.',
     states: [
       { key: 'draft', kind: 'initial' },
       { key: 'in_review' },
@@ -163,6 +163,10 @@ export const WORKFLOW_DEFINITIONS: DefinitionSeed[] = [
       { from: 'board_review', to: 'rejected', action: 'reject', guards: [GOV_ROLE, { type: 'board_decision', decision: 'rejected' }], effects: ['study.rejected'] },
       { from: 'board_review', to: 'draft', action: 'request_changes', guards: [GOV_ROLE, { type: 'board_decision', decision: 'changes_requested' }] },
       { from: 'approved', to: 'donations_open', action: 'open_donations', guards: [{ type: 'capability', cap: 'canOpenDonations' }] },
+      // W6 pilot finding (definition adjustment = data change, the W4 point):
+      // agreement/allocation-funded projects never open public donations —
+      // execution must be reachable straight from approved.
+      { from: 'approved', to: 'executing', action: 'begin_execution', guards: [ORG_OR_BOARD_ROLE, { type: 'capability', cap: 'canExecuteProjects' }] },
       { from: 'donations_open', to: 'executing', action: 'begin_execution', guards: [ORG_OR_BOARD_ROLE, { type: 'capability', cap: 'canExecuteProjects' }] },
       { from: 'executing', to: 'completed', action: 'complete' },
       { from: 'donations_open', to: 'completed', action: 'complete' },
@@ -172,8 +176,8 @@ export const WORKFLOW_DEFINITIONS: DefinitionSeed[] = [
     key: 'emergency-relief',
     version: 1,
     subjectType: 'project',
-    isActive: false,
-    description: 'INACTIVE (Wave 5/6): no public voting — Board fast-track decision, straight to execution.',
+    isActive: true, // ACTIVATED in Wave 6 (W6-E4-S2)
+    description: 'ACTIVE (W6-E4-S2): no public voting — Board fast-track decision, straight to execution. Board-only initiation via policy.',
     states: [
       { key: 'draft', kind: 'initial' },
       { key: 'board_review' },
@@ -194,8 +198,9 @@ export const WORKFLOW_DEFINITIONS: DefinitionSeed[] = [
     key: 'org-verification',
     version: 1,
     subjectType: 'organization',
-    isActive: false,
-    description: 'INACTIVE (Wave 6): submitted → under_review → verified → active, Board approval guard; or rejected.',
+    isActive: true, // ACTIVATED in Wave 6 (W6-E3-S1)
+    description:
+      'ACTIVE (W6-E3-S1): submitted → under_review → verified → active. Verification requires official registration documents on file AND a Board approval decision.',
     states: [
       { key: 'submitted', kind: 'initial' },
       { key: 'under_review' },
@@ -205,7 +210,13 @@ export const WORKFLOW_DEFINITIONS: DefinitionSeed[] = [
     ],
     transitions: [
       { from: 'submitted', to: 'under_review', action: 'begin_review', guards: [GOV_ROLE] },
-      { from: 'under_review', to: 'verified', action: 'verify', guards: [GOV_ROLE, { type: 'board_decision', decision: 'approved' }] },
+      {
+        from: 'under_review',
+        to: 'verified',
+        action: 'verify',
+        // document guard (wave doc): no verification without registration papers
+        guards: [GOV_ROLE, { type: 'documents_present' }, { type: 'board_decision', decision: 'approved' }],
+      },
       { from: 'under_review', to: 'rejected', action: 'reject', guards: [GOV_ROLE, { type: 'board_decision', decision: 'rejected' }] },
       { from: 'verified', to: 'active', action: 'activate', guards: [GOV_ROLE] },
     ],
@@ -263,7 +274,9 @@ export async function seedWorkflowDefinitions(prisma: PrismaClient): Promise<{ s
         isActive: def.isActive,
         description: def.description,
       },
-      update: { subjectType: def.subjectType, description: def.description },
+      // isActive rides the update so wave activations (W5 fund-allocation,
+      // W6 v2/org-verification/emergency-relief) reach existing databases.
+      update: { subjectType: def.subjectType, description: def.description, isActive: def.isActive },
     });
 
     // states/transitions are replaced wholesale ONLY while no instance pins

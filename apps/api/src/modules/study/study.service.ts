@@ -18,6 +18,7 @@ import { policyEnforced } from '../policy/policy.guard';
 import { GovernanceService } from '../governance/governance.service';
 import { WorkflowService } from '../workflow/workflow.service';
 import { workflowEnforced } from '../workflow/workflow.types';
+import { CategoriesService } from '../categories/categories.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ChangeStudyStatusDto } from './dto/change-study-status.dto';
@@ -45,7 +46,8 @@ const GOVERNANCE_TARGETS = new Set<StudyStatus>([
   StudyStatus.rejected,
 ]);
 
-// Map ProjectCategory values that overlap with ProjectType
+// Legacy fallback (pre-W6 rows without a category node): map ProjectCategory
+// values that overlap with ProjectType
 const CATEGORY_TO_TYPE: Record<string, ProjectType> = {
   agricultural: ProjectType.agricultural,
   industrial: ProjectType.industrial,
@@ -63,6 +65,7 @@ export class StudyService {
     private policy: PolicyService,
     private governance: GovernanceService,
     private workflow: WorkflowService,
+    private categories: CategoriesService,
   ) {}
 
   /** W4-E4-S2: legacy status→engine action map (transcription of VALID_TRANSITIONS). */
@@ -88,11 +91,19 @@ export class StudyService {
     });
     if (existing) throw new BadRequestException('This project already has a study');
 
-    const projectType = CATEGORY_TO_TYPE[project.category] ?? ProjectType.trading;
-    const templates = await this.prisma.studyDepartmentTemplate.findMany({
-      where: { projectType, isActive: true },
-      orderBy: { order: 'asc' },
-    });
+    // W6-E2-S2: templates come from the category node (child nodes inherit
+    // the nearest ancestor's set); the legacy enum path only serves rows the
+    // backfill never saw.
+    let templates;
+    if (project.categoryId != null) {
+      templates = await this.categories.templatesForCategory(project.categoryId);
+    } else {
+      const projectType = CATEGORY_TO_TYPE[project.category ?? ''] ?? ProjectType.trading;
+      templates = await this.prisma.studyDepartmentTemplate.findMany({
+        where: { projectType, isActive: true },
+        orderBy: { order: 'asc' },
+      });
+    }
 
     const study = await this.prisma.projectStudy.create({
       data: {

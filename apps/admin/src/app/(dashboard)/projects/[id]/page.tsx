@@ -10,6 +10,7 @@ import {
 import { projectsApi, donationsApi } from '@/lib/api';
 import { formatCurrency, formatDate, getTranslation, STATUS_COLORS, cn } from '@/lib/utils';
 import { WorkflowTimeline } from '@/components/workflow/workflow-timeline';
+import { ParticipationsPanel } from '@/components/projects/participations-panel';
 
 export default function ProjectDetailPage({ params }: { params: { id: string } }) {
   const id = Number(params.id);
@@ -151,7 +152,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
           <div className="card p-5 space-y-4">
             <h3 className="font-semibold text-gray-900">Details</h3>
             {[
-              { icon: TrendingUp, label: 'Category', value: project.category },
+              { icon: TrendingUp, label: 'Category', value: project.categoryNode?.name ?? project.category ?? '—' },
               { icon: DollarSign, label: 'Target', value: formatCurrency(target) },
               { icon: MapPin, label: 'Location', value: project.location || '—' },
               { icon: Calendar, label: 'Start Date', value: project.expectedStartDate ? formatDate(project.expectedStartDate) : '—' },
@@ -190,6 +191,9 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
               </Link>
             ))}
           </div>
+
+          {/* W6-E5: joint projects — participations + project-scope grants */}
+          <ParticipationsPanel projectId={id} />
 
           {/* W4: engine lifecycle — state, timeline, availableTransitions */}
           <WorkflowTimeline projectId={Number(id)} studyId={project.studyId ?? null} />

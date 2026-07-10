@@ -10,6 +10,7 @@ import { TenancyRepository } from '../policy/tenancy.repository';
 import { PolicyService } from '../policy/policy.service';
 import { GovernanceService } from '../governance/governance.service';
 import { WorkflowService } from '../workflow/workflow.service';
+import { CategoriesService } from '../categories/categories.service';
 
 const mockPrisma = {
   project: {
@@ -73,6 +74,16 @@ const mockTenancy = {
   enforcedProjectRelationWhere: jest.fn(async (w: any = {}) => w),
 };
 
+// W6: category taxonomy collaborator — unit fixtures carry no categoryId, so
+// the legacy template path runs; the mock exists for DI only
+const mockCategories = {
+  templatesForCategory: jest.fn().mockResolvedValue([]),
+  resolveForWrite: jest.fn().mockResolvedValue(1),
+  byKey: jest.fn(),
+  byId: jest.fn(),
+  selfAndDescendantIds: jest.fn().mockResolvedValue([1]),
+};
+
 const actor = { userId: 1, referenceType: 'admin', requestId: 'unit-test', ip: null };
 
 describe('StudyService', () => {
@@ -98,6 +109,7 @@ describe('StudyService', () => {
         { provide: PolicyService, useValue: mockPolicy },
         { provide: GovernanceService, useValue: mockGovernance },
         { provide: WorkflowService, useValue: mockWorkflow },
+        { provide: CategoriesService, useValue: mockCategories },
       ],
     }).compile();
 

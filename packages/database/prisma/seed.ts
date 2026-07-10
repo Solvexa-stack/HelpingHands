@@ -5,6 +5,8 @@ import { backfillGovernance } from './backfills/w3-governance-backfill';
 import { seedWorkflowDefinitions } from './seeds/w4-workflow-definitions';
 import { backfillWorkflowInstances } from './backfills/w4-workflow-backfill';
 import { backfillTreasury } from './backfills/w5-treasury-backfill';
+import { backfillProjectFund } from './backfills/w6-project-fund-backfill';
+import { seedCategoryTaxonomy } from './seeds/w6-category-taxonomy';
 
 const prisma = new PrismaClient();
 
@@ -288,6 +290,12 @@ async function main() {
   }
   console.log(`✅ Treasury (${fundsCreated} funds created; ${treasury.accountsCreated} accounts; ${treasury.transactionsReconstructed} legacy rows reconstructed; reconciliation exact for ${treasury.reconciliation.projectsChecked} projects)`);
 
+  // ─── W6 addendum: fund-of-record backfill (idempotent) ─────────────────────
+  const projectFund = await backfillProjectFund(prisma);
+  console.log(
+    `✅ Fund of record (${projectFund.projectsChecked} projects checked; ${projectFund.assigned} assigned from a single allocation; ${projectFund.needsReview} left for manual review: [${projectFund.reviewProjectIds.join(', ')}])`,
+  );
+
   // ─── Study Department Templates ───────────────────────────────────────────────
   const sharedSections = [
     { name: 'Financial Overview', description: 'Overall budget breakdown and funding sources', order: 100 },
@@ -364,6 +372,12 @@ async function main() {
   } else {
     console.log(`✅ Study department templates already seeded (${existingTemplateCount} found)`);
   }
+
+  // ─── W6 civic category taxonomy + enum→node backfill (gated, idempotent) ───
+  const taxonomy = await seedCategoryTaxonomy(prisma);
+  console.log(
+    `✅ Category taxonomy (${taxonomy.nodesSeeded} nodes; ${taxonomy.projectsBackfilled} projects backfilled; ${taxonomy.templatesRekeyed} templates re-keyed; ${taxonomy.civicTemplatesCreated} civic templates; coverage gate exact)`,
+  );
 
   console.log('\n✨ Database seeded successfully!');
   console.log('\nTest accounts:');

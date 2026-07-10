@@ -32,6 +32,8 @@ import { FinancialModule } from './modules/financial/financial.module';
 import { MilestonesModule } from './modules/milestones/milestones.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { OrgReportingModule } from './modules/org-reporting/org-reporting.module';
 
 @Module({
   imports: [
@@ -85,6 +87,8 @@ import { ReportsModule } from './modules/reports/reports.module';
     MilestonesModule,
     OrganizationsModule,
     ReportsModule,
+    CategoriesModule,
+    OrgReportingModule,
   ],
 })
 export class AppModule {}

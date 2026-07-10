@@ -44,10 +44,14 @@ export class WorkflowService {
     private guards: GuardRegistryService,
   ) {}
 
-  /** Create an instance at the definition's initial state. */
-  async start(actor: ActorContext, subject: WorkflowSubject, definitionKey: string) {
+  /**
+   * Create an instance at the definition's initial state. `opts.version`
+   * pins a specific active version — W6-E4-S1: the caller selects v1/v2 by
+   * owner-org capabilities; without it the latest active version wins.
+   */
+  async start(actor: ActorContext, subject: WorkflowSubject, definitionKey: string, opts: { version?: number } = {}) {
     const definition = await this.prisma.workflowDefinition.findFirst({
-      where: { key: definitionKey, isActive: true },
+      where: { key: definitionKey, isActive: true, ...(opts.version ? { version: opts.version } : {}) },
       orderBy: { version: 'desc' },
     });
     if (!definition) throw new NotFoundException(`No active workflow definition "${definitionKey}"`);
@@ -228,9 +232,12 @@ export class WorkflowService {
   async ensurePositionedInstance(subject: WorkflowSubject, stateKey: string, definitionKey = 'project-lifecycle') {
     const existing = await this.instanceFor(subject);
     if (existing) return existing;
+    // Positioned starts serve the legacy bridge: subjects that predate the
+    // engine were governed by the machine v1 transcribes — never a later
+    // version (W6-E4-S1: v2 applies to NEW oversight-org projects only).
     const definition = await this.prisma.workflowDefinition.findFirst({
       where: { key: definitionKey, isActive: true },
-      orderBy: { version: 'desc' },
+      orderBy: { version: 'asc' },
     });
     if (!definition) throw new NotFoundException(`No active workflow definition "${definitionKey}"`);
     const instance = await this.prisma.workflowInstance.create({

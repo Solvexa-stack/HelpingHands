@@ -135,6 +135,52 @@ export class OrganizationQueryDto {
   limit?: number = 15;
 }
 
+/**
+ * W6-E3-S1 — self-service registration (flag-gated; pilot allowlist). The
+ * contact becomes the org's first org_admin with direct credentials.
+ */
+export class RegisterOrganizationDto {
+  @ApiProperty({ enum: ['municipality', 'youth_team'] })
+  @IsEnum(OrganizationType)
+  type: OrganizationType;
+
+  @ApiProperty({ example: 'Municipality of Al-Karama' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  name: string;
+
+  @ApiProperty({ description: 'Official registration number' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  registrationNumber: string;
+
+  @ApiProperty({ example: 'mayor@alkarama.gov' })
+  @IsEmail()
+  adminEmail: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  adminFirstName: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  adminLastName: string;
+
+  @ApiProperty()
+  @IsString()
+  @MinLength(8)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/, {
+    message: 'Password must contain uppercase, lowercase, a number and a special character',
+  })
+  adminPassword: string;
+}
+
 export const DEFAULT_CAPABILITIES = {
   canExecuteProjects: false,
   canReceivePublicFunds: false,
