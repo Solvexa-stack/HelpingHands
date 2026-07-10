@@ -10,7 +10,8 @@
     "login": "Sign In",
     "register": "Sign Up",
     "dashboard": "My Dashboard",
-    "logout": "Sign Out"
+    "logout": "Sign Out",
+    "transparency": "Transparency"
   },
   "home": {
     "hero": {
@@ -159,5 +160,59 @@
     "sort": "Sort",
     "noResults": "No results found",
     "readMore": "Read More"
+  },
+  "transparency": {
+    "title": "Transparency",
+    "subtitle": "Where the money comes from and where it goes — live from the ledger",
+    "asOf": "as of",
+    "funds": "Funds",
+    "organizations": "Organizations",
+    "statistics": "Platform statistics",
+    "intakeByChannel": "Intake by channel",
+    "projectsByCategory": "Projects by category",
+    "orgsByType": "Organizations by type",
+    "balance": "Balance",
+    "intake": "Intake",
+    "allocated": "Allocated",
+    "disbursed": "Disbursed",
+    "allocations": "Allocations to projects",
+    "spendByCategory": "Spend by category",
+    "verified": "Verified",
+    "portfolio": "Project portfolio",
+    "fundingSources": "Funding sources",
+    "moneyTrail": "Where the money went",
+    "decisions": "Board decisions",
+    "milestones": "Milestones",
+    "downloadStatement": "Download statement (CSV)",
+    "qrCash": "Cash donations (QR)",
+    "online": "Online donations",
+    "fundAllocations": "Fund allocations",
+    "spend": "Spend",
+    "remaining": "Remaining in project account"
+  },
+  "about": {
+    "hero": {
+      "title": "About HelpingHands",
+      "subtitle": "We are a community-driven platform connecting generous donors with impactful projects worldwide. Building bridges between compassion and action."
+    },
+    "valuesHeading": "Our Values",
+    "values": {
+      "compassion": {
+        "title": "Compassion",
+        "desc": "We believe every act of giving, no matter how small, creates waves of positive change."
+      },
+      "transparency": {
+        "title": "Transparency",
+        "desc": "Every donation is tracked and verified. You always know where your money goes."
+      },
+      "community": {
+        "title": "Community",
+        "desc": "We connect diaspora communities with their home regions through meaningful impact."
+      },
+      "globalReach": {
+        "title": "Global Reach",
+        "desc": "Operating across borders to ensure help reaches where it is needed most."
+      }
+    }
   }
 }

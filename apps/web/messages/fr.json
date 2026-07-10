@@ -10,7 +10,8 @@
     "login": "Se connecter",
     "register": "S'inscrire",
     "dashboard": "Mon espace",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "transparency": "Transparence"
   },
   "home": {
     "hero": {
@@ -159,5 +160,59 @@
     "sort": "Trier",
     "noResults": "Aucun résultat trouvé",
     "readMore": "Lire la suite"
+  },
+  "transparency": {
+    "title": "Transparence",
+    "subtitle": "D'où vient l'argent et où il va — en direct du grand livre",
+    "asOf": "au",
+    "funds": "Fonds",
+    "organizations": "Organisations",
+    "statistics": "Statistiques de la plateforme",
+    "intakeByChannel": "Recettes par canal",
+    "projectsByCategory": "Projets par catégorie",
+    "orgsByType": "Organisations par type",
+    "balance": "Solde",
+    "intake": "Recettes",
+    "allocated": "Alloué",
+    "disbursed": "Décaissé",
+    "allocations": "Allocations aux projets",
+    "spendByCategory": "Dépenses par catégorie",
+    "verified": "Vérifiée",
+    "portfolio": "Portefeuille de projets",
+    "fundingSources": "Sources de financement",
+    "moneyTrail": "Où est allé l'argent",
+    "decisions": "Décisions du conseil",
+    "milestones": "Jalons",
+    "downloadStatement": "Télécharger le relevé (CSV)",
+    "qrCash": "Dons en espèces (QR)",
+    "online": "Dons en ligne",
+    "fundAllocations": "Allocations de fonds",
+    "spend": "Dépenses",
+    "remaining": "Restant sur le compte du projet"
+  },
+  "about": {
+    "hero": {
+      "title": "À propos de HelpingHands",
+      "subtitle": "Nous sommes une plateforme communautaire qui relie des donateurs généreux à des projets à fort impact dans le monde entier, en construisant des ponts entre la compassion et l'action."
+    },
+    "valuesHeading": "Nos valeurs",
+    "values": {
+      "compassion": {
+        "title": "Compassion",
+        "desc": "Nous croyons que chaque geste de générosité, aussi modeste soit-il, crée des vagues de changement positif."
+      },
+      "transparency": {
+        "title": "Transparence",
+        "desc": "Chaque don est suivi et vérifié. Vous savez toujours où va votre argent."
+      },
+      "community": {
+        "title": "Communauté",
+        "desc": "Nous relions les communautés de la diaspora à leurs régions d'origine à travers un impact concret."
+      },
+      "globalReach": {
+        "title": "Portée mondiale",
+        "desc": "Nous intervenons au-delà des frontières pour que l'aide arrive là où elle est le plus nécessaire."
+      }
+    }
   }
 }

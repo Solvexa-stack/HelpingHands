@@ -1,14 +1,21 @@
+import { getTranslations } from 'next-intl/server';
 import { blocksApi } from '@/lib/api';
 import { getTranslation } from '@/lib/utils';
 import { Heart, Shield, Users, Globe } from 'lucide-react';
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = { title: 'About Us' };
-export const revalidate = 3600;
-
 interface Props { params: { locale: string } }
 
+export async function generateMetadata({ params: { locale } }: Props): Promise<Metadata> {
+  const tNav = await getTranslations({ locale, namespace: 'nav' });
+  return { title: tNav('about') };
+}
+
+export const revalidate = 3600;
+
 export default async function AboutPage({ params: { locale } }: Props) {
+  const t = await getTranslations({ locale, namespace: 'about' });
+
   let blocks: any[] = [];
   try {
     const data: any = await blocksApi.list({ category: 'about_us', lang: locale, activeOnly: true });
@@ -16,10 +23,10 @@ export default async function AboutPage({ params: { locale } }: Props) {
   } catch {}
 
   const values = [
-    { icon: Heart, title: 'Compassion', desc: 'We believe every act of giving, no matter how small, creates waves of positive change.' },
-    { icon: Shield, title: 'Transparency', desc: 'Every donation is tracked and verified. You always know where your money goes.' },
-    { icon: Users, title: 'Community', desc: 'We connect diaspora communities with their home regions through meaningful impact.' },
-    { icon: Globe, title: 'Global Reach', desc: 'Operating across borders to ensure help reaches where it is needed most.' },
+    { icon: Heart, title: t('values.compassion.title'), desc: t('values.compassion.desc') },
+    { icon: Shield, title: t('values.transparency.title'), desc: t('values.transparency.desc') },
+    { icon: Users, title: t('values.community.title'), desc: t('values.community.desc') },
+    { icon: Globe, title: t('values.globalReach.title'), desc: t('values.globalReach.desc') },
   ];
 
   return (
@@ -27,11 +34,8 @@ export default async function AboutPage({ params: { locale } }: Props) {
       {/* Hero */}
       <section className="bg-gradient-to-br from-brand to-brand-light text-white py-20">
         <div className="container max-w-3xl text-center">
-          <h1 className="text-5xl font-extrabold mb-6">About HelpingHands</h1>
-          <p className="text-blue-100 text-xl leading-relaxed">
-            We are a community-driven platform connecting generous donors with impactful projects worldwide.
-            Building bridges between compassion and action.
-          </p>
+          <h1 className="text-5xl font-extrabold mb-6">{t('hero.title')}</h1>
+          <p className="text-blue-100 text-xl leading-relaxed">{t('hero.subtitle')}</p>
         </div>
       </section>
 
@@ -57,7 +61,7 @@ export default async function AboutPage({ params: { locale } }: Props) {
       {/* Values */}
       <section className="py-20 bg-gray-50">
         <div className="container">
-          <h2 className="text-3xl font-extrabold text-center text-gray-900 mb-12">Our Values</h2>
+          <h2 className="text-3xl font-extrabold text-center text-gray-900 mb-12">{t('valuesHeading')}</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {values.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="card p-6 text-center">
