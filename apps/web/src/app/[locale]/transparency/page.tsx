@@ -95,9 +95,9 @@ export default async function TransparencyPage({ params: { locale } }: Props) {
                 <p className="font-semibold text-gray-900">{fund.name}</p>
                 <div className="mt-2 grid grid-cols-2 gap-1 text-sm">
                   <span className="text-gray-400">{t('balance')}</span>
-                  <span className="text-right font-medium">{formatCurrency(fund.balance, undefined, locale)}</span>
+                  <span className="text-end font-medium">{formatCurrency(fund.balance, undefined, locale)}</span>
                   <span className="text-gray-400">{t('disbursed')}</span>
-                  <span className="text-right font-medium">{formatCurrency(fund.disbursed, undefined, locale)}</span>
+                  <span className="text-end font-medium">{formatCurrency(fund.disbursed, undefined, locale)}</span>
                 </div>
               </Link>
             ))}

@@ -81,10 +81,10 @@ export default function PaymentSuccessPage() {
           <p className="text-gray-500 mt-1 text-sm">{t('confirmed')}</p>
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-4 text-left space-y-2 text-sm">
+        <div className="bg-gray-50 rounded-xl p-4 text-start space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-gray-500">{tDonations('fields.project')}</span>
-            <span className="font-semibold text-gray-900 text-right max-w-[180px] truncate">{projectName}</span>
+            <span className="font-semibold text-gray-900 text-end max-w-[180px] truncate">{projectName}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">{tDonations('fields.amount')}</span>

@@ -114,7 +114,7 @@ export default async function FundTransparencyPage({ params: { locale, id } }: P
                       {categoryLabel(a.project.category, locale)} · {a.status}
                     </p>
                   </div>
-                  <div className="text-right text-sm">
+                  <div className="text-end text-sm">
                     <p className="font-semibold">{formatCurrency(a.disbursed, undefined, locale)}</p>
                     <p className="text-xs text-gray-400">/ {formatCurrency(a.amount, undefined, locale)}</p>
                   </div>

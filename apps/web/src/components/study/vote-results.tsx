@@ -52,8 +52,8 @@ export function VoteResults({ studyId, studyStatus }: VoteResultsProps) {
               style={{ width: `${pct(value)}%` }}
             />
           </div>
-          <span className="text-sm font-semibold text-gray-900 w-12 text-right">{pct(value)}%</span>
-          <span className="text-xs text-gray-400 w-8 text-right">{value}</span>
+          <span className="text-sm font-semibold text-gray-900 w-12 text-end">{pct(value)}%</span>
+          <span className="text-xs text-gray-400 w-8 text-end">{value}</span>
         </div>
       ))}
       <p className="text-xs text-gray-400 pt-1">Total: {total} votes</p>
