@@ -277,6 +277,7 @@
       "required": "Required"
     },
     "sections": "sections",
+    "sectionSingular": "section",
     "vote": "vote",
     "votes_": "votes",
     "changeStatus": "Change Status",

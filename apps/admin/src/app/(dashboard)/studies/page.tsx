@@ -14,7 +14,7 @@ const STUDY_STATUSES = ['', 'draft', 'in_review', 'published', 'voting_open', 'v
 function SectionsProgress({ count, t }: { count: number; t: (k: string) => string }) {
   return (
     <span className="text-sm text-gray-600">
-      {count} {count !== 1 ? t('studies.sections') : t('studies.section')}
+      {count} {count !== 1 ? t('studies.sections') : t('studies.sectionSingular')}
     </span>
   );
 }
