@@ -10,7 +10,7 @@ import { useToast } from '@/components/ui/toaster';
 import { useLanguage } from '@/contexts/language-context';
 
 export default function ParticipantsPage() {
-  const { locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
@@ -26,35 +26,35 @@ export default function ParticipantsPage() {
 
   const toggleMutation = useMutation({
     mutationFn: (id: number) => participantsApi.toggleActive(id),
-    onSuccess: () => { success('Status updated'); qc.invalidateQueries({ queryKey: ['participants'] }); },
-    onError: (err: any) => toastError(err?.response?.data?.message || 'Failed'),
+    onSuccess: () => { success(t('participants.toast.statusUpdated')); qc.invalidateQueries({ queryKey: ['participants'] }); },
+    onError: (err: any) => toastError(err?.response?.data?.message || t('common.failed')),
   });
 
   return (
     <div className="space-y-5">
       <div className="relative max-w-sm">
         <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="input ps-9" placeholder="Search participants..." />
+        <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="input ps-9" placeholder={t('participants.searchPlaceholder')} />
       </div>
 
       <div className="card overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="table-header">Participant</th>
-              <th className="table-header">Email</th>
-              <th className="table-header">Type</th>
-              <th className="table-header">Donations</th>
-              <th className="table-header">Joined</th>
-              <th className="table-header">Status</th>
-              <th className="table-header">Actions</th>
+              <th className="table-header">{t('participants.colParticipant')}</th>
+              <th className="table-header">{t('participants.colEmail')}</th>
+              <th className="table-header">{t('participants.colType')}</th>
+              <th className="table-header">{t('participants.colDonations')}</th>
+              <th className="table-header">{t('participants.colJoined')}</th>
+              <th className="table-header">{t('common.status')}</th>
+              <th className="table-header">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {isLoading ? (
-              <tr><td colSpan={7} className="table-cell text-center py-12 text-gray-400">Loading...</td></tr>
+              <tr><td colSpan={7} className="table-cell text-center py-12 text-gray-400">{t('common.loading')}</td></tr>
             ) : participants.length === 0 ? (
-              <tr><td colSpan={7} className="table-cell text-center py-12 text-gray-400">No participants found</td></tr>
+              <tr><td colSpan={7} className="table-cell text-center py-12 text-gray-400">{t('participants.empty')}</td></tr>
             ) : (
               participants.map((p: any) => (
                 <tr key={p.id} className="hover:bg-gray-50 transition-colors">
@@ -67,12 +67,12 @@ export default function ParticipantsPage() {
                     </div>
                   </td>
                   <td className="table-cell text-gray-500">{p.user?.email}</td>
-                  <td className="table-cell capitalize">{p.representation}</td>
+                  <td className="table-cell capitalize">{t(`participants.representations.${p.representation}`) || p.representation}</td>
                   <td className="table-cell">{p._count?.donations || 0}</td>
                   <td className="table-cell text-gray-400">{p.user?.joiningDate ? formatDate(p.user.joiningDate, locale) : '—'}</td>
                   <td className="table-cell">
                     <span className={cn('badge', p.user?.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
-                      {p.user?.isActive ? 'Active' : 'Inactive'}
+                      {p.user?.isActive ? t('common.active') : t('common.inactive')}
                     </span>
                   </td>
                   <td className="table-cell">

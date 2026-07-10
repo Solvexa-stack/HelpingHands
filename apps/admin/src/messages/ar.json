@@ -175,7 +175,8 @@
     "publish": "نشر",
     "draft": "مسودة",
     "total": "الإجمالي",
-    "failed": "فشل"
+    "failed": "فشل",
+    "confirm": "تأكيد"
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -213,7 +214,43 @@
     "target": "المستهدف",
     "progress": "التقدم",
     "completed": "مكتمل",
-    "searchPlaceholder": "البحث في المشاريع..."
+    "searchPlaceholder": "البحث في المشاريع...",
+    "colProject": "المشروع",
+    "colStudy": "الدراسة",
+    "empty": "لا توجد مشاريع",
+    "unnamedFallback": "بدون اسم",
+    "createStudy": "إنشاء دراسة",
+    "deleteTitle": "حذف المشروع",
+    "deleteMessage": "هل أنت متأكد من حذف هذا المشروع؟ لا يمكن التراجع عن هذا الإجراء.",
+    "totalCount": "{count} إجمالي",
+    "toast": {
+      "projectDeleted": "تم حذف المشروع",
+      "deleteFailed": "فشل الحذف",
+      "studyCreated": "تم إنشاء الدراسة",
+      "studyCreateFailed": "تعذر إنشاء الدراسة"
+    },
+    "detail": {
+      "notFound": "المشروع غير موجود",
+      "editProject": "تعديل المشروع",
+      "fundingProgress": "تقدم التمويل",
+      "collected": "المحصَّل",
+      "fundedPercent": "تم تمويل {percent}%",
+      "rejected": "مرفوض",
+      "donationsHeading": "التبرعات ({count})",
+      "noDonationsYet": "لا توجد تبرعات بعد",
+      "details": "التفاصيل",
+      "location": "الموقع",
+      "startDate": "تاريخ البدء",
+      "completionLabel": "الإنجاز",
+      "projectManagement": "إدارة المشروع",
+      "execution": "التنفيذ",
+      "executionDesc": "المراحل والخطوات والمهام",
+      "financialLabel": "المالية",
+      "financialDesc": "الميزانيات والمصروفات والدفتر",
+      "milestonesLabel": "المعالم",
+      "milestonesDesc": "الجدول الزمني للمشروع",
+      "financialOfficer": "الموظف المالي"
+    }
   },
   "employees": {
     "title": "إدارة الفريق",
@@ -231,7 +268,16 @@
     "newPassword": "كلمة مرور جديدة",
     "keepPassword": "(اتركه فارغاً للإبقاء على الحالية)",
     "createAccount": "إنشاء الحساب",
-    "saveChanges": "حفظ التغييرات"
+    "saveChanges": "حفظ التغييرات",
+    "empty": "لا يوجد أعضاء فريق",
+    "cancel": "إلغاء",
+    "passwordHint": "يجب أن تتضمن حرفًا كبيرًا وصغيرًا ورقمًا ورمزًا خاصًا",
+    "passwordHintOptional": "يجب أن تتكون من 8 أحرف على الأقل وتتضمن حرفًا كبيرًا وصغيرًا ورقمًا ورمزًا خاصًا",
+    "toast": {
+      "statusUpdated": "تم تحديث الحالة",
+      "accountCreated": "تم إنشاء الحساب!",
+      "memberUpdated": "تم تحديث العضو!"
+    }
   },
   "content": {
     "title": "العنوان",
@@ -682,6 +728,86 @@
       "heading": "مشاريعك",
       "viewAll": "جميع المشاريع",
       "empty": "لا توجد مشاريع بعد — أنشئ مشروعك الأول."
+    }
+  },
+  "participants": {
+    "searchPlaceholder": "بحث عن مشارك...",
+    "representations": {
+      "personal": "فردي",
+      "company": "شركة",
+      "organization": "منظمة"
+    },
+    "colParticipant": "المشارك",
+    "colEmail": "البريد الإلكتروني",
+    "colType": "النوع",
+    "colDonations": "التبرعات",
+    "colJoined": "تاريخ الانضمام",
+    "empty": "لا يوجد مشاركون",
+    "toast": {
+      "statusUpdated": "تم تحديث الحالة",
+      "accountStatusUpdated": "تم تحديث حالة الحساب"
+    },
+    "detail": {
+      "title": "الملف الشخصي للمشارك",
+      "deactivateAccount": "إلغاء تفعيل الحساب",
+      "activateAccount": "تفعيل الحساب",
+      "totalDonations": "إجمالي التبرعات",
+      "totalDonated": "إجمالي المبلغ المتبرع به",
+      "pending": "معلق",
+      "donationHistory": "سجل التبرعات",
+      "noDonations": "لا توجد تبرعات بعد",
+      "colProject": "المشروع",
+      "colAmount": "المبلغ",
+      "colDate": "التاريخ",
+      "information": "المعلومات",
+      "email": "البريد الإلكتروني",
+      "representation": "الصفة",
+      "joined": "تاريخ الانضمام",
+      "notFound": "المشارك غير موجود"
+    }
+  },
+  "participations": {
+    "heading": "المنظمات المشاركة",
+    "addOrgTitle": "إضافة منظمة",
+    "ownerOnly": "المنظمة المالكة فقط.",
+    "ended": "منتهية",
+    "end": "إنهاء",
+    "grantsHeading": "صلاحيات على مستوى المشروع (معينون من خارج المنظمة)",
+    "grantTitle": "منح صلاحية على المشروع",
+    "noneYet": "لا يوجد بعد.",
+    "revokeHint": "انقر للسحب",
+    "addOrgModalTitle": "إضافة منظمة مشاركة",
+    "organizationPlaceholder": "المنظمة…",
+    "notesPlaceholder": "ملاحظات (اختياري)",
+    "addParticipation": "إضافة مشاركة",
+    "grantDescription": "يجب أن ينتمي المستخدم إلى المنظمة المالكة أو إحدى المنظمات المشاركة؛ يمنحه هذا التفويض صلاحية على هذا المشروع فقط.",
+    "userIdPlaceholder": "معرّف المستخدم",
+    "grantRoleSubmit": "منح الصلاحية",
+    "roles": {
+      "owner": "مالك",
+      "executing_agency": "جهة منفذة",
+      "funding_partner": "شريك تمويل",
+      "supervising": "جهة إشراف",
+      "beneficiary_rep": "ممثل المستفيدين"
+    },
+    "projectRoles": {
+      "contributor": "مساهم",
+      "project_lead": "قائد المشروع",
+      "financial_delegate": "مفوض مالي"
+    },
+    "toast": {
+      "orgAdded": "تمت إضافة المنظمة إلى المشروع",
+      "participationEnded": "تم إنهاء المشاركة (مع الاحتفاظ بالسجل)",
+      "roleGranted": "تم منح صلاحية المشروع",
+      "roleRevoked": "تم سحب الصلاحية"
+    }
+  },
+  "workflow": {
+    "lifecycle": "دورة الحياة",
+    "notAvailable": "غير متاح هنا",
+    "toast": {
+      "transitionExecuted": "تم تنفيذ الانتقال",
+      "transitionFailed": "فشل الانتقال"
     }
   }
 }

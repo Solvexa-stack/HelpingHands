@@ -17,7 +17,7 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 export default function EmployeesPage() {
-  const { locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
@@ -33,20 +33,20 @@ export default function EmployeesPage() {
 
   const toggleMutation = useMutation({
     mutationFn: (id: number) => adminsApi.toggleActive(id),
-    onSuccess: () => { success('Status updated'); qc.invalidateQueries({ queryKey: ['admins'] }); },
-    onError: (err: any) => toastError(err?.response?.data?.message || 'Failed'),
+    onSuccess: () => { success(t('employees.toast.statusUpdated')); qc.invalidateQueries({ queryKey: ['admins'] }); },
+    onError: (err: any) => toastError(err?.response?.data?.message || t('common.failed')),
   });
 
   const createMutation = useMutation({
     mutationFn: (data: any) => adminsApi.create(data),
-    onSuccess: () => { success('Account created!'); qc.invalidateQueries({ queryKey: ['admins'] }); setCreateOpen(false); },
-    onError: (err: any) => toastError(err?.response?.data?.message || 'Create failed'),
+    onSuccess: () => { success(t('employees.toast.accountCreated')); qc.invalidateQueries({ queryKey: ['admins'] }); setCreateOpen(false); },
+    onError: (err: any) => toastError(err?.response?.data?.message || t('common.failed')),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) => adminsApi.update(id, data),
-    onSuccess: () => { success('Member updated!'); qc.invalidateQueries({ queryKey: ['admins'] }); setEditAdmin(null); },
-    onError: (err: any) => toastError(err?.response?.data?.message || 'Update failed'),
+    onSuccess: () => { success(t('employees.toast.memberUpdated')); qc.invalidateQueries({ queryKey: ['admins'] }); setEditAdmin(null); },
+    onError: (err: any) => toastError(err?.response?.data?.message || t('common.failed')),
   });
 
   return (
@@ -54,10 +54,10 @@ export default function EmployeesPage() {
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} className="input ps-9" placeholder="Search team members..." />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} className="input ps-9" placeholder={t('employees.searchPlaceholder')} />
         </div>
         <button onClick={() => setCreateOpen(true)} className="btn-primary btn-md gap-2">
-          <Plus className="w-4 h-4" /> Add Member
+          <Plus className="w-4 h-4" /> {t('employees.addMember')}
         </button>
       </div>
 
@@ -65,19 +65,19 @@ export default function EmployeesPage() {
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="table-header">Name</th>
-              <th className="table-header">Email</th>
-              <th className="table-header">Role</th>
-              <th className="table-header">Joined</th>
-              <th className="table-header">Status</th>
-              <th className="table-header">Actions</th>
+              <th className="table-header">{t('employees.name')}</th>
+              <th className="table-header">{t('employees.email')}</th>
+              <th className="table-header">{t('employees.role')}</th>
+              <th className="table-header">{t('employees.joined')}</th>
+              <th className="table-header">{t('common.status')}</th>
+              <th className="table-header">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {isLoading ? (
-              <tr><td colSpan={6} className="table-cell text-center py-12 text-gray-400">Loading...</td></tr>
+              <tr><td colSpan={6} className="table-cell text-center py-12 text-gray-400">{t('common.loading')}</td></tr>
             ) : admins.length === 0 ? (
-              <tr><td colSpan={6} className="table-cell text-center py-12 text-gray-400">No team members found</td></tr>
+              <tr><td colSpan={6} className="table-cell text-center py-12 text-gray-400">{t('employees.empty')}</td></tr>
             ) : (
               admins.map((a: any) => (
                 <tr key={a.id} className="hover:bg-gray-50 transition-colors">
@@ -92,13 +92,13 @@ export default function EmployeesPage() {
                   <td className="table-cell text-gray-500">{a.user?.email}</td>
                   <td className="table-cell">
                     <span className={cn('badge capitalize', ROLE_COLORS[a.role] || 'bg-gray-100 text-gray-600')}>
-                      {a.role.replace('_', ' ')}
+                      {t(`roles.${a.role}`) || a.role.replace('_', ' ')}
                     </span>
                   </td>
                   <td className="table-cell text-gray-400">{a.user?.joiningDate ? formatDate(a.user.joiningDate, locale) : '—'}</td>
                   <td className="table-cell">
                     <span className={cn('badge', a.user?.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
-                      {a.user?.isActive ? 'Active' : 'Inactive'}
+                      {a.user?.isActive ? t('common.active') : t('common.inactive')}
                     </span>
                   </td>
                   <td className="table-cell">

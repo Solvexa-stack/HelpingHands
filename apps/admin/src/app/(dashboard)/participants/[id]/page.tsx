@@ -9,7 +9,7 @@ import { useToast } from '@/components/ui/toaster';
 import { useLanguage } from '@/contexts/language-context';
 
 export default function ParticipantDetailPage({ params }: { params: { id: string } }) {
-  const { locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const id = Number(params.id);
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
@@ -21,12 +21,12 @@ export default function ParticipantDetailPage({ params }: { params: { id: string
 
   const toggleMutation = useMutation({
     mutationFn: () => participantsApi.toggleActive(id),
-    onSuccess: () => { success('Account status updated'); qc.invalidateQueries({ queryKey: ['participant', id] }); },
-    onError: (err: any) => toastError(err?.response?.data?.message || 'Failed'),
+    onSuccess: () => { success(t('participants.toast.accountStatusUpdated')); qc.invalidateQueries({ queryKey: ['participant', id] }); },
+    onError: (err: any) => toastError(err?.response?.data?.message || t('common.failed')),
   });
 
-  if (isLoading) return <div className="flex items-center justify-center py-20 text-gray-400">Loading...</div>;
-  if (!participant) return <div className="py-20 text-center text-gray-400">Participant not found</div>;
+  if (isLoading) return <div className="flex items-center justify-center py-20 text-gray-400">{t('common.loading')}</div>;
+  if (!participant) return <div className="py-20 text-center text-gray-400">{t('participants.detail.notFound')}</div>;
 
   const isActive = participant.user?.isActive;
   const donations = participant.donations || [];
@@ -39,12 +39,12 @@ export default function ParticipantDetailPage({ params }: { params: { id: string
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/participants" className="btn-ghost btn-sm p-1.5 rounded-lg"><ArrowLeft className="w-4 h-4" /></Link>
-          <h1 className="page-title">Participant Profile</h1>
+          <h1 className="page-title">{t('participants.detail.title')}</h1>
         </div>
         <button onClick={() => toggleMutation.mutate()} disabled={toggleMutation.isPending}
           className={cn('btn btn-md gap-2', isActive ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100')}>
           {isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-          {isActive ? 'Deactivate Account' : 'Activate Account'}
+          {isActive ? t('participants.detail.deactivateAccount') : t('participants.detail.activateAccount')}
         </button>
       </div>
 
@@ -55,9 +55,9 @@ export default function ParticipantDetailPage({ params }: { params: { id: string
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-4">
             {[
-              { icon: Heart, label: 'Total Donations', value: String(participant._count?.donations ?? 0), color: 'text-rose-600 bg-rose-50' },
-              { icon: DollarSign, label: 'Total Donated', value: formatCurrency(totalDonated, undefined, locale), color: 'text-emerald-600 bg-emerald-50' },
-              { icon: Heart, label: 'Pending', value: String(donations.filter((d: any) => d.status === 'pending').length), color: 'text-yellow-600 bg-yellow-50' },
+              { icon: Heart, label: t('participants.detail.totalDonations'), value: String(participant._count?.donations ?? 0), color: 'text-rose-600 bg-rose-50' },
+              { icon: DollarSign, label: t('participants.detail.totalDonated'), value: formatCurrency(totalDonated, undefined, locale), color: 'text-emerald-600 bg-emerald-50' },
+              { icon: Heart, label: t('participants.detail.pending'), value: String(donations.filter((d: any) => d.status === 'pending').length), color: 'text-yellow-600 bg-yellow-50' },
             ].map(({ icon: Icon, label, value, color }) => (
               <div key={label} className="card p-4 space-y-2">
                 <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center', color)}>
@@ -72,18 +72,18 @@ export default function ParticipantDetailPage({ params }: { params: { id: string
           {/* Donations table */}
           <div className="card overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-900">Donation History</h2>
+              <h2 className="font-semibold text-gray-900">{t('participants.detail.donationHistory')}</h2>
             </div>
             {donations.length === 0 ? (
-              <p className="text-center py-10 text-gray-400 text-sm">No donations yet</p>
+              <p className="text-center py-10 text-gray-400 text-sm">{t('participants.detail.noDonations')}</p>
             ) : (
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="table-header">Project</th>
-                    <th className="table-header">Amount</th>
-                    <th className="table-header">Status</th>
-                    <th className="table-header">Date</th>
+                    <th className="table-header">{t('participants.detail.colProject')}</th>
+                    <th className="table-header">{t('participants.detail.colAmount')}</th>
+                    <th className="table-header">{t('common.status')}</th>
+                    <th className="table-header">{t('participants.detail.colDate')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -121,18 +121,18 @@ export default function ParticipantDetailPage({ params }: { params: { id: string
             <div>
               <p className="font-bold text-gray-900 text-lg">{fullName}</p>
               <span className={cn('badge mt-1', isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')}>
-                {isActive ? 'Active' : 'Inactive'}
+                {isActive ? t('common.active') : t('common.inactive')}
               </span>
             </div>
           </div>
 
           {/* Contact & info */}
           <div className="card p-5 space-y-4">
-            <h3 className="font-semibold text-gray-900">Information</h3>
+            <h3 className="font-semibold text-gray-900">{t('participants.detail.information')}</h3>
             {[
-              { icon: Mail, label: 'Email', value: participant.user?.email || '—' },
-              { icon: User, label: 'Representation', value: participant.representation || '—' },
-              { icon: Calendar, label: 'Joined', value: participant.user?.joiningDate ? formatDate(participant.user.joiningDate, locale) : '—' },
+              { icon: Mail, label: t('participants.detail.email'), value: participant.user?.email || '—' },
+              { icon: User, label: t('participants.detail.representation'), value: (participant.representation && t(`participants.representations.${participant.representation}`)) || '—' },
+              { icon: Calendar, label: t('participants.detail.joined'), value: participant.user?.joiningDate ? formatDate(participant.user.joiningDate, locale) : '—' },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">

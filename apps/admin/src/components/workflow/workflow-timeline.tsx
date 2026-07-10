@@ -43,7 +43,7 @@ const STATE_BADGE: Record<string, string> = {
 };
 
 export function WorkflowTimeline({ projectId, studyId }: { projectId: number; studyId?: number | null }) {
-  const { locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
 
@@ -63,23 +63,23 @@ export function WorkflowTimeline({ projectId, studyId }: { projectId: number; st
       return studiesApi.changeStatus(studyId!, status, undefined, extra);
     },
     onSuccess: () => {
-      success('Transition executed');
+      success(t('workflow.toast.transitionExecuted'));
       qc.invalidateQueries({ queryKey: ['workflow-instance', projectId] });
       qc.invalidateQueries();
     },
-    onError: (err: any) => toastError(err?.response?.data?.message || 'Transition failed'),
+    onError: (err: any) => toastError(err?.response?.data?.message || t('workflow.toast.transitionFailed')),
   });
 
   if (isError || !instance) return null;
 
-  const actions = (instance.availableTransitions ?? []).filter((t: any) => !HIDDEN_ACTIONS.has(t.actionKey));
+  const actions = (instance.availableTransitions ?? []).filter((tr: any) => !HIDDEN_ACTIONS.has(tr.actionKey));
 
   return (
     <div className="card p-5 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h3 className="font-semibold text-sm flex items-center gap-2">
           <GitBranch className="w-4 h-4 text-primary-600" />
-          Lifecycle
+          {t('workflow.lifecycle')}
           <span className="text-xs text-gray-400 font-normal">
             {instance.definition?.key} v{instance.definition?.version}
           </span>
@@ -92,24 +92,24 @@ export function WorkflowTimeline({ projectId, studyId }: { projectId: number; st
       {/* Actions from availableTransitions */}
       {actions.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {actions.map((t: any) =>
-            t.allowed && studyId && ACTION_TO_STATUS[t.actionKey] ? (
+          {actions.map((tr: any) =>
+            tr.allowed && studyId && ACTION_TO_STATUS[tr.actionKey] ? (
               <button
-                key={t.actionKey}
+                key={tr.actionKey}
                 className="btn-secondary btn-sm"
                 disabled={actionMutation.isPending}
-                onClick={() => actionMutation.mutate(t.actionKey)}
-                title={`→ ${t.toStateKey}`}
+                onClick={() => actionMutation.mutate(tr.actionKey)}
+                title={`→ ${tr.toStateKey}`}
               >
-                {t.actionKey.replace(/_/g, ' ')}
+                {tr.actionKey.replace(/_/g, ' ')}
               </button>
             ) : (
               <span
-                key={t.actionKey}
+                key={tr.actionKey}
                 className="badge bg-gray-100 text-gray-400 gap-1"
-                title={t.deniedBy ?? 'not available here'}
+                title={tr.deniedBy ?? t('workflow.notAvailable')}
               >
-                <Lock className="w-3 h-3" /> {t.actionKey.replace(/_/g, ' ')}
+                <Lock className="w-3 h-3" /> {tr.actionKey.replace(/_/g, ' ')}
               </span>
             ),
           )}

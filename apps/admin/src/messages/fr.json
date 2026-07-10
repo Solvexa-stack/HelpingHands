@@ -175,7 +175,8 @@
     "publish": "Publier",
     "draft": "Brouillon",
     "total": "Total",
-    "failed": "Échec"
+    "failed": "Échec",
+    "confirm": "Confirmer"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -213,7 +214,43 @@
     "target": "Objectif",
     "progress": "Progression",
     "completed": "Terminé",
-    "searchPlaceholder": "Rechercher des projets..."
+    "searchPlaceholder": "Rechercher des projets...",
+    "colProject": "Projet",
+    "colStudy": "Étude",
+    "empty": "Aucun projet trouvé",
+    "unnamedFallback": "Sans nom",
+    "createStudy": "Créer une étude",
+    "deleteTitle": "Supprimer le projet",
+    "deleteMessage": "Êtes-vous sûr de vouloir supprimer ce projet ? Cette action est irréversible.",
+    "totalCount": "{count} au total",
+    "toast": {
+      "projectDeleted": "Projet supprimé",
+      "deleteFailed": "Échec de la suppression",
+      "studyCreated": "Étude créée",
+      "studyCreateFailed": "Échec de la création de l'étude"
+    },
+    "detail": {
+      "notFound": "Projet introuvable",
+      "editProject": "Modifier le projet",
+      "fundingProgress": "Progression du financement",
+      "collected": "Collecté",
+      "fundedPercent": "{percent} % financé",
+      "rejected": "Rejeté",
+      "donationsHeading": "Dons ({count})",
+      "noDonationsYet": "Aucun don pour le moment",
+      "details": "Détails",
+      "location": "Lieu",
+      "startDate": "Date de début",
+      "completionLabel": "Achèvement",
+      "projectManagement": "Gestion du projet",
+      "execution": "Exécution",
+      "executionDesc": "Phases, étapes et tâches",
+      "financialLabel": "Finances",
+      "financialDesc": "Budgets, dépenses et grand livre",
+      "milestonesLabel": "Jalons",
+      "milestonesDesc": "Calendrier du projet",
+      "financialOfficer": "Responsable financier"
+    }
   },
   "employees": {
     "title": "Gestion de l'équipe",
@@ -231,7 +268,16 @@
     "newPassword": "Nouveau mot de passe",
     "keepPassword": "(laisser vide pour conserver l'actuel)",
     "createAccount": "Créer le compte",
-    "saveChanges": "Enregistrer"
+    "saveChanges": "Enregistrer",
+    "empty": "Aucun membre d'équipe trouvé",
+    "cancel": "Annuler",
+    "passwordHint": "Doit inclure majuscule, minuscule, chiffre et caractère spécial",
+    "passwordHintOptional": "Doit comporter au moins 8 caractères avec majuscule, minuscule, chiffre et caractère spécial",
+    "toast": {
+      "statusUpdated": "Statut mis à jour",
+      "accountCreated": "Compte créé !",
+      "memberUpdated": "Membre mis à jour !"
+    }
   },
   "content": {
     "title": "Titre",
@@ -682,6 +728,86 @@
       "heading": "Vos projets",
       "viewAll": "Tous les projets",
       "empty": "Aucun projet pour le moment — créez le premier."
+    }
+  },
+  "participants": {
+    "searchPlaceholder": "Rechercher des participants...",
+    "representations": {
+      "personal": "Personnel",
+      "company": "Entreprise",
+      "organization": "Organisation"
+    },
+    "colParticipant": "Participant",
+    "colEmail": "E-mail",
+    "colType": "Type",
+    "colDonations": "Dons",
+    "colJoined": "Inscrit le",
+    "empty": "Aucun participant trouvé",
+    "toast": {
+      "statusUpdated": "Statut mis à jour",
+      "accountStatusUpdated": "Statut du compte mis à jour"
+    },
+    "detail": {
+      "title": "Profil du participant",
+      "deactivateAccount": "Désactiver le compte",
+      "activateAccount": "Activer le compte",
+      "totalDonations": "Total des dons",
+      "totalDonated": "Total donné",
+      "pending": "En attente",
+      "donationHistory": "Historique des dons",
+      "noDonations": "Aucun don pour le moment",
+      "colProject": "Projet",
+      "colAmount": "Montant",
+      "colDate": "Date",
+      "information": "Informations",
+      "email": "E-mail",
+      "representation": "Représentation",
+      "joined": "Inscrit le",
+      "notFound": "Participant introuvable"
+    }
+  },
+  "participations": {
+    "heading": "Organisations participantes",
+    "addOrgTitle": "Ajouter une organisation",
+    "ownerOnly": "Organisation propriétaire uniquement.",
+    "ended": "terminée",
+    "end": "Terminer",
+    "grantsHeading": "Attributions au niveau du projet (assignés hors organisation)",
+    "grantTitle": "Attribuer un rôle sur le projet",
+    "noneYet": "Aucune pour le moment.",
+    "revokeHint": "Cliquer pour révoquer",
+    "addOrgModalTitle": "Ajouter une organisation participante",
+    "organizationPlaceholder": "Organisation…",
+    "notesPlaceholder": "Notes (facultatif)",
+    "addParticipation": "Ajouter la participation",
+    "grantDescription": "L'utilisateur doit appartenir à l'organisation propriétaire ou à une organisation participante ; cette attribution lui donne accès uniquement à ce projet.",
+    "userIdPlaceholder": "ID utilisateur",
+    "grantRoleSubmit": "Attribuer le rôle",
+    "roles": {
+      "owner": "Propriétaire",
+      "executing_agency": "Agence d'exécution",
+      "funding_partner": "Partenaire financier",
+      "supervising": "Supervision",
+      "beneficiary_rep": "Représentant des bénéficiaires"
+    },
+    "projectRoles": {
+      "contributor": "Contributeur",
+      "project_lead": "Chef de projet",
+      "financial_delegate": "Délégué financier"
+    },
+    "toast": {
+      "orgAdded": "Organisation ajoutée au projet",
+      "participationEnded": "Participation terminée (historique conservé)",
+      "roleGranted": "Rôle sur le projet attribué",
+      "roleRevoked": "Rôle révoqué"
+    }
+  },
+  "workflow": {
+    "lifecycle": "Cycle de vie",
+    "notAvailable": "non disponible ici",
+    "toast": {
+      "transitionExecuted": "Transition exécutée",
+      "transitionFailed": "Échec de la transition"
     }
   }
 }

@@ -15,7 +15,7 @@ import { useLanguage } from '@/contexts/language-context';
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 export default function DashboardPage() {
-  const { locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: dashboardApi.stats,
@@ -45,14 +45,14 @@ export default function DashboardPage() {
   const hasChartData = chartFormatted.some((d: any) => d.amount > 0 || d.count > 0);
 
   const statCards = [
-    { icon: FolderKanban, label: 'Total Projects', value: stats?.totalProjects ?? '—', color: 'text-blue-600 bg-blue-50', href: '/projects' },
-    { icon: Heart, label: 'Total Donations', value: stats?.totalDonations ?? '—', color: 'text-rose-600 bg-rose-50', href: '/donations' },
-    { icon: Clock, label: 'Pending', value: stats?.pendingDonations ?? '—', color: 'text-yellow-600 bg-yellow-50', href: '/donations?status=pending' },
-    { icon: CheckCircle, label: 'Approved', value: stats?.approvedDonations ?? '—', color: 'text-green-600 bg-green-50', href: '/donations?status=approved' },
-    { icon: DollarSign, label: 'Total Collected', value: stats ? formatCurrency(stats.totalCollected, undefined, locale) : '—', color: 'text-emerald-600 bg-emerald-50', href: '/donations' },
-    { icon: TrendingUp, label: 'Project Completion', value: stats ? `${stats.projectCompletionRate}%` : '—', color: 'text-purple-600 bg-purple-50', href: '/projects' },
-    { icon: Users, label: 'Participants', value: stats?.totalParticipants ?? '—', color: 'text-indigo-600 bg-indigo-50', href: '/participants' },
-    { icon: UserCheck, label: 'Employees', value: stats?.totalEmployees ?? '—', color: 'text-orange-600 bg-orange-50', href: '/employees' },
+    { icon: FolderKanban, label: t('dashboard.totalProjects'), value: stats?.totalProjects ?? '—', color: 'text-blue-600 bg-blue-50', href: '/projects' },
+    { icon: Heart, label: t('dashboard.totalDonations'), value: stats?.totalDonations ?? '—', color: 'text-rose-600 bg-rose-50', href: '/donations' },
+    { icon: Clock, label: t('dashboard.pending'), value: stats?.pendingDonations ?? '—', color: 'text-yellow-600 bg-yellow-50', href: '/donations?status=pending' },
+    { icon: CheckCircle, label: t('dashboard.approved'), value: stats?.approvedDonations ?? '—', color: 'text-green-600 bg-green-50', href: '/donations?status=approved' },
+    { icon: DollarSign, label: t('dashboard.totalCollected'), value: stats ? formatCurrency(stats.totalCollected, undefined, locale) : '—', color: 'text-emerald-600 bg-emerald-50', href: '/donations' },
+    { icon: TrendingUp, label: t('dashboard.completion'), value: stats ? `${stats.projectCompletionRate}%` : '—', color: 'text-purple-600 bg-purple-50', href: '/projects' },
+    { icon: Users, label: t('dashboard.participants'), value: stats?.totalParticipants ?? '—', color: 'text-indigo-600 bg-indigo-50', href: '/participants' },
+    { icon: UserCheck, label: t('dashboard.employees'), value: stats?.totalEmployees ?? '—', color: 'text-orange-600 bg-orange-50', href: '/employees' },
   ];
 
   return (
@@ -76,9 +76,9 @@ export default function DashboardPage() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Chart */}
         <div className="card p-6 lg:col-span-2">
-          <h2 className="font-semibold text-gray-900 mb-4">Monthly Donations (This Year)</h2>
+          <h2 className="font-semibold text-gray-900 mb-4">{t('dashboard.monthlyChart')}</h2>
           {chartLoading ? (
-            <div className="h-48 flex items-center justify-center text-gray-300">Loading…</div>
+            <div className="h-48 flex items-center justify-center text-gray-300">{t('common.loading')}</div>
           ) : (
             <div className="relative">
               <ResponsiveContainer width="100%" height={220}>
@@ -98,7 +98,7 @@ export default function DashboardPage() {
               </ResponsiveContainer>
               {!hasChartData && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <p className="text-sm text-gray-400 bg-white/80 px-3 py-1.5 rounded-lg">No approved donations this year yet</p>
+                  <p className="text-sm text-gray-400 bg-white/80 px-3 py-1.5 rounded-lg">{t('dashboard.noApproved')}</p>
                 </div>
               )}
             </div>
@@ -108,8 +108,8 @@ export default function DashboardPage() {
         {/* Recent donations */}
         <div className="card">
           <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900">Recent Donations</h2>
-            <Link href="/donations" className="text-xs text-primary-600 font-medium">View all →</Link>
+            <h2 className="font-semibold text-gray-900">{t('dashboard.recentDonations')}</h2>
+            <Link href="/donations" className="text-xs text-primary-600 font-medium">{t('dashboard.viewAll')}</Link>
           </div>
           <div className="divide-y divide-gray-50">
             {recentDonations?.slice(0, 6).map((d: any) => (

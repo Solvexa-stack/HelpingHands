@@ -2,6 +2,7 @@
 
 import { AlertTriangle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 interface Props {
   title: string;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function ConfirmDialog({ title, message, onConfirm, onCancel, loading, danger }: Props) {
+  const { t } = useLanguage();
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
@@ -24,13 +26,13 @@ export function ConfirmDialog({ title, message, onConfirm, onCancel, loading, da
           <p className="text-gray-500 text-sm leading-relaxed">{message}</p>
         </div>
         <div className="flex gap-3 p-6 pt-0">
-          <button onClick={onCancel} className="flex-1 btn-secondary btn-md">Cancel</button>
+          <button onClick={onCancel} className="flex-1 btn-secondary btn-md">{t('common.cancel')}</button>
           <button
             onClick={onConfirm}
             disabled={loading}
             className={cn('flex-1 btn btn-md', danger ? 'bg-red-600 text-white hover:bg-red-700' : 'btn-primary')}
           >
-            {loading ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : 'Confirm'}
+            {loading ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : t('common.confirm')}
           </button>
         </div>
       </div>

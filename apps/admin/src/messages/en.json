@@ -175,7 +175,8 @@
     "publish": "Publish",
     "draft": "Draft",
     "total": "Total",
-    "failed": "Failed"
+    "failed": "Failed",
+    "confirm": "Confirm"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -213,7 +214,43 @@
     "target": "Target",
     "progress": "Progress",
     "completed": "Completed",
-    "searchPlaceholder": "Search projects..."
+    "searchPlaceholder": "Search projects...",
+    "colProject": "Project",
+    "colStudy": "Study",
+    "empty": "No projects found",
+    "unnamedFallback": "Unnamed",
+    "createStudy": "Create Study",
+    "deleteTitle": "Delete Project",
+    "deleteMessage": "Are you sure you want to delete this project? This action cannot be undone.",
+    "totalCount": "{count} total",
+    "toast": {
+      "projectDeleted": "Project deleted",
+      "deleteFailed": "Delete failed",
+      "studyCreated": "Study created",
+      "studyCreateFailed": "Failed to create study"
+    },
+    "detail": {
+      "notFound": "Project not found",
+      "editProject": "Edit Project",
+      "fundingProgress": "Funding Progress",
+      "collected": "Collected",
+      "fundedPercent": "{percent}% funded",
+      "rejected": "Rejected",
+      "donationsHeading": "Donations ({count})",
+      "noDonationsYet": "No donations yet",
+      "details": "Details",
+      "location": "Location",
+      "startDate": "Start Date",
+      "completionLabel": "Completion",
+      "projectManagement": "Project Management",
+      "execution": "Execution",
+      "executionDesc": "Phases, Steps & Tasks",
+      "financialLabel": "Financial",
+      "financialDesc": "Budgets, Expenses & Ledger",
+      "milestonesLabel": "Milestones",
+      "milestonesDesc": "Project Timeline",
+      "financialOfficer": "Financial Officer"
+    }
   },
   "employees": {
     "title": "Team Management",
@@ -231,7 +268,16 @@
     "newPassword": "New Password",
     "keepPassword": "(leave blank to keep current)",
     "createAccount": "Create Account",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "empty": "No team members found",
+    "cancel": "Cancel",
+    "passwordHint": "Must include uppercase, lowercase, number & special char",
+    "passwordHintOptional": "Must be at least 8 chars with uppercase, lowercase, number & special char",
+    "toast": {
+      "statusUpdated": "Status updated",
+      "accountCreated": "Account created!",
+      "memberUpdated": "Member updated!"
+    }
   },
   "content": {
     "title": "Title",
@@ -682,6 +728,86 @@
       "heading": "Your projects",
       "viewAll": "All projects",
       "empty": "No projects yet — create your first one."
+    }
+  },
+  "participants": {
+    "searchPlaceholder": "Search participants...",
+    "representations": {
+      "personal": "Personal",
+      "company": "Company",
+      "organization": "Organization"
+    },
+    "colParticipant": "Participant",
+    "colEmail": "Email",
+    "colType": "Type",
+    "colDonations": "Donations",
+    "colJoined": "Joined",
+    "empty": "No participants found",
+    "toast": {
+      "statusUpdated": "Status updated",
+      "accountStatusUpdated": "Account status updated"
+    },
+    "detail": {
+      "title": "Participant Profile",
+      "deactivateAccount": "Deactivate Account",
+      "activateAccount": "Activate Account",
+      "totalDonations": "Total Donations",
+      "totalDonated": "Total Donated",
+      "pending": "Pending",
+      "donationHistory": "Donation History",
+      "noDonations": "No donations yet",
+      "colProject": "Project",
+      "colAmount": "Amount",
+      "colDate": "Date",
+      "information": "Information",
+      "email": "Email",
+      "representation": "Representation",
+      "joined": "Joined",
+      "notFound": "Participant not found"
+    }
+  },
+  "participations": {
+    "heading": "Participating organizations",
+    "addOrgTitle": "Add organization",
+    "ownerOnly": "Owner organization only.",
+    "ended": "ended",
+    "end": "End",
+    "grantsHeading": "Project-scope grants (cross-org assignees)",
+    "grantTitle": "Grant a project role",
+    "noneYet": "None yet.",
+    "revokeHint": "Click to revoke",
+    "addOrgModalTitle": "Add a participating organization",
+    "organizationPlaceholder": "Organization…",
+    "notesPlaceholder": "Notes (optional)",
+    "addParticipation": "Add participation",
+    "grantDescription": "The user must belong to the owner or a participating organization; the grant admits them to exactly this project.",
+    "userIdPlaceholder": "User id",
+    "grantRoleSubmit": "Grant role",
+    "roles": {
+      "owner": "Owner",
+      "executing_agency": "Executing agency",
+      "funding_partner": "Funding partner",
+      "supervising": "Supervising",
+      "beneficiary_rep": "Beneficiary rep."
+    },
+    "projectRoles": {
+      "contributor": "Contributor",
+      "project_lead": "Project lead",
+      "financial_delegate": "Financial delegate"
+    },
+    "toast": {
+      "orgAdded": "Organization added to the project",
+      "participationEnded": "Participation ended (history preserved)",
+      "roleGranted": "Project role granted",
+      "roleRevoked": "Role revoked"
+    }
+  },
+  "workflow": {
+    "lifecycle": "Lifecycle",
+    "notAvailable": "not available here",
+    "toast": {
+      "transitionExecuted": "Transition executed",
+      "transitionFailed": "Transition failed"
     }
   }
 }

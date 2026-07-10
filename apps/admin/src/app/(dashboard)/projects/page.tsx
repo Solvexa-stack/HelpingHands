@@ -14,7 +14,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useLanguage } from '@/contexts/language-context';
 
 export default function ProjectsPage() {
-  const { locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const { user } = useAuth();
   const role = user?.admin?.role || '';
@@ -36,22 +36,22 @@ export default function ProjectsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => projectsApi.delete(id),
     onSuccess: () => {
-      success('Project deleted');
+      success(t('projects.toast.projectDeleted'));
       qc.invalidateQueries({ queryKey: ['admin-projects'] });
       setDeleteId(null);
     },
-    onError: (err: any) => toastError(err?.response?.data?.message || 'Delete failed'),
+    onError: (err: any) => toastError(err?.response?.data?.message || t('projects.toast.deleteFailed')),
   });
 
   const createStudyMutation = useMutation({
     mutationFn: (projectId: number) => studiesApi.create(projectId),
     onSuccess: (study) => {
-      success('Study created');
+      success(t('projects.toast.studyCreated'));
       qc.invalidateQueries({ queryKey: ['admin-projects'] });
       router.push(`/studies/${study.id}`);
     },
     onError: (err: any) => {
-      toastError(err?.response?.data?.message || 'Failed to create study');
+      toastError(err?.response?.data?.message || t('projects.toast.studyCreateFailed'));
       qc.invalidateQueries({ queryKey: ['admin-projects'] });
       setCreatingStudyFor(null);
     },
@@ -67,11 +67,11 @@ export default function ProjectsPage() {
       <div className="flex gap-3">
         <div className="relative flex-1">
           <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="input ps-9" placeholder="Search projects..." />
+          <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="input ps-9" placeholder={t('projects.searchPlaceholder')} />
         </div>
         {role !== 'financial_officer' && (
           <Link href="/projects/new" className="btn-primary btn-md gap-2">
-            <Plus className="w-4 h-4" /> New Project
+            <Plus className="w-4 h-4" /> {t('projects.newProject')}
           </Link>
         )}
       </div>
@@ -81,23 +81,23 @@ export default function ProjectsPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="table-header">Project</th>
-                <th className="table-header">Category</th>
-                <th className="table-header">Target</th>
-                <th className="table-header">Progress</th>
-                <th className="table-header">Status</th>
-                <th className="table-header">Study</th>
-                <th className="table-header">Actions</th>
+                <th className="table-header">{t('projects.colProject')}</th>
+                <th className="table-header">{t('projects.category')}</th>
+                <th className="table-header">{t('projects.target')}</th>
+                <th className="table-header">{t('projects.progress')}</th>
+                <th className="table-header">{t('common.status')}</th>
+                <th className="table-header">{t('projects.colStudy')}</th>
+                <th className="table-header">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
-                <tr><td colSpan={7} className="table-cell text-center py-12 text-gray-400">Loading...</td></tr>
+                <tr><td colSpan={7} className="table-cell text-center py-12 text-gray-400">{t('common.loading')}</td></tr>
               ) : projects.length === 0 ? (
-                <tr><td colSpan={7} className="table-cell text-center py-12 text-gray-400">No projects found</td></tr>
+                <tr><td colSpan={7} className="table-cell text-center py-12 text-gray-400">{t('projects.empty')}</td></tr>
               ) : (
                 projects.map((p: any) => {
-                  const name = getTranslation(p.block?.translations || [])?.name || 'Unnamed';
+                  const name = getTranslation(p.block?.translations || [])?.name || t('projects.unnamedFallback');
                   const isCreating = creatingStudyFor === p.id && createStudyMutation.isPending;
                   return (
                     <tr key={p.id} className="hover:bg-gray-50 transition-colors">
@@ -117,7 +117,7 @@ export default function ProjectsPage() {
                       </td>
                       <td className="table-cell">
                         <span className={cn('badge', p.isCompleted ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700')}>
-                          {p.isCompleted ? 'Completed' : 'Active'}
+                          {p.isCompleted ? t('projects.completed') : t('common.active')}
                         </span>
                       </td>
                       <td className="table-cell">
@@ -140,7 +140,7 @@ export default function ProjectsPage() {
                             ) : (
                               <FlaskConical className="w-3 h-3" />
                             )}
-                            Create Study
+                            {t('projects.createStudy')}
                           </button>
                         ) : (
                           <span className="text-gray-400 text-xs">—</span>
@@ -172,7 +172,7 @@ export default function ProjectsPage() {
         </div>
         {meta?.totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-            <p className="text-sm text-gray-500">{meta.total} total</p>
+            <p className="text-sm text-gray-500">{t('projects.totalCount', { count: meta.total })}</p>
             <div className="flex gap-1">
               {Array.from({ length: meta.totalPages }, (_, i) => i + 1).map((pg) => (
                 <button key={pg} onClick={() => setPage(pg)} className={cn('w-8 h-8 rounded-lg text-sm', pg === page ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100')}>
@@ -186,8 +186,8 @@ export default function ProjectsPage() {
 
       {deleteId && (
         <ConfirmDialog
-          title="Delete Project"
-          message="Are you sure you want to delete this project? This action cannot be undone."
+          title={t('projects.deleteTitle')}
+          message={t('projects.deleteMessage')}
           onConfirm={() => deleteMutation.mutate(deleteId)}
           onCancel={() => setDeleteId(null)}
           loading={deleteMutation.isPending}
