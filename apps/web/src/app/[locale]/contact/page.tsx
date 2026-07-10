@@ -1,10 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Mail, Phone, MapPin, Send, Loader2 } from 'lucide-react';
 import { contactApi } from '@/lib/api';
 
 export default function ContactPage() {
+  const t = useTranslations('contact');
+  const tAuth = useTranslations('auth');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -18,7 +21,7 @@ export default function ContactPage() {
       await contactApi.submit(form);
       setSubmitted(true);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to send message. Please try again.');
+      setError(err?.response?.data?.message || t('form.errorFallback'));
     } finally {
       setLoading(false);
     }
@@ -28,17 +31,17 @@ export default function ContactPage() {
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container max-w-5xl">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-3">Contact Us</h1>
-          <p className="text-gray-500 text-lg">Get in touch with our team</p>
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-3">{t('title')}</h1>
+          <p className="text-gray-500 text-lg">{t('subtitle')}</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Contact info */}
           <div className="space-y-5">
             {[
-              { icon: Mail, title: 'Email', value: 'info@helpinghands.org' },
-              { icon: Phone, title: 'Phone', value: '+1 (555) 000-0000' },
-              { icon: MapPin, title: 'Address', value: '123 Charity Lane, Hope City, HC 10001' },
+              { icon: Mail, title: t('info.emailLabel'), value: 'info@helpinghands.org' },
+              { icon: Phone, title: t('info.phoneLabel'), value: '+1 (555) 000-0000' },
+              { icon: MapPin, title: t('info.addressLabel'), value: '123 Charity Lane, Hope City, HC 10001' },
             ].map(({ icon: Icon, title, value }) => (
               <div key={title} className="card p-5 flex items-start gap-4">
                 <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -59,33 +62,33 @@ export default function ContactPage() {
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Send className="w-8 h-8 text-green-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Message Sent!</h3>
-                <p className="text-gray-500">Thank you for reaching out. We'll get back to you within 24 hours.</p>
-                <p className="text-sm text-gray-400 mt-2">A confirmation has been sent to {form.email}.</p>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{t('form.successTitle')}</h3>
+                <p className="text-gray-500">{t('form.successMessage')}</p>
+                <p className="text-sm text-gray-400 mt-2">{t('form.successConfirmation', { email: form.email })}</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="label">Your Name</label>
+                    <label className="label">{t('form.name')}</label>
                     <input type="text" required className="input" value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ali Hassan" />
+                      onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('form.namePlaceholder')} />
                   </div>
                   <div>
-                    <label className="label">Email Address</label>
+                    <label className="label">{tAuth('email')}</label>
                     <input type="email" required className="input" value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="ali@example.com" />
+                      onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t('form.emailPlaceholder')} />
                   </div>
                 </div>
                 <div>
-                  <label className="label">Subject</label>
+                  <label className="label">{t('form.subject')}</label>
                   <input type="text" required className="input" value={form.subject}
-                    onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="How can we help?" />
+                    onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder={t('form.subjectPlaceholder')} />
                 </div>
                 <div>
-                  <label className="label">Message</label>
+                  <label className="label">{t('form.message')}</label>
                   <textarea required rows={5} className="input resize-none" value={form.message}
-                    onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Tell us more..." />
+                    onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder={t('form.messagePlaceholder')} />
                 </div>
 
                 {error && (
@@ -94,7 +97,7 @@ export default function ContactPage() {
 
                 <button type="submit" disabled={loading} className="btn-primary gap-2">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  {loading ? 'Sending...' : 'Send Message'}
+                  {loading ? t('form.sending') : t('form.send')}
                 </button>
               </form>
             )}

@@ -214,5 +214,29 @@
         "desc": "Operating across borders to ensure help reaches where it is needed most."
       }
     }
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "Get in touch with our team",
+    "info": {
+      "emailLabel": "Email",
+      "phoneLabel": "Phone",
+      "addressLabel": "Address"
+    },
+    "form": {
+      "name": "Your Name",
+      "namePlaceholder": "Ali Hassan",
+      "emailPlaceholder": "ali@example.com",
+      "subject": "Subject",
+      "subjectPlaceholder": "How can we help?",
+      "message": "Message",
+      "messagePlaceholder": "Tell us more...",
+      "errorFallback": "Failed to send message. Please try again.",
+      "sending": "Sending...",
+      "send": "Send Message",
+      "successTitle": "Message Sent!",
+      "successMessage": "Thank you for reaching out. We'll get back to you within 24 hours.",
+      "successConfirmation": "A confirmation has been sent to {email}."
+    }
   }
 }

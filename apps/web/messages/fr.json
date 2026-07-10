@@ -214,5 +214,29 @@
         "desc": "Nous intervenons au-delà des frontières pour que l'aide arrive là où elle est le plus nécessaire."
       }
     }
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "subtitle": "Entrez en contact avec notre équipe",
+    "info": {
+      "emailLabel": "E-mail",
+      "phoneLabel": "Téléphone",
+      "addressLabel": "Adresse"
+    },
+    "form": {
+      "name": "Votre nom",
+      "namePlaceholder": "Ali Hassan",
+      "emailPlaceholder": "ali@example.com",
+      "subject": "Sujet",
+      "subjectPlaceholder": "Comment pouvons-nous vous aider ?",
+      "message": "Message",
+      "messagePlaceholder": "Dites-nous en plus...",
+      "errorFallback": "Échec de l'envoi du message. Veuillez réessayer.",
+      "sending": "Envoi en cours...",
+      "send": "Envoyer le message",
+      "successTitle": "Message envoyé !",
+      "successMessage": "Merci de nous avoir contactés. Nous vous répondrons sous 24 heures.",
+      "successConfirmation": "Une confirmation a été envoyée à {email}."
+    }
   }
 }

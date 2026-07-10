@@ -214,5 +214,29 @@
         "desc": "نعمل عبر الحدود لضمان وصول المساعدة إلى حيث تشتد الحاجة إليها."
       }
     }
+  },
+  "contact": {
+    "title": "اتصل بنا",
+    "subtitle": "تواصل مع فريقنا",
+    "info": {
+      "emailLabel": "البريد الإلكتروني",
+      "phoneLabel": "الهاتف",
+      "addressLabel": "العنوان"
+    },
+    "form": {
+      "name": "الاسم الكامل",
+      "namePlaceholder": "علي حسن",
+      "emailPlaceholder": "ali@example.com",
+      "subject": "الموضوع",
+      "subjectPlaceholder": "كيف يمكننا مساعدتك؟",
+      "message": "الرسالة",
+      "messagePlaceholder": "أخبرنا بالمزيد...",
+      "errorFallback": "تعذر إرسال الرسالة. يرجى المحاولة مرة أخرى.",
+      "sending": "جارٍ الإرسال...",
+      "send": "إرسال الرسالة",
+      "successTitle": "تم إرسال الرسالة!",
+      "successMessage": "شكرًا لتواصلك معنا. سنرد عليك خلال 24 ساعة.",
+      "successConfirmation": "تم إرسال تأكيد إلى {email}."
+    }
   }
 }
