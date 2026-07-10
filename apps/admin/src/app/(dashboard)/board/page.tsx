@@ -39,7 +39,7 @@ function Tally({ studyId }: { studyId: number }) {
 }
 
 export default function BoardPage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { hasBoardWorkspace } = useAuth();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
@@ -288,7 +288,7 @@ export default function BoardPage() {
                   <td className="table-cell text-sm">
                     {d.decidedBy?.admin ? `${d.decidedBy.admin.firstName} ${d.decidedBy.admin.lastName}` : d.decidedBy?.email}
                   </td>
-                  <td className="table-cell text-sm text-gray-500">{formatDatetime(d.decidedAt)}</td>
+                  <td className="table-cell text-sm text-gray-500">{formatDatetime(d.decidedAt, locale)}</td>
                 </tr>
               ))}
               {(decisions ?? []).length === 0 && (

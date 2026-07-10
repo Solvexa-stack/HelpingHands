@@ -21,7 +21,7 @@ const STATUS_BADGE: Record<string, string> = {
  * overdue obligations per agreement are flagged alongside.
  */
 export function ReportsTab() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [returning, setReturning] = useState<{ id: number; title: string } | null>(null);
@@ -67,7 +67,7 @@ export function ReportsTab() {
             <div key={o.agreementId} className="text-sm text-gray-600">
               <span className="font-medium">{o.organization?.name}</span> — “{o.agreementTitle}”:{' '}
               {o.obligations
-                .map((ob: any) => t('board.reportsTab.obligationDue', { type: ob.type, date: formatDatetime(ob.dueAt) }))
+                .map((ob: any) => t('board.reportsTab.obligationDue', { type: ob.type, date: formatDatetime(ob.dueAt, locale) }))
                 .join(' · ')}
               <span className="text-xs text-amber-600 ml-2">{t('board.reportsTab.disbursementsBlockedNote')}</span>
             </div>
@@ -101,7 +101,7 @@ export function ReportsTab() {
                 <td className="table-cell">{r.organization?.name}</td>
                 <td className="table-cell"><span className="badge bg-gray-100 text-gray-600">{r.type}</span></td>
                 <td className="table-cell text-sm text-gray-500">{r.fundingAgreement?.title ?? '—'}</td>
-                <td className="table-cell text-sm text-gray-500">{formatDatetime(r.submittedAt)}</td>
+                <td className="table-cell text-sm text-gray-500">{formatDatetime(r.submittedAt, locale)}</td>
                 <td className="table-cell">
                   <span className={cn('badge', STATUS_BADGE[r.status] ?? 'bg-gray-100 text-gray-500')}>{r.status}</span>
                 </td>
@@ -146,8 +146,8 @@ export function ReportsTab() {
                 <>
                   {' '}
                   {t('board.reportsTab.inspect.periodLine', {
-                    start: formatDatetime(inspect.periodStart),
-                    end: formatDatetime(inspect.periodEnd),
+                    start: formatDatetime(inspect.periodStart, locale),
+                    end: formatDatetime(inspect.periodEnd, locale),
                   })}
                 </>
               )}

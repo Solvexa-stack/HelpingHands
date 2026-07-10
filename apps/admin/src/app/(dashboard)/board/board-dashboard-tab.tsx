@@ -14,7 +14,7 @@ const fmt = (n: number) => Number(n ?? 0).toLocaleString();
  * aggregates the public portal serves — parity by construction.
  */
 export function BoardDashboardTab() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { data, isLoading } = useQuery({
     queryKey: ['board-dashboard'],
     queryFn: () => transparencyApi.boardDashboard(),
@@ -30,7 +30,7 @@ export function BoardDashboardTab() {
   return (
     <div className="space-y-5">
       <p className="text-xs text-gray-400">
-        {t('board.dashboard.asOfNote', { date: formatDatetime(data.asOf) })}
+        {t('board.dashboard.asOfNote', { date: formatDatetime(data.asOf, locale) })}
       </p>
 
       {/* KPI row */}

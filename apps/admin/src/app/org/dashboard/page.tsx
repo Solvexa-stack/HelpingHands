@@ -14,7 +14,7 @@ import { useLanguage } from '@/contexts/language-context';
  * donations and studies. No platform-wide statistics exist here.
  */
 export default function OrgDashboardPage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { activeOrg, user } = useAuth();
 
   const { data: stats } = useQuery({ queryKey: ['org-stats'], queryFn: () => dashboardApi.stats() });
@@ -109,7 +109,7 @@ export default function OrgDashboardPage() {
                   {t('orgDashboard.reportCalendar.line', { type: o.type, agreementTitle: o.agreementTitle })}
                 </span>
                 <span className={cn('badge text-xs whitespace-nowrap', o.overdue ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800')}>
-                  {o.overdue ? t('orgDashboard.reportCalendar.overdue') : t('orgDashboard.reportCalendar.dueDate', { date: formatDatetime(o.dueAt) })}
+                  {o.overdue ? t('orgDashboard.reportCalendar.overdue') : t('orgDashboard.reportCalendar.dueDate', { date: formatDatetime(o.dueAt, locale) })}
                 </span>
               </div>
             ))}
@@ -142,7 +142,7 @@ export default function OrgDashboardPage() {
                 </div>
                 <div className="text-right flex-shrink-0 ml-3">
                   <p className="font-semibold">{Number(d.amount).toLocaleString()}</p>
-                  <p className="text-xs text-gray-400">{formatDatetime(d.createdAt)}</p>
+                  <p className="text-xs text-gray-400">{formatDatetime(d.createdAt, locale)}</p>
                 </div>
               </div>
             ))}

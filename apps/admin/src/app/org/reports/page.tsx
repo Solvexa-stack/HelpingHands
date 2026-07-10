@@ -7,6 +7,7 @@ import { agreementsApi, orgReportsApi, projectsApi } from '@/lib/api';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/components/ui/toaster';
 import { cn, formatDatetime } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 const STATUS_BADGE: Record<string, string> = {
   submitted: 'bg-yellow-100 text-yellow-800',
@@ -22,6 +23,7 @@ const STATUS_BADGE: Record<string, string> = {
  * obligations from active funding agreements.
  */
 export default function OrgReportsPage() {
+  const { locale } = useLanguage();
   const { activeOrg } = useAuth();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
@@ -128,8 +130,8 @@ export default function OrgReportsPage() {
               <span className={cn('badge text-xs', o.overdue ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800')}>
                 {o.overdue ? 'overdue' : 'due'}
               </span>
-              {o.type} report for {formatDatetime(o.periodStart)} → {formatDatetime(o.periodEnd)}
-              <span className="text-xs text-gray-400">({o.agreementTitle}, due {formatDatetime(o.dueAt)})</span>
+              {o.type} report for {formatDatetime(o.periodStart, locale)} → {formatDatetime(o.periodEnd, locale)}
+              <span className="text-xs text-gray-400">({o.agreementTitle}, due {formatDatetime(o.dueAt, locale)})</span>
             </div>
           ))}
           <p className="text-xs text-amber-600">Overdue reports can block further disbursements under your agreements.</p>
@@ -158,7 +160,7 @@ export default function OrgReportsPage() {
                 <td className="table-cell font-medium">{r.title}</td>
                 <td className="table-cell"><span className="badge bg-gray-100 text-gray-600">{r.type}</span></td>
                 <td className="table-cell text-sm text-gray-500">{r.fundingAgreement?.title ?? '—'}</td>
-                <td className="table-cell text-sm text-gray-500">{formatDatetime(r.submittedAt)}</td>
+                <td className="table-cell text-sm text-gray-500">{formatDatetime(r.submittedAt, locale)}</td>
                 <td className="table-cell">
                   <span className={cn('badge', STATUS_BADGE[r.status] ?? 'bg-gray-100 text-gray-500')}>{r.status}</span>
                 </td>
