@@ -490,6 +490,89 @@
         "accepted": "Rapport accepté",
         "returned": "Rapport retourné avec commentaires"
       }
+    },
+    "title": "Espace de travail du conseil",
+    "subtitle": "gouvernance inter-organisations · les décisions sont immuables et auditées",
+    "accessRestricted": "L'espace de travail du conseil est réservé aux rôles de gouvernance de la plateforme.",
+    "tabs": {
+      "queue": "File de revue",
+      "verifications": "Vérifications",
+      "reports": "Rapports",
+      "dashboard": "Tableau de bord",
+      "history": "Historique des décisions",
+      "projects": "Tous les projets"
+    },
+    "queue": {
+      "colStudy": "Étude",
+      "colOrganization": "Organisation",
+      "colWaiting": "Attente",
+      "colTally": "Décompte",
+      "empty": "La file est vide — rien n'attend le conseil."
+    },
+    "actions": {
+      "requestChanges": "Demander des modifications",
+      "closeVoting": "Clore le vote",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "changes": "Modifications"
+    },
+    "history": {
+      "colSubject": "Sujet",
+      "colDecision": "Décision",
+      "colRationale": "Justification",
+      "colDecidedBy": "Décidé par",
+      "colWhen": "Quand",
+      "empty": "Aucune décision enregistrée pour le moment."
+    },
+    "projects": {
+      "colProject": "Projet",
+      "colOwnerOrg": "Organisation propriétaire",
+      "colCategory": "Catégorie",
+      "colValue": "Valeur",
+      "colProgress": "Progression"
+    },
+    "modal": {
+      "titleTemplate": "{action} — {name}",
+      "description": "La décision est enregistrée de façon immuable avec votre justification et apparaît dans la piste d'audit et pour l'organisation propriétaire.",
+      "rationalePlaceholder": "Justification (requise)",
+      "submit": "Enregistrer la décision"
+    },
+    "rationaleTemplates": {
+      "routine": "Approbation de routine — revue de l'étude terminée ; documentation en règle.",
+      "communitySupport": "Soutien communautaire confirmé par vote ; budget vérifié.",
+      "insufficientDocs": "Documentation insuffisante — voir les modifications demandées."
+    },
+    "toast": {
+      "statusUpdated": "Statut mis à jour",
+      "decisionRecorded": "Décision enregistrée"
+    },
+    "dashboard": {
+      "loading": "Chargement du tableau de bord…",
+      "asOfNote": "Tous les chiffres proviennent de la couche de lecture de transparence (parité publique) · au {date}",
+      "kpi": {
+        "decisions30d": "Décisions (30j)",
+        "decisionsSub": "file {queue} · âge médian {days}j",
+        "reportsAwaiting": "Rapports en attente de revue",
+        "reportsOverdueSub": "{count} accord(s) en retard",
+        "funds": "Fonds",
+        "fundsBalanceSub": "{amount} solde combiné",
+        "qrIntake": "Recettes QR",
+        "qrOnlineSub": "{amount} en ligne"
+      },
+      "fundsComparison": "Comparaison des fonds",
+      "colFund": "Fonds",
+      "colIntake": "Recettes",
+      "colAllocated": "Alloué",
+      "colDisbursed": "Décaissé",
+      "colBalance": "Solde",
+      "colStatement": "Relevé",
+      "csvLink": "CSV",
+      "decisionThroughput": "Débit des décisions",
+      "publicationPolicy": "Politique de publication",
+      "neverPublic": "jamais public",
+      "visibilityPublic": "public",
+      "visibilityWorkspaceOnly": "espace de travail uniquement",
+      "policyNote": "Les modifications sont auditées par le conseil et se répercutent immédiatement sur le portail public."
     }
   }
 }

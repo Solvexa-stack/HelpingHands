@@ -490,6 +490,89 @@
         "accepted": "Report accepted",
         "returned": "Report returned with comments"
       }
+    },
+    "title": "Board workspace",
+    "subtitle": "cross-organization governance · decisions are immutable and audited",
+    "accessRestricted": "The Board workspace is only available to platform governance roles.",
+    "tabs": {
+      "queue": "Review queue",
+      "verifications": "Verifications",
+      "reports": "Reports",
+      "dashboard": "Dashboard",
+      "history": "Decision history",
+      "projects": "All projects"
+    },
+    "queue": {
+      "colStudy": "Study",
+      "colOrganization": "Organization",
+      "colWaiting": "Waiting",
+      "colTally": "Tally",
+      "empty": "Queue is clear — nothing awaits the Board."
+    },
+    "actions": {
+      "requestChanges": "Request changes",
+      "closeVoting": "Close voting",
+      "approve": "Approve",
+      "reject": "Reject",
+      "changes": "Changes"
+    },
+    "history": {
+      "colSubject": "Subject",
+      "colDecision": "Decision",
+      "colRationale": "Rationale",
+      "colDecidedBy": "Decided by",
+      "colWhen": "When",
+      "empty": "No decisions recorded yet."
+    },
+    "projects": {
+      "colProject": "Project",
+      "colOwnerOrg": "Owner org",
+      "colCategory": "Category",
+      "colValue": "Value",
+      "colProgress": "Progress"
+    },
+    "modal": {
+      "titleTemplate": "{action} — {name}",
+      "description": "The decision is recorded immutably with your rationale and appears in the audit trail and to the owning organization.",
+      "rationalePlaceholder": "Rationale (required)",
+      "submit": "Record decision"
+    },
+    "rationaleTemplates": {
+      "routine": "Routine approval — study review complete; documentation in order.",
+      "communitySupport": "Community support confirmed by vote; budget verified.",
+      "insufficientDocs": "Insufficient documentation — see requested changes."
+    },
+    "toast": {
+      "statusUpdated": "Status updated",
+      "decisionRecorded": "Decision recorded"
+    },
+    "dashboard": {
+      "loading": "Loading dashboard…",
+      "asOfNote": "All figures from the transparency read layer (public parity) · as of {date}",
+      "kpi": {
+        "decisions30d": "Decisions (30d)",
+        "decisionsSub": "queue {queue} · median age {days}d",
+        "reportsAwaiting": "Reports awaiting review",
+        "reportsOverdueSub": "{count} agreement(s) overdue",
+        "funds": "Funds",
+        "fundsBalanceSub": "{amount} combined balance",
+        "qrIntake": "QR intake",
+        "qrOnlineSub": "{amount} online"
+      },
+      "fundsComparison": "Funds comparison",
+      "colFund": "Fund",
+      "colIntake": "Intake",
+      "colAllocated": "Allocated",
+      "colDisbursed": "Disbursed",
+      "colBalance": "Balance",
+      "colStatement": "Statement",
+      "csvLink": "CSV",
+      "decisionThroughput": "Decision throughput",
+      "publicationPolicy": "Publication policy",
+      "neverPublic": "never public",
+      "visibilityPublic": "public",
+      "visibilityWorkspaceOnly": "workspace only",
+      "policyNote": "Changes are Board-audited and flow to the public portal immediately."
     }
   }
 }

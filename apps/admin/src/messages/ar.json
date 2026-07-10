@@ -490,6 +490,89 @@
         "accepted": "تم قبول التقرير",
         "returned": "تمت إعادة التقرير مع التعليقات"
       }
+    },
+    "title": "مساحة عمل المجلس",
+    "subtitle": "الحوكمة عبر المنظمات · القرارات ثابتة ومُدقَّقة",
+    "accessRestricted": "مساحة عمل المجلس متاحة فقط لأدوار الحوكمة على مستوى المنصة.",
+    "tabs": {
+      "queue": "قائمة المراجعة",
+      "verifications": "التحقق",
+      "reports": "التقارير",
+      "dashboard": "لوحة المعلومات",
+      "history": "سجل القرارات",
+      "projects": "جميع المشاريع"
+    },
+    "queue": {
+      "colStudy": "الدراسة",
+      "colOrganization": "المنظمة",
+      "colWaiting": "الانتظار",
+      "colTally": "النتائج",
+      "empty": "القائمة فارغة — لا شيء بانتظار المجلس."
+    },
+    "actions": {
+      "requestChanges": "طلب تعديلات",
+      "closeVoting": "إغلاق التصويت",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "changes": "تعديلات"
+    },
+    "history": {
+      "colSubject": "الموضوع",
+      "colDecision": "القرار",
+      "colRationale": "المبرر",
+      "colDecidedBy": "اتُّخذ بواسطة",
+      "colWhen": "التاريخ",
+      "empty": "لا توجد قرارات مسجلة بعد."
+    },
+    "projects": {
+      "colProject": "المشروع",
+      "colOwnerOrg": "المنظمة المالكة",
+      "colCategory": "الفئة",
+      "colValue": "القيمة",
+      "colProgress": "التقدم"
+    },
+    "modal": {
+      "titleTemplate": "{action} — {name}",
+      "description": "يُسجَّل القرار بشكل ثابت مع مبرراتك ويظهر في سجل التدقيق وللمنظمة المالكة.",
+      "rationalePlaceholder": "المبرر (مطلوب)",
+      "submit": "تسجيل القرار"
+    },
+    "rationaleTemplates": {
+      "routine": "موافقة روتينية — اكتملت مراجعة الدراسة؛ التوثيق مكتمل.",
+      "communitySupport": "الدعم المجتمعي مؤكَّد بالتصويت؛ تم التحقق من الميزانية.",
+      "insufficientDocs": "توثيق غير كافٍ — انظر التعديلات المطلوبة."
+    },
+    "toast": {
+      "statusUpdated": "تم تحديث الحالة",
+      "decisionRecorded": "تم تسجيل القرار"
+    },
+    "dashboard": {
+      "loading": "جارٍ تحميل لوحة المعلومات…",
+      "asOfNote": "جميع الأرقام من طبقة القراءة الخاصة بالشفافية (مطابقة للعرض العام) · حتى {date}",
+      "kpi": {
+        "decisions30d": "القرارات (30 يومًا)",
+        "decisionsSub": "القائمة {queue} · متوسط العمر {days} يوم",
+        "reportsAwaiting": "تقارير بانتظار المراجعة",
+        "reportsOverdueSub": "{count} اتفاقية (اتفاقيات) متأخرة",
+        "funds": "الصناديق",
+        "fundsBalanceSub": "{amount} إجمالي الرصيد",
+        "qrIntake": "إيرادات QR",
+        "qrOnlineSub": "{amount} إلكترونية"
+      },
+      "fundsComparison": "مقارنة الصناديق",
+      "colFund": "الصندوق",
+      "colIntake": "الإيرادات",
+      "colAllocated": "المخصص",
+      "colDisbursed": "المصروف",
+      "colBalance": "الرصيد",
+      "colStatement": "كشف الحساب",
+      "csvLink": "CSV",
+      "decisionThroughput": "معدل إصدار القرارات",
+      "publicationPolicy": "سياسة النشر",
+      "neverPublic": "غير معلن أبدًا",
+      "visibilityPublic": "علني",
+      "visibilityWorkspaceOnly": "داخل مساحة العمل فقط",
+      "policyNote": "يتم تدقيق التغييرات من قبل المجلس وتنعكس على البوابة العامة فورًا."
     }
   }
 }

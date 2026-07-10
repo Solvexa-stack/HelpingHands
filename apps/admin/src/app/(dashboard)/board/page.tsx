@@ -8,6 +8,7 @@ import { governanceApi, orgReportsApi, projectsApi, studiesApi, verificationApi,
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/components/ui/toaster';
 import { cn, formatDatetime } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 import { VerificationsTab } from './verifications-tab';
 import { ReportsTab } from './reports-tab';
 import { BoardDashboardTab } from './board-dashboard-tab';
@@ -16,12 +17,6 @@ import { BoardDashboardTab } from './board-dashboard-tab';
  * W3-E5 — Board workspace: cross-org review queue, decision recording with
  * mandatory rationale, live tallies, and the immutable decision history.
  */
-
-const RATIONALE_TEMPLATES = [
-  'Routine approval — study review complete; documentation in order.',
-  'Community support confirmed by vote; budget verified.',
-  'Insufficient documentation — see requested changes.',
-];
 
 const STATUS_BADGE: Record<string, string> = {
   in_review: 'bg-yellow-100 text-yellow-800',
@@ -44,6 +39,7 @@ function Tally({ studyId }: { studyId: number }) {
 }
 
 export default function BoardPage() {
+  const { t } = useLanguage();
   const { hasBoardWorkspace } = useAuth();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
@@ -85,12 +81,12 @@ export default function BoardPage() {
     qc.invalidateQueries({ queryKey: ['board-queue'] });
     qc.invalidateQueries({ queryKey: ['board-decisions'] });
   };
-  const onError = (err: any) => toastError(err?.response?.data?.message || 'Failed');
+  const onError = (err: any) => toastError(err?.response?.data?.message || t('common.failed'));
 
   const statusMutation = useMutation({
     mutationFn: ({ studyId, status, extra }: { studyId: number; status: string; extra?: Record<string, any> }) =>
       studiesApi.changeStatus(studyId, status, undefined, extra),
-    onSuccess: () => { success('Status updated'); refresh(); },
+    onSuccess: () => { success(t('board.toast.statusUpdated')); refresh(); },
     onError,
   });
 
@@ -109,12 +105,12 @@ export default function BoardPage() {
         rationale,
       });
     },
-    onSuccess: () => { success('Decision recorded'); setDecide(null); setRationale(''); refresh(); },
+    onSuccess: () => { success(t('board.toast.decisionRecorded')); setDecide(null); setRationale(''); refresh(); },
     onError,
   });
 
   if (!hasBoardWorkspace) {
-    return <div className="card p-8 text-center text-gray-500">The Board workspace is only available to platform governance roles.</div>;
+    return <div className="card p-8 text-center text-gray-500">{t('board.accessRestricted')}</div>;
   }
 
   const items = queue ?? [];
@@ -123,19 +119,19 @@ export default function BoardPage() {
     <div className="space-y-5">
       <div className="flex items-center gap-2">
         <Landmark className="w-5 h-5 text-primary-600" />
-        <h1 className="text-lg font-semibold">Board workspace</h1>
-        <span className="text-sm text-gray-400">cross-organization governance · decisions are immutable and audited</span>
+        <h1 className="text-lg font-semibold">{t('board.title')}</h1>
+        <span className="text-sm text-gray-400">{t('board.subtitle')}</span>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-800">
         {([
-          ['queue', 'Review queue', ListTodo],
-          ['verifications', 'Verifications', BadgeCheck],
-          ['reports', 'Reports', FileText],
-          ['dashboard', 'Dashboard', Landmark],
-          ['history', 'Decision history', History],
-          ['projects', 'All projects', Gavel],
+          ['queue', t('board.tabs.queue'), ListTodo],
+          ['verifications', t('board.tabs.verifications'), BadgeCheck],
+          ['reports', t('board.tabs.reports'), FileText],
+          ['dashboard', t('board.tabs.dashboard'), Landmark],
+          ['history', t('board.tabs.history'), History],
+          ['projects', t('board.tabs.projects'), Gavel],
         ] as const).map(
           ([key, label, Icon]) => {
             const badge =
@@ -180,18 +176,18 @@ export default function BoardPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="table-header">Study</th>
-                <th className="table-header">Organization</th>
-                <th className="table-header">Status</th>
-                <th className="table-header">Waiting</th>
-                <th className="table-header">Tally</th>
-                <th className="table-header">Actions</th>
+                <th className="table-header">{t('board.queue.colStudy')}</th>
+                <th className="table-header">{t('board.queue.colOrganization')}</th>
+                <th className="table-header">{t('common.status')}</th>
+                <th className="table-header">{t('board.queue.colWaiting')}</th>
+                <th className="table-header">{t('board.queue.colTally')}</th>
+                <th className="table-header">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {queueLoading && <tr><td colSpan={6} className="p-6 text-center text-gray-400">Loading…</td></tr>}
+              {queueLoading && <tr><td colSpan={6} className="p-6 text-center text-gray-400">{t('common.loading')}</td></tr>}
               {!queueLoading && items.length === 0 && (
-                <tr><td colSpan={6} className="p-8 text-center text-gray-400">Queue is clear — nothing awaits the Board.</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center text-gray-400">{t('board.queue.empty')}</td></tr>
               )}
               {items.map((item: any) => (
                 <tr key={item.studyId}>
@@ -217,13 +213,13 @@ export default function BoardPage() {
                             className="btn-primary btn-sm gap-1"
                             onClick={() => statusMutation.mutate({ studyId: item.studyId, status: 'published' })}
                           >
-                            <Megaphone className="w-3 h-3" /> Publish
+                            <Megaphone className="w-3 h-3" /> {t('common.publish')}
                           </button>
                           <button
                             className="btn-secondary btn-sm gap-1"
                             onClick={() => setDecide({ studyId: item.studyId, projectName: item.projectName, kind: 'changes_requested' })}
                           >
-                            <FileEdit className="w-3 h-3" /> Request changes
+                            <FileEdit className="w-3 h-3" /> {t('board.actions.requestChanges')}
                           </button>
                         </>
                       )}
@@ -232,7 +228,7 @@ export default function BoardPage() {
                           className="btn-secondary btn-sm"
                           onClick={() => statusMutation.mutate({ studyId: item.studyId, status: 'voting_closed' })}
                         >
-                          Close voting
+                          {t('board.actions.closeVoting')}
                         </button>
                       )}
                       {item.status === 'voting_closed' && (
@@ -241,19 +237,19 @@ export default function BoardPage() {
                             className="btn-primary btn-sm gap-1"
                             onClick={() => setDecide({ studyId: item.studyId, projectName: item.projectName, kind: 'approved' })}
                           >
-                            <CheckCircle2 className="w-3 h-3" /> Approve
+                            <CheckCircle2 className="w-3 h-3" /> {t('board.actions.approve')}
                           </button>
                           <button
                             className="btn-secondary btn-sm gap-1 text-red-600"
                             onClick={() => setDecide({ studyId: item.studyId, projectName: item.projectName, kind: 'rejected' })}
                           >
-                            <XCircle className="w-3 h-3" /> Reject
+                            <XCircle className="w-3 h-3" /> {t('board.actions.reject')}
                           </button>
                           <button
                             className="btn-secondary btn-sm gap-1"
                             onClick={() => setDecide({ studyId: item.studyId, projectName: item.projectName, kind: 'changes_requested' })}
                           >
-                            <FileEdit className="w-3 h-3" /> Changes
+                            <FileEdit className="w-3 h-3" /> {t('board.actions.changes')}
                           </button>
                         </>
                       )}
@@ -272,11 +268,11 @@ export default function BoardPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="table-header">Subject</th>
-                <th className="table-header">Decision</th>
-                <th className="table-header">Rationale</th>
-                <th className="table-header">Decided by</th>
-                <th className="table-header">When</th>
+                <th className="table-header">{t('board.history.colSubject')}</th>
+                <th className="table-header">{t('board.history.colDecision')}</th>
+                <th className="table-header">{t('board.history.colRationale')}</th>
+                <th className="table-header">{t('board.history.colDecidedBy')}</th>
+                <th className="table-header">{t('board.history.colWhen')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -296,7 +292,7 @@ export default function BoardPage() {
                 </tr>
               ))}
               {(decisions ?? []).length === 0 && (
-                <tr><td colSpan={5} className="p-8 text-center text-gray-400">No decisions recorded yet.</td></tr>
+                <tr><td colSpan={5} className="p-8 text-center text-gray-400">{t('board.history.empty')}</td></tr>
               )}
             </tbody>
           </table>
@@ -309,11 +305,11 @@ export default function BoardPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="table-header">Project</th>
-                <th className="table-header">Owner org</th>
-                <th className="table-header">Category</th>
-                <th className="table-header">Value</th>
-                <th className="table-header">Progress</th>
+                <th className="table-header">{t('board.projects.colProject')}</th>
+                <th className="table-header">{t('board.projects.colOwnerOrg')}</th>
+                <th className="table-header">{t('board.projects.colCategory')}</th>
+                <th className="table-header">{t('board.projects.colValue')}</th>
+                <th className="table-header">{t('board.projects.colProgress')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -338,23 +334,30 @@ export default function BoardPage() {
             <div className="flex items-center justify-between">
               <h2 className="font-semibold flex items-center gap-2">
                 <Gavel className="w-4 h-4" />
-                {decide.kind === 'approved' ? 'Approve' : decide.kind === 'rejected' ? 'Reject' : 'Request changes'} — {decide.projectName}
+                {t('board.modal.titleTemplate', {
+                  action: decide.kind === 'approved' ? t('board.actions.approve') : decide.kind === 'rejected' ? t('board.actions.reject') : t('board.actions.requestChanges'),
+                  name: decide.projectName,
+                })}
               </h2>
               <button onClick={() => setDecide(null)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"><X className="w-4 h-4" /></button>
             </div>
             <p className="text-sm text-gray-500">
-              The decision is recorded immutably with your rationale and appears in the audit trail and to the owning organization.
+              {t('board.modal.description')}
             </p>
             <textarea
               className="input min-h-24 w-full"
-              placeholder="Rationale (required)"
+              placeholder={t('board.modal.rationalePlaceholder')}
               value={rationale}
               onChange={(e) => setRationale(e.target.value)}
             />
             <div className="flex flex-wrap gap-1">
-              {RATIONALE_TEMPLATES.map((t) => (
-                <button key={t} className="badge bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer" onClick={() => setRationale(t)}>
-                  {t.slice(0, 40)}…
+              {[
+                t('board.rationaleTemplates.routine'),
+                t('board.rationaleTemplates.communitySupport'),
+                t('board.rationaleTemplates.insufficientDocs'),
+              ].map((template) => (
+                <button key={template} className="badge bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer" onClick={() => setRationale(template)}>
+                  {template.slice(0, 40)}…
                 </button>
               ))}
             </div>
@@ -363,7 +366,7 @@ export default function BoardPage() {
               disabled={!rationale.trim() || decideMutation.isPending}
               onClick={() => decideMutation.mutate()}
             >
-              Record decision
+              {t('board.modal.submit')}
             </button>
           </div>
         </div>
