@@ -52,7 +52,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export default function MilestonesPage() {
   const { id } = useParams<{ id: string }>();
   const projectId = Number(id);
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { user } = useAuth();
   const role = user?.admin?.role || '';
   const canEdit = role === 'administrator' || role === 'employee';
@@ -161,10 +161,10 @@ export default function MilestonesPage() {
                             {t(`milestones.statuses.${m.status}`) || m.status}
                           </span>
                           {m.targetDate && (
-                            <span>{t('milestones.targetDate')}: {new Date(m.targetDate).toLocaleDateString()}</span>
+                            <span>{t('milestones.targetDate')}: {new Date(m.targetDate).toLocaleDateString(locale)}</span>
                           )}
                           {m.completedAt && (
-                            <span className="text-green-600">{t('milestones.completedAt')}: {new Date(m.completedAt).toLocaleDateString()}</span>
+                            <span className="text-green-600">{t('milestones.completedAt')}: {new Date(m.completedAt).toLocaleDateString(locale)}</span>
                           )}
                         </div>
                       </div>

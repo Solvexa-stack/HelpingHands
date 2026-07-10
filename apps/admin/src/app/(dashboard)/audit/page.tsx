@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Filter, ScrollText, X } from 'lucide-react';
 import { auditApi } from '@/lib/api';
 import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 const ACTION_COLORS: Record<string, string> = {
   created: 'bg-green-100 text-green-800',
@@ -42,6 +43,7 @@ function Snapshot({ label, value }: { label: string; value: unknown }) {
 }
 
 export default function AuditPage() {
+  const { locale } = useLanguage();
   const { user } = useAuth();
   const [page, setPage] = useState(1);
   const [action, setAction] = useState('');
@@ -158,7 +160,7 @@ export default function AuditPage() {
                   className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
                 >
                   <td className="table-cell text-gray-400">{log.id}</td>
-                  <td className="table-cell whitespace-nowrap">{new Date(log.timestamp).toLocaleString()}</td>
+                  <td className="table-cell whitespace-nowrap">{new Date(log.timestamp).toLocaleString(locale)}</td>
                   <td className="table-cell">
                     <span className={cn('badge', actionBadge(log.action))}>{log.action}</span>
                   </td>
@@ -211,7 +213,7 @@ export default function AuditPage() {
 
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div><div className="text-xs text-gray-500">Action</div><span className={cn('badge', actionBadge(selected.action))}>{selected.action}</span></div>
-              <div><div className="text-xs text-gray-500">Timestamp</div>{new Date(selected.timestamp).toLocaleString()}</div>
+              <div><div className="text-xs text-gray-500">Timestamp</div>{new Date(selected.timestamp).toLocaleString(locale)}</div>
               <div><div className="text-xs text-gray-500">Subject</div>{selected.subjectType} #{selected.subjectId}</div>
               <div><div className="text-xs text-gray-500">Actor user id</div>{selected.actorUserId ?? 'system / anonymous'}</div>
               <div><div className="text-xs text-gray-500">IP</div>{selected.ip ?? '—'}</div>

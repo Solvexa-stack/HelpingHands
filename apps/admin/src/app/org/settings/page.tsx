@@ -7,6 +7,7 @@ import { organizationsApi } from '@/lib/api';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 /**
  * W3 UI isolation — organization settings: the org's own profile and
@@ -14,6 +15,7 @@ import { cn } from '@/lib/utils';
  * suspend) and capability switches remain Board verbs on the platform side.
  */
 export default function OrgSettingsPage() {
+  const { locale } = useLanguage();
   const { activeOrgId, activeOrg } = useAuth();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
@@ -75,7 +77,7 @@ export default function OrgSettingsPage() {
               </button>
               <span className="text-xs text-gray-400">
                 Status: <span className={cn('badge', org.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800')}>{org.status}</span>
-                {org.verifiedAt && <> · verified {new Date(org.verifiedAt).toLocaleDateString()}</>}
+                {org.verifiedAt && <> · verified {new Date(org.verifiedAt).toLocaleDateString(locale)}</>}
               </span>
             </div>
           </div>

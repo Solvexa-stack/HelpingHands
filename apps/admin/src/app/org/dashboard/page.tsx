@@ -35,7 +35,7 @@ export default function OrgDashboardPage() {
   const tiles = [
     { label: t('orgDashboard.tiles.projects'), value: stats?.totalProjects ?? '—', sub: t('orgDashboard.tiles.projectsSub', { count: stats?.completedProjects ?? 0 }), icon: FolderKanban, href: '/org/projects' },
     { label: t('orgDashboard.tiles.donations'), value: stats?.totalDonations ?? '—', sub: t('orgDashboard.tiles.donationsSub', { count: stats?.pendingDonations ?? 0 }), icon: Heart, href: '/org/donations' },
-    { label: t('orgDashboard.tiles.collected'), value: stats ? Number(stats.totalCollected).toLocaleString() : '—', sub: t('orgDashboard.tiles.collectedSub', { rate: stats?.projectCompletionRate ?? 0 }), icon: TrendingUp, href: '/org/projects' },
+    { label: t('orgDashboard.tiles.collected'), value: stats ? Number(stats.totalCollected).toLocaleString(locale) : '—', sub: t('orgDashboard.tiles.collectedSub', { rate: stats?.projectCompletionRate ?? 0 }), icon: TrendingUp, href: '/org/projects' },
     { label: t('orgDashboard.tiles.openVotings'), value: stats?.pendingVotes ?? '—', sub: t('orgDashboard.tiles.openVotingsSub'), icon: Vote, href: '/org/studies' },
   ];
 
@@ -86,13 +86,13 @@ export default function OrgDashboardPage() {
             {orgDash.fundingReceived.allocations.map((a: any, i: number) => (
               <div key={i} className="flex justify-between text-sm">
                 <span className="text-gray-600">{a.fund?.name}</span>
-                <span className="font-medium">{Number(a.amount).toLocaleString()}</span>
+                <span className="font-medium">{Number(a.amount).toLocaleString(locale)}</span>
               </div>
             ))}
             {orgDash.fundingReceived.allocations.length > 0 && (
               <div className="flex justify-between text-sm pt-2 border-t border-gray-100 font-semibold">
                 <span>{t('orgDashboard.fundingReceived.totalAllocated')}</span>
-                <span>{Number(orgDash.fundingReceived.totalAllocated).toLocaleString()}</span>
+                <span>{Number(orgDash.fundingReceived.totalAllocated).toLocaleString(locale)}</span>
               </div>
             )}
           </div>
@@ -141,7 +141,7 @@ export default function OrgDashboardPage() {
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0 ml-3">
-                  <p className="font-semibold">{Number(d.amount).toLocaleString()}</p>
+                  <p className="font-semibold">{Number(d.amount).toLocaleString(locale)}</p>
                   <p className="text-xs text-gray-400">{formatDatetime(d.createdAt, locale)}</p>
                 </div>
               </div>
@@ -169,7 +169,7 @@ export default function OrgDashboardPage() {
                 </div>
                 <div className="text-right flex-shrink-0 ml-3">
                   <p className="font-semibold">{Number(p.progression)}%</p>
-                  <p className="text-xs text-gray-400">of {Number(p.value).toLocaleString()}</p>
+                  <p className="text-xs text-gray-400">of {Number(p.value).toLocaleString(locale)}</p>
                 </div>
               </Link>
             ))}

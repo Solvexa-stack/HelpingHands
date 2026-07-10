@@ -6,7 +6,7 @@ import { transparencyApi } from '@/lib/api';
 import { cn, formatDatetime } from '@/lib/utils';
 import { useLanguage } from '@/contexts/language-context';
 
-const fmt = (n: number) => Number(n ?? 0).toLocaleString();
+const fmt = (n: number, locale: string) => Number(n ?? 0).toLocaleString(locale);
 
 /**
  * W7-E3-S1 — Board dashboard on the transparency read layer: cross-entity
@@ -39,27 +39,27 @@ export function BoardDashboardTab() {
           {
             icon: Gavel,
             label: t('board.dashboard.kpi.decisions30d'),
-            value: fmt(throughput.last30Days),
+            value: fmt(throughput.last30Days, locale),
             sub: t('board.dashboard.kpi.decisionsSub', { queue: throughput.openQueueSize, days: throughput.medianQueueAgeDays }),
           },
           {
             icon: AlarmClock,
             label: t('board.dashboard.kpi.reportsAwaiting'),
-            value: fmt(data.reports.awaitingReview),
+            value: fmt(data.reports.awaitingReview, locale),
             sub: t('board.dashboard.kpi.reportsOverdueSub', { count: data.reports.overdueAgreements }),
           },
           {
             icon: Landmark,
             label: t('board.dashboard.kpi.funds'),
-            value: fmt(platform.funds.length),
-            sub: t('board.dashboard.kpi.fundsBalanceSub', { amount: fmt(platform.funds.reduce((s: number, f: any) => s + f.balance, 0)) }),
+            value: fmt(platform.funds.length, locale),
+            sub: t('board.dashboard.kpi.fundsBalanceSub', { amount: fmt(platform.funds.reduce((s: number, f: any) => s + f.balance, 0), locale) }),
           },
           {
             icon: BarChart3,
             label: t('board.dashboard.kpi.qrIntake'),
-            value: fmt(platform.intakeByChannel.qr_cash_donations.amount),
+            value: fmt(platform.intakeByChannel.qr_cash_donations.amount, locale),
             sub: t('board.dashboard.kpi.qrOnlineSub', {
-              amount: fmt(platform.intakeByChannel.online_project_donations.amount + platform.intakeByChannel.online_fund_donations.amount),
+              amount: fmt(platform.intakeByChannel.online_project_donations.amount + platform.intakeByChannel.online_fund_donations.amount, locale),
             }),
           },
         ].map(({ icon: Icon, label, value, sub }) => (
@@ -95,10 +95,10 @@ export function BoardDashboardTab() {
                 <td className="table-cell">
                   <span className={cn('badge', f.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500')}>{f.status}</span>
                 </td>
-                <td className="table-cell">{fmt(f.intake)}</td>
-                <td className="table-cell">{fmt(f.allocated)}</td>
-                <td className="table-cell">{fmt(f.disbursed)}</td>
-                <td className="table-cell font-semibold">{fmt(f.balance)}</td>
+                <td className="table-cell">{fmt(f.intake, locale)}</td>
+                <td className="table-cell">{fmt(f.allocated, locale)}</td>
+                <td className="table-cell">{fmt(f.disbursed, locale)}</td>
+                <td className="table-cell font-semibold">{fmt(f.balance, locale)}</td>
                 <td className="table-cell">
                   <a className="text-primary-600 text-sm hover:underline" href={transparencyApi.fundStatementUrl(f.id)} target="_blank" rel="noreferrer">
                     {t('board.dashboard.csvLink')}

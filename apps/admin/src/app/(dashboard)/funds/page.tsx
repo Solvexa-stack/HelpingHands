@@ -10,7 +10,7 @@ import { useLanguage } from '@/contexts/language-context';
 
 /** W7-E3-S2 — monthly intake/outflow trend rows from the ledger read layer. */
 function FundTrends({ fundId }: { fundId: number }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { data } = useQuery({
     queryKey: ['fund-trends', fundId],
     queryFn: () => transparencyApi.fundTrends(fundId),
@@ -28,7 +28,7 @@ function FundTrends({ fundId }: { fundId: number }) {
             <div className="h-1.5 rounded bg-emerald-500" style={{ width: `${(m.intake / peak) * 100}%` }} />
             <div className="h-1.5 rounded bg-amber-500" style={{ width: `${(m.outflow / peak) * 100}%` }} />
           </div>
-          <span className="w-32 text-right text-gray-500">+{Number(m.intake).toLocaleString()} / −{Number(m.outflow).toLocaleString()}</span>
+          <span className="w-32 text-right text-gray-500">+{Number(m.intake).toLocaleString(locale)} / −{Number(m.outflow).toLocaleString(locale)}</span>
         </div>
       ))}
       <p className="text-[10px] text-gray-400">{t('funds.trends.legend')}</p>
@@ -57,7 +57,7 @@ const ALLOC_BADGE: Record<string, string> = {
  * disburse tranches → reconcile → close). Board view of all funds.
  */
 export default function FundsPage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -118,7 +118,7 @@ export default function FundsPage() {
               <p className="font-semibold">{fund.name}</p>
               <span className={cn('badge', STATUS_BADGE[fund.status])}>{fund.status}</span>
             </div>
-            <p className="text-2xl font-bold mt-2">{Number(fund.balance).toLocaleString()}</p>
+            <p className="text-2xl font-bold mt-2">{Number(fund.balance).toLocaleString(locale)}</p>
             <p className="text-xs text-gray-400 mt-1">
               {t('funds.card.officersAllocations', { officers: fund._count.memberships, allocations: fund._count.allocations })}
             </p>
@@ -162,7 +162,7 @@ export default function FundsPage() {
               ].map(([label, value]) => (
                 <div key={label as string} className="card p-3">
                   <p className="text-xs text-gray-500">{label}</p>
-                  <p className="text-lg font-bold">{Number(value).toLocaleString()}</p>
+                  <p className="text-lg font-bold">{Number(value).toLocaleString(locale)}</p>
                 </div>
               ))}
             </div>
@@ -251,12 +251,12 @@ export default function FundsPage() {
                 <div key={a.id} className="border border-gray-100 dark:border-gray-800 rounded-lg p-3 space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">
-                      {t('funds.allocations.rowSummary', { id: a.id, projectId: a.projectId, amount: Number(a.amount).toLocaleString() })}
+                      {t('funds.allocations.rowSummary', { id: a.id, projectId: a.projectId, amount: Number(a.amount).toLocaleString(locale) })}
                     </span>
                     <span className={cn('badge', ALLOC_BADGE[a.status])}>{a.status}</span>
                   </div>
                   <p className="text-xs text-gray-400">
-                    {t('funds.allocations.disbursedOf', { disbursed: a.disbursed, amount: Number(a.amount).toLocaleString() })}
+                    {t('funds.allocations.disbursedOf', { disbursed: a.disbursed, amount: Number(a.amount).toLocaleString(locale) })}
                     {a.note ? ` · ${a.note}` : ''}
                   </p>
                   <div className="flex flex-wrap gap-1">

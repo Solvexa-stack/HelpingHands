@@ -7,6 +7,7 @@ import { organizationsApi } from '@/lib/api';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 const ORG_ROLES = ['org_admin', 'project_manager', 'staff', 'org_accountant', 'viewer'];
 
@@ -18,6 +19,7 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 export default function OrganizationsPage() {
+  const { locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const { contexts, activeOrgId, switchOrg } = useAuth();
   const qc = useQueryClient();
@@ -182,7 +184,7 @@ export default function OrganizationsPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <span className={cn('badge', STATUS_BADGE[selected.status] ?? 'bg-gray-100 text-gray-500')}>{selected.status}</span>
                 {selected.verifiedAt && (
-                  <span className="text-xs text-gray-400">verified {new Date(selected.verifiedAt).toLocaleDateString()}</span>
+                  <span className="text-xs text-gray-400">verified {new Date(selected.verifiedAt).toLocaleDateString(locale)}</span>
                 )}
                 {selected.status !== 'active' && selected.status !== 'archived' && (
                   <button

@@ -318,7 +318,7 @@ export default function BoardPage() {
                   <td className="table-cell font-medium">{p.block?.translations?.[0]?.name ?? `#${p.id}`}</td>
                   <td className="table-cell">{p.ownerOrganizationId}</td>
                   <td className="table-cell">{p.category}</td>
-                  <td className="table-cell">{Number(p.value).toLocaleString()}</td>
+                  <td className="table-cell">{Number(p.value).toLocaleString(locale)}</td>
                   <td className="table-cell">{Number(p.progression)}%</td>
                 </tr>
               ))}
