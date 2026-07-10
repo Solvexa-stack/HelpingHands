@@ -7,8 +7,10 @@ import Link from 'next/link';
 import { participantsApi } from '@/lib/api';
 import { formatDate, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toaster';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function ParticipantsPage() {
+  const { locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
@@ -67,7 +69,7 @@ export default function ParticipantsPage() {
                   <td className="table-cell text-gray-500">{p.user?.email}</td>
                   <td className="table-cell capitalize">{p.representation}</td>
                   <td className="table-cell">{p._count?.donations || 0}</td>
-                  <td className="table-cell text-gray-400">{p.user?.joiningDate ? formatDate(p.user.joiningDate) : '—'}</td>
+                  <td className="table-cell text-gray-400">{p.user?.joiningDate ? formatDate(p.user.joiningDate, locale) : '—'}</td>
                   <td className="table-cell">
                     <span className={cn('badge', p.user?.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
                       {p.user?.isActive ? 'Active' : 'Inactive'}

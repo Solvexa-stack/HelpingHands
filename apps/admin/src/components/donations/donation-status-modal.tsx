@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X, CheckCircle, XCircle } from 'lucide-react';
 import { formatCurrency, getTranslation } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 interface Props {
   donation: any;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function DonationStatusModal({ donation, onClose, onSubmit, loading }: Props) {
+  const { locale } = useLanguage();
   const [notes, setNotes] = useState('');
 
   const projectName = getTranslation(donation.project?.block?.translations || [])?.name || 'N/A';
@@ -37,7 +39,7 @@ export function DonationStatusModal({ donation, onClose, onSubmit, loading }: Pr
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Amount</span>
-              <span className="font-bold text-primary-600 text-base">{formatCurrency(Number(donation.amount))}</span>
+              <span className="font-bold text-primary-600 text-base">{formatCurrency(Number(donation.amount), undefined, locale)}</span>
             </div>
           </div>
 

@@ -10,10 +10,12 @@ import { formatCurrency, formatDate, getTranslation, STATUS_COLORS } from '@/lib
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 export default function DashboardPage() {
+  const { locale } = useLanguage();
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: dashboardApi.stats,
@@ -47,7 +49,7 @@ export default function DashboardPage() {
     { icon: Heart, label: 'Total Donations', value: stats?.totalDonations ?? '—', color: 'text-rose-600 bg-rose-50', href: '/donations' },
     { icon: Clock, label: 'Pending', value: stats?.pendingDonations ?? '—', color: 'text-yellow-600 bg-yellow-50', href: '/donations?status=pending' },
     { icon: CheckCircle, label: 'Approved', value: stats?.approvedDonations ?? '—', color: 'text-green-600 bg-green-50', href: '/donations?status=approved' },
-    { icon: DollarSign, label: 'Total Collected', value: stats ? formatCurrency(stats.totalCollected) : '—', color: 'text-emerald-600 bg-emerald-50', href: '/donations' },
+    { icon: DollarSign, label: 'Total Collected', value: stats ? formatCurrency(stats.totalCollected, undefined, locale) : '—', color: 'text-emerald-600 bg-emerald-50', href: '/donations' },
     { icon: TrendingUp, label: 'Project Completion', value: stats ? `${stats.projectCompletionRate}%` : '—', color: 'text-purple-600 bg-purple-50', href: '/projects' },
     { icon: Users, label: 'Participants', value: stats?.totalParticipants ?? '—', color: 'text-indigo-600 bg-indigo-50', href: '/participants' },
     { icon: UserCheck, label: 'Employees', value: stats?.totalEmployees ?? '—', color: 'text-orange-600 bg-orange-50', href: '/employees' },
@@ -90,7 +92,7 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`} />
-                  <Tooltip formatter={(v: number) => [formatCurrency(v), 'Amount']} />
+                  <Tooltip formatter={(v: number) => [formatCurrency(v, undefined, locale), 'Amount']} />
                   <Area type="monotone" dataKey="amount" stroke="#2563eb" strokeWidth={2} fill="url(#colorAmount)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -121,7 +123,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-bold text-gray-900">{formatCurrency(Number(d.amount))}</p>
+                  <p className="text-sm font-bold text-gray-900">{formatCurrency(Number(d.amount), undefined, locale)}</p>
                   <span className={cn('badge text-xs', STATUS_COLORS[d.status])}>{d.status}</span>
                 </div>
               </div>

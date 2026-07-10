@@ -5,6 +5,7 @@ import { ScanBarcode, X, Search } from 'lucide-react';
 import { donationsApi } from '@/lib/api';
 import { formatCurrency, getTranslation, STATUS_COLORS } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 interface Props {
   onClose: () => void;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function QrScannerModal({ onClose, onFound }: Props) {
+  const { locale } = useLanguage();
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -82,7 +84,7 @@ export function QrScannerModal({ onClose, onFound }: Props) {
                   {[
                     ['Participant', `${result.participant?.firstName} ${result.participant?.lastName}`],
                     ['Project', getTranslation(result.project?.block?.translations || [])?.name || '—'],
-                    ['Amount', formatCurrency(Number(result.amount))],
+                    ['Amount', formatCurrency(Number(result.amount), undefined, locale)],
                   ].map(([l, v]) => (
                     <tr key={l}>
                       <td className="py-1 text-gray-500 w-24">{l}</td>

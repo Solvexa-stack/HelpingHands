@@ -11,8 +11,10 @@ import { projectsApi, donationsApi } from '@/lib/api';
 import { formatCurrency, formatDate, getTranslation, STATUS_COLORS, cn } from '@/lib/utils';
 import { WorkflowTimeline } from '@/components/workflow/workflow-timeline';
 import { ParticipationsPanel } from '@/components/projects/participations-panel';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function ProjectDetailPage({ params }: { params: { id: string } }) {
+  const { locale } = useLanguage();
   const id = Number(params.id);
 
   const { data: project, isLoading } = useQuery({
@@ -75,7 +77,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Collected</span>
-                <span className="font-bold text-primary-600">{formatCurrency(collected)} / {formatCurrency(target)}</span>
+                <span className="font-bold text-primary-600">{formatCurrency(collected, undefined, locale)} / {formatCurrency(target, undefined, locale)}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                 <div className="h-full bg-primary-600 rounded-full transition-all duration-700"
@@ -126,11 +128,11 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                         <p className="font-medium">{d.participant?.firstName} {d.participant?.lastName}</p>
                         <p className="text-xs text-gray-400">{d.participant?.user?.email}</p>
                       </td>
-                      <td className="table-cell font-semibold">{formatCurrency(Number(d.amount))}</td>
+                      <td className="table-cell font-semibold">{formatCurrency(Number(d.amount), undefined, locale)}</td>
                       <td className="table-cell">
                         <span className={cn('badge', STATUS_COLORS[d.status])}>{d.status}</span>
                       </td>
-                      <td className="table-cell text-gray-400">{formatDate(d.createdAt)}</td>
+                      <td className="table-cell text-gray-400">{formatDate(d.createdAt, locale)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -153,10 +155,10 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
             <h3 className="font-semibold text-gray-900">Details</h3>
             {[
               { icon: TrendingUp, label: 'Category', value: project.categoryNode?.name ?? project.category ?? '—' },
-              { icon: DollarSign, label: 'Target', value: formatCurrency(target) },
+              { icon: DollarSign, label: 'Target', value: formatCurrency(target, undefined, locale) },
               { icon: MapPin, label: 'Location', value: project.location || '—' },
-              { icon: Calendar, label: 'Start Date', value: project.expectedStartDate ? formatDate(project.expectedStartDate) : '—' },
-              { icon: Calendar, label: 'Completion', value: project.dateOfCompletion ? formatDate(project.dateOfCompletion) : '—' },
+              { icon: Calendar, label: 'Start Date', value: project.expectedStartDate ? formatDate(project.expectedStartDate, locale) : '—' },
+              { icon: Calendar, label: 'Completion', value: project.dateOfCompletion ? formatDate(project.dateOfCompletion, locale) : '—' },
               { icon: Users, label: 'Donations', value: String(project._count?.donations ?? 0) },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-center gap-3">

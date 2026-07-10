@@ -8,6 +8,7 @@ import { formatCurrency, formatDate, getTranslation, STATUS_COLORS, cn } from '@
 import { useToast } from '@/components/ui/toaster';
 import { QrScannerModal } from '@/components/donations/qr-scanner-modal';
 import { DonationStatusModal } from '@/components/donations/donation-status-modal';
+import { useLanguage } from '@/contexts/language-context';
 
 const statuses = ['', 'pending', 'approved', 'rejected', 'cancelled'];
 const API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:4000/api';
@@ -53,6 +54,7 @@ function downloadQr(token: string) {
 }
 
 export default function DonationsPage() {
+  const { locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
@@ -171,11 +173,11 @@ export default function DonationsPage() {
                       <td className="table-cell max-w-48">
                         <p className="truncate">{projectName || '—'}</p>
                       </td>
-                      <td className="table-cell font-semibold">{formatCurrency(Number(d.amount))}</td>
+                      <td className="table-cell font-semibold">{formatCurrency(Number(d.amount), undefined, locale)}</td>
                       <td className="table-cell">
                         <span className={cn('badge', STATUS_COLORS[d.status])}>{d.status}</span>
                       </td>
-                      <td className="table-cell text-gray-400">{formatDate(d.createdAt)}</td>
+                      <td className="table-cell text-gray-400">{formatDate(d.createdAt, locale)}</td>
                       <td className="table-cell">
                         <div className="flex gap-1.5">
                           {d.status === 'pending' && (

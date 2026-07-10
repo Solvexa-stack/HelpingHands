@@ -11,8 +11,10 @@ import { StudyStatusBadge } from '@/components/study/study-status-badge';
 import { useToast } from '@/components/ui/toaster';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useAuth } from '@/contexts/auth-context';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function ProjectsPage() {
+  const { locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const { user } = useAuth();
   const role = user?.admin?.role || '';
@@ -104,7 +106,7 @@ export default function ProjectsPage() {
                         {p.location && <p className="text-xs text-gray-400">{p.location}</p>}
                       </td>
                       <td className="table-cell capitalize">{p.category}</td>
-                      <td className="table-cell font-semibold">{formatCurrency(Number(p.value))}</td>
+                      <td className="table-cell font-semibold">{formatCurrency(Number(p.value), undefined, locale)}</td>
                       <td className="table-cell">
                         <div className="flex items-center gap-2 min-w-24">
                           <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">

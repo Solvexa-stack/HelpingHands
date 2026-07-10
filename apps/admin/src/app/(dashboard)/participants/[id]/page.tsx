@@ -6,8 +6,10 @@ import { ArrowLeft, Mail, Calendar, Heart, DollarSign, ToggleLeft, ToggleRight, 
 import { participantsApi } from '@/lib/api';
 import { formatCurrency, formatDate, getTranslation, STATUS_COLORS, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toaster';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function ParticipantDetailPage({ params }: { params: { id: string } }) {
+  const { locale } = useLanguage();
   const id = Number(params.id);
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
@@ -54,7 +56,7 @@ export default function ParticipantDetailPage({ params }: { params: { id: string
           <div className="grid grid-cols-3 gap-4">
             {[
               { icon: Heart, label: 'Total Donations', value: String(participant._count?.donations ?? 0), color: 'text-rose-600 bg-rose-50' },
-              { icon: DollarSign, label: 'Total Donated', value: formatCurrency(totalDonated), color: 'text-emerald-600 bg-emerald-50' },
+              { icon: DollarSign, label: 'Total Donated', value: formatCurrency(totalDonated, undefined, locale), color: 'text-emerald-600 bg-emerald-50' },
               { icon: Heart, label: 'Pending', value: String(donations.filter((d: any) => d.status === 'pending').length), color: 'text-yellow-600 bg-yellow-50' },
             ].map(({ icon: Icon, label, value, color }) => (
               <div key={label} className="card p-4 space-y-2">
@@ -92,11 +94,11 @@ export default function ParticipantDetailPage({ params }: { params: { id: string
                         <td className="table-cell max-w-48">
                           <p className="truncate font-medium">{projectName}</p>
                         </td>
-                        <td className="table-cell font-semibold">{formatCurrency(Number(d.amount))}</td>
+                        <td className="table-cell font-semibold">{formatCurrency(Number(d.amount), undefined, locale)}</td>
                         <td className="table-cell">
                           <span className={cn('badge', STATUS_COLORS[d.status])}>{d.status}</span>
                         </td>
-                        <td className="table-cell text-gray-400">{formatDate(d.createdAt)}</td>
+                        <td className="table-cell text-gray-400">{formatDate(d.createdAt, locale)}</td>
                       </tr>
                     );
                   })}
@@ -130,7 +132,7 @@ export default function ParticipantDetailPage({ params }: { params: { id: string
             {[
               { icon: Mail, label: 'Email', value: participant.user?.email || '—' },
               { icon: User, label: 'Representation', value: participant.representation || '—' },
-              { icon: Calendar, label: 'Joined', value: participant.user?.joiningDate ? formatDate(participant.user.joiningDate) : '—' },
+              { icon: Calendar, label: 'Joined', value: participant.user?.joiningDate ? formatDate(participant.user.joiningDate, locale) : '—' },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
