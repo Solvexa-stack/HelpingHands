@@ -416,3 +416,18 @@ export const verificationApi = {
   reject: (orgId: number) => api.post(`/organizations/${orgId}/verification/reject`).then((r) => r.data.data),
   activate: (orgId: number) => api.post(`/organizations/${orgId}/verification/activate`).then((r) => r.data.data),
 };
+
+// ─── W7 — transparency read layer, dashboards, publication policy ────────────
+export const transparencyApi = {
+  stats: () => api.get('/transparency/stats').then((r) => r.data.data),
+  boardDashboard: () => api.get('/dashboards/board').then((r) => r.data.data),
+  orgDashboard: () => api.get('/dashboards/org').then((r) => r.data.data),
+  fundTrends: (fundId: number) => api.get(`/dashboards/funds/${fundId}/trends`).then((r) => r.data.data),
+  policy: () => api.get('/transparency-policy').then((r) => r.data.data),
+  setPolicy: (fieldClass: string, visibility: string) =>
+    api.patch(`/transparency-policy/${fieldClass}`, { visibility }).then((r) => r.data.data),
+  fundStatementUrl: (fundId: number) => `${api.defaults.baseURL}/transparency/exports/funds/${fundId}/statement.csv`,
+  projectStatementUrl: (projectId: number) =>
+    `${api.defaults.baseURL}/transparency/exports/projects/${projectId}/statement.csv`,
+  orgSummaryUrl: (orgId: number) => `${api.defaults.baseURL}/transparency/exports/organizations/${orgId}/summary.csv`,
+};

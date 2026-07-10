@@ -9,13 +9,6 @@ Format follows [BACKLOG_00_OVERVIEW.md](BACKLOG_00_OVERVIEW.md); IDs are `BUG-n`
 
 ---
 
-**BUG-1 · S · api — `study_approved` notifications crash: invalid Prisma query**
-Found by: W0-E1-S2 (lifecycle spec run logs).
-Where: `apps/api/src/modules/notifications/notifications.processor.ts` (~line 205).
-Defect: the voters query passes both `select` and `include` on the `user` relation, and selects `participantId`, which is not a `User` field. Prisma throws `PrismaClientValidationError` on every `study_approved` event; the Bull job fails, so voters/donors never receive study-approval notifications. The failure is invisible outside the queue logs.
-Fix: use a single `select` (or `include`) and `referenceId`; add a processor unit test.
-AC: study approval in the lifecycle e2e spec produces no `NotificationsProcessor` error in logs.
-
 **BUG-2 · S · api — Rate limiting configured but never enforced**
 Found by: W0-E1-S2 (code inspection while writing role-restriction tests).
 Where: `apps/api/src/app.module.ts` (ThrottlerModule.forRoot) + `@Throttle()` on auth endpoints.
@@ -56,33 +49,12 @@ Defect: the Prisma relations `participant.user` / `admin.user` and `user.partici
 Fix: backfill migration (`UPDATE users SET participant_id = reference_id WHERE reference_type='participant'`, same for admins) + set the columns on user creation; or drop the columns and derive relations from `referenceId/referenceType`. Coordinate with Wave 1 identity work.
 AC: fix the marked assertions in `auth-matrix.e2e-spec.ts` (self-update 200 / foreign 403; `user` non-null in participant detail); donation approval e2e asserts an email send attempt.
 
-**BUG-8 · S · api — `GET /study/:id` has no role restriction: drafts and rejection reasons visible to participants**
-Found by: W0-E1-S5.
-Where: `apps/api/src/modules/study/study.controller.ts` `findOne` (no `@Roles`).
-Defect: any authenticated user (participants included) can read any study by id — including `draft`, `in_review` and `rejected` ones with `rejectionReason` and unpublished section content. The public-by-project endpoint carefully filters to published+; the by-id route bypasses that.
-Fix: add `@Roles(administrator, employee, financial_officer)` or status-based filtering for non-staff callers.
-AC: participant reading an unpublished study → 403/404; the `BUG-8` test in `auth-matrix.e2e-spec.ts` flipped; lifecycle suite still green.
-
-**BUG-9 · S · api — Dashboard endpoints have no role restriction**
-Found by: W0-E1-S5.
-Where: `apps/api/src/modules/dashboard/dashboard.controller.ts` (no `@Roles` on any route).
-Defect: participants can read the admin dashboard (`stats`, `recent-donations`, `recent-projects`, `donations-by-month`) — aggregate and per-donation data across all participants.
-Fix: `@Roles(administrator, employee, financial_officer)` at class level (verify the admin UI is the only consumer).
-AC: participant → 403 on all dashboard routes; matrix row updated.
-
 **BUG-10 · S · api — Two logins by the same user within one second → 500 (unique-constraint collision)**
 Found by: W0-E1-S5 (rapid consecutive logins in the suite hit it deterministically).
 Where: `auth.service.generateTokens` + `refresh_tokens.token @unique`.
 Defect: the refresh JWT is deterministic per (payload, secret, second) — same user logging in twice within the same `iat` second produces an identical token string, and the second `refreshToken.create` throws P2002 → 500. Real-world: double-click on the login button, or two devices.
 Fix: add a `jti`/nonce claim to the refresh payload (or catch P2002 and reuse).
 AC: two immediate logins both 200; remove the `BUG-10` sleep workarounds in `auth-matrix.e2e-spec.ts`.
-
-**BUG-11 · S · api — `GET /participants/:id` is not self-scoped for participants**
-Found by: W0-E1-S5.
-Where: `apps/api/src/modules/participants/participants.controller.ts` `findOne` (`@Roles(..., 'participant')` with no ownership check in `findById`).
-Defect: any participant can read any other participant's profile including their last 10 donations with amounts. (Email/avatar currently come back null only because of BUG-7 — fixing BUG-7 without this one widens the leak to emails.)
-Fix: scope to self for role `participant`, as `update` already intends to.
-AC: participant → 403 (or filtered payload) on foreign ids, 200 on own; the `BUG-11` test flipped. **Fix together with or before BUG-7.**
 
 ---
 
@@ -91,5 +63,13 @@ When a bug is fixed, move its entry to a "Fixed" section at the bottom with the 
 ## Fixed
 
 **BUG-6 — Refresh-token flow always 401** · fixed in W1-E5-S1: `AuthService.refreshTokens` now derives the userId from the verified refresh token (was a hardcoded 0). Rotation covered in `auth-matrix.e2e-spec.ts`.
+
+**BUG-1 — `study_approved` notifications crash** · fixed in W8 consolidation: the voters query used mutually exclusive `select`+`include` on the `user` relation; now a single nested `select`. Voters/donors receive approval notifications.
+
+**BUG-8 — `GET /study/:id` unrestricted** · fixed in W8 consolidation: staff-only (`@Roles(administrator, employee, financial_officer)`). Escalated to release blocker because the by-id route bypassed the W7 beneficiary redaction on the public study endpoint. Matrix row + pinned test flipped.
+
+**BUG-9 — Dashboard endpoints unrestricted** · fixed in W8 consolidation: class-level `@Roles(administrator, employee, financial_officer)` — participants could read `recent-donations` platform-wide incl. donor names. Verified only the admin app consumes these routes. Matrix row flipped.
+
+**BUG-11 — `GET /participants/:id` not self-scoped** · fixed in W8 consolidation: participants read only themselves; foreign ids read as 404 (no information leak). Pinned test flipped (own-profile read + foreign 404).
 
 **FLAKE-1 (open, test-infra)** · The e2e run intermittently reports one suite failed with all tests passing (suite-level teardown error, ~1 in 5 runs, not reproducible on retry). Suspect Bull/Redis handle teardown; investigate when it next reproduces with a captured log.

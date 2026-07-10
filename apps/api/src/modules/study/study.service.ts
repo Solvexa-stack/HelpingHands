@@ -204,7 +204,41 @@ export class StudyService {
     });
     if (!study) throw new NotFoundException('No published study found for this project');
 
+    // W7-E1-S3 (privacy hard exclusion, 18): for social-support-category
+    // projects, this PUBLIC endpoint never serves section content — it may
+    // carry personal beneficiary data (martyr families, widows, orphans,
+    // IDPs). Redacted at query result level, not in the UI.
+    let sections = study.sections;
+    if (await this.isSocialSupportProject(projectId)) {
+      sections = sections.map((s) => ({ ...s, content: null, files: [] }));
+      return {
+        ...study,
+        sections,
+        beneficiaryDataWithheld: true,
+        votesSummary: await this.buildVotesSummary(study.id),
+      };
+    }
+
     return { ...study, votesSummary: await this.buildVotesSummary(study.id) };
+  }
+
+  /** Is the project's category inside the social_support subtree? */
+  private async isSocialSupportProject(projectId: number): Promise<boolean> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { categoryNode: { select: { id: true, key: true, parentId: true } } },
+    });
+    let node = project?.categoryNode ?? null;
+    while (node) {
+      if (node.key === 'social_support') return true;
+      node = node.parentId
+        ? await this.prisma.projectCategoryNode.findUnique({
+            where: { id: node.parentId },
+            select: { id: true, key: true, parentId: true },
+          })
+        : null;
+    }
+    return false;
   }
 
   async listStudies(filters: StudyFiltersDto, user: JwtPayload) {

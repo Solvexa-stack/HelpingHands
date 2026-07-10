@@ -57,7 +57,12 @@ export class ParticipantsService {
     return paginatedResponse(data, total, page, limit);
   }
 
-  async findById(id: number) {
+  async findById(id: number, requesterRole?: string, requesterReferenceId?: number) {
+    // BUG-11 fix (pilot consolidation): a participant reads only their own
+    // profile — foreign ids read as nonexistence (no information leak).
+    if (requesterRole === 'participant' && requesterReferenceId !== id) {
+      throw new NotFoundException(`Participant #${id} not found`);
+    }
     // W2 isolation: cross-org participants read as nonexistence, and the
     // embedded donation history is limited to the workspace's own projects.
     const orgId = await this.tenancy.enforcedOrgId('participant.read');

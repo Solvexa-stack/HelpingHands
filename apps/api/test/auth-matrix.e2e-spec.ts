@@ -78,10 +78,12 @@ describe('Auth & roles matrix (W0-E1-S5)', () => {
       ['GET', '/api/v1/donations', undefined, [401, 200, 200, 200, 200]],
       ['GET', '/api/v1/voting/my-votes', undefined, [401, 200, 200, 200, 200]],
       ['GET', '/api/v1/notifications', undefined, [401, 200, 200, 200, 200]],
-      // BUG-9: dashboard has no @Roles — participants read admin stats
-      ['GET', '/api/v1/dashboard/stats', undefined, [401, 200, 200, 200, 200]],
-      // BUG-8: study detail has no @Roles — 404 proves participants reach the handler
-      ['GET', '/api/v1/study/999999', undefined, [401, 404, 404, 404, 404]],
+      // BUG-9 FIXED (pilot consolidation): dashboard is staff-only
+      ['GET', '/api/v1/dashboard/stats', undefined, [401, 403, 200, 200, 200]],
+      // BUG-8 FIXED (pilot consolidation): study-by-id is staff-only —
+      // participants are refused before the handler (drafts/rejection reasons/
+      // unpublished sections stay internal; public read = /study/project/:id)
+      ['GET', '/api/v1/study/999999', undefined, [401, 403, 404, 404, 404]],
 
       // Role-restricted reads
       ['GET', '/api/v1/study', undefined, [401, 403, 200, 200, 200]],
@@ -452,22 +454,29 @@ describe('Auth & roles matrix (W0-E1-S5)', () => {
         .expect(200);
     });
 
-    it('BUG-11 (current behavior): any participant can read any other participant’s profile and donation history', async () => {
+    it('BUG-11 FIXED (pilot consolidation): participants read only their own profile', async () => {
       const other = await prisma.participant.findFirst({
         where: { firstName: 'Second', lastName: 'Member' },
       });
-      const res = await http()
+      // foreign profile reads as nonexistence — no information leak
+      await http()
         .get(`/api/v1/participants/${other!.id}`)
         .set('Authorization', tokens.participant!)
+        .expect(404);
+      // own profile still readable (id from the token's identity — an
+      // earlier test renames the seeded participant)
+      const ownUser = await prisma.user.findUnique({ where: { email: 'participant@example.com' } });
+      const own = await http()
+        .get(`/api/v1/participants/${ownUser!.referenceId}`)
+        .set('Authorization', tokens.participant!)
         .expect(200);
-      expect(res.body.data.firstName).toBe('Second');
-      expect(res.body.data.donations).toBeDefined();
-      // BUG-7 side effect: the user relation (email/avatar) is null because
+      expect(own.body.data.id).toBe(ownUser!.referenceId);
+      // BUG-7 side effect (still open): the user relation is null because
       // User.participantId is never written — asserted to pin it.
-      expect(res.body.data.user).toBeNull();
+      expect(own.body.data.user).toBeNull();
     });
 
-    it('BUG-8 (current behavior): participants can read unpublished study details by id', async () => {
+    it('BUG-8 FIXED (pilot consolidation): participants cannot read unpublished study details by id', async () => {
       const { projectId } = await createProjectViaApi(app, tokens.employee!, 'auth-matrix');
       const study = await http()
         .post('/api/v1/study')
@@ -475,12 +484,18 @@ describe('Auth & roles matrix (W0-E1-S5)', () => {
         .send({ projectId, summary: 'Draft — should not be public' })
         .expect(201);
 
-      const res = await http()
+      // staff-only now: drafts, rejection reasons, and unpublished sections
+      // never reach participants through the by-id route
+      await http()
         .get(`/api/v1/study/${study.body.data.id}`)
         .set('Authorization', tokens.participant!)
+        .expect(403);
+      // staff still reads it
+      const staff = await http()
+        .get(`/api/v1/study/${study.body.data.id}`)
+        .set('Authorization', tokens.employee!)
         .expect(200);
-      expect(res.body.data.status).toBe('draft');
-      expect(res.body.data.summary).toBe('Draft — should not be public');
+      expect(staff.body.data.summary).toBe('Draft — should not be public');
     });
   });
 });

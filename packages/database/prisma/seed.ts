@@ -7,6 +7,7 @@ import { backfillWorkflowInstances } from './backfills/w4-workflow-backfill';
 import { backfillTreasury } from './backfills/w5-treasury-backfill';
 import { backfillProjectFund } from './backfills/w6-project-fund-backfill';
 import { seedCategoryTaxonomy } from './seeds/w6-category-taxonomy';
+import { seedPublicationPolicy } from './seeds/w7-publication-policy';
 
 const prisma = new PrismaClient();
 
@@ -378,6 +379,10 @@ async function main() {
   console.log(
     `✅ Category taxonomy (${taxonomy.nodesSeeded} nodes; ${taxonomy.projectsBackfilled} projects backfilled; ${taxonomy.templatesRekeyed} templates re-keyed; ${taxonomy.civicTemplatesCreated} civic templates; coverage gate exact)`,
   );
+
+  // ─── W7 publication policy (conservative defaults; Board changes survive) ──
+  const publication = await seedPublicationPolicy(prisma);
+  console.log(`✅ Publication policy (${publication.created} defaults created)`);
 
   console.log('\n✨ Database seeded successfully!');
   console.log('\nTest accounts:');

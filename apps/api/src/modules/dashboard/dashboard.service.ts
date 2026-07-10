@@ -2,12 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AdminRole, DonationStatus, StudyStatus } from '@prisma/client';
 import { TenancyRepository } from '../policy/tenancy.repository';
+import { TransparencyReadService } from '../transparency/transparency-read.service';
 
 @Injectable()
 export class DashboardService {
   constructor(
     private prisma: PrismaService,
     private tenancy: TenancyRepository,
+    private readLayer: TransparencyReadService,
   ) {}
 
   async getStats(role: string, adminId?: number) {
@@ -72,6 +74,15 @@ export class DashboardService {
     const projectCompletionRate =
       totalProjects > 0 ? Math.round((completedProjects / totalProjects) * 100) : 0;
 
+    // W7-E3-S2: the unscoped platform view delegates its headline financial
+    // number to the transparency read layer — internal and public figures
+    // come from ONE source (contract preserved: same channel, same value).
+    let collected = Number(totalCollected._sum.amount || 0);
+    if (orgId == null && role === AdminRole.administrator) {
+      const stats = await this.readLayer.platformStats();
+      collected = stats.data.intakeByChannel.qr_cash_donations.amount;
+    }
+
     return {
       totalProjects,
       completedProjects,
@@ -80,7 +91,7 @@ export class DashboardService {
       pendingDonations,
       approvedDonations,
       rejectedDonations,
-      totalCollected: Number(totalCollected._sum.amount || 0),
+      totalCollected: collected,
       pendingVotes,
       studiesByStatus,
       ...(role === AdminRole.administrator && {

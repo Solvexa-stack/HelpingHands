@@ -204,12 +204,18 @@ export class NotificationsProcessor {
     const donateUrl = `${this.webUrl()}/en/projects/${projectId}`;
 
     const [voters, donors] = await Promise.all([
+      // BUG-1 fix: `select` and `include` are mutually exclusive on a relation —
+      // the old shape threw PrismaClientValidationError on every study_approved
+      // event, so voters never received approval notifications.
       this.prisma.studyVote.findMany({
         where: { studyId },
         include: {
           user: {
-            select: { id: true, email: true, participantId: true },
-            include: { participant: { select: { firstName: true, lastName: true } } },
+            select: {
+              id: true,
+              email: true,
+              participant: { select: { firstName: true, lastName: true } },
+            },
           },
         },
       }),

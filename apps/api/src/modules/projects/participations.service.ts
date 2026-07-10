@@ -53,6 +53,21 @@ export class ParticipationsService {
       throw new BadRequestException(`Organization is ${organization.status} — only active organizations can participate`);
     }
 
+    // W6 addendum — at most one active "owner" participation per project.
+    // Project.ownerOrganizationId remains the structural owner and is
+    // unaffected by this; this only guards the parallel accountability
+    // record so a joint project can never carry two (or, once ended,
+    // silently zero) owner participations without it being an explicit,
+    // auditable end-then-add sequence.
+    if (dto.role === 'owner') {
+      const existingOwner = await this.prisma.projectParticipation.findFirst({
+        where: { projectId, role: 'owner', status: 'active', deletedAt: null },
+      });
+      if (existingOwner) {
+        throw new ConflictException('This project already has an active owner participation — end it first');
+      }
+    }
+
     const participation = await this.prisma.projectParticipation
       .create({
         data: {

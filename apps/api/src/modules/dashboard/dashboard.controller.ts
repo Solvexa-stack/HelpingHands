@@ -1,9 +1,15 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { AdminRole } from '@prisma/client';
 import { DashboardService } from './dashboard.service';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 
+// BUG-9 fix (pilot consolidation): the admin dashboard is staff-only — it
+// serves per-donation rows incl. donor names; participants were able to read
+// it. The admin app is the only consumer (verified: apps/web never calls it).
 @ApiTags('Dashboard')
+@Roles(AdminRole.administrator, AdminRole.employee, AdminRole.financial_officer)
 @Controller({ path: 'dashboard', version: '1' })
 @ApiBearerAuth('JWT')
 export class DashboardController {

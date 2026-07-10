@@ -37,9 +37,11 @@ export class ParticipantsController {
 
   @Get(':id')
   @Roles(AdminRole.administrator, AdminRole.employee, 'participant')
-  @ApiOperation({ summary: 'Get participant by ID' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.participantsService.findById(id);
+  @ApiOperation({ summary: 'Get participant by ID (participants: self only)' })
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtPayload) {
+    // BUG-11 fix (pilot consolidation): participants read only themselves —
+    // foreign profiles carried donation history (names + amounts).
+    return this.participantsService.findById(id, user.role, user.referenceId);
   }
 
   @Put(':id')

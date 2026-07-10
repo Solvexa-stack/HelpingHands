@@ -1426,6 +1426,29 @@ model OrganizationReport {
   @@map("organization_reports")
 }
 
+// ─── Wave 7 — publication policy (18_WAVE_7_REPORTING_TRANSPARENCY.md) ───────
+// Board-controlled allowlist deciding which field classes the public
+// transparency layer may serve. `never_public` classes (beneficiary data)
+// are hard-excluded at query level and cannot be opened by policy.
+
+enum PublicationVisibility {
+  public
+  workspace_only
+  never_public
+}
+
+model PublicationPolicy {
+  id              Int                   @id @default(autoincrement())
+  fieldClass      String                @unique @map("field_class") @db.VarChar(100)
+  visibility      PublicationVisibility
+  description     String?               @db.Text
+  updatedByUserId Int?                  @map("updated_by_user_id")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+
+  @@map("publication_policies")
+}
+
 model ProjectCategoryNode {
   id          Int     @id @default(autoincrement())
   key         String  @unique @db.VarChar(100)

@@ -173,6 +173,14 @@ export const POLICY_REGISTRY: Record<string, PolicyEntry> = {
     anyGrants: [{ scopeType: 'platform', roles: ['board_chair', 'board_member'] }],
     sensitive: true,
   },
+
+  // ─── W7 transparency ─────────────────────────────────────────────────────────
+  // Publication-policy changes are the Board opening/closing public data
+  // classes — chair-level, every change audited.
+  'publication.policy.manage': {
+    anyGrants: [{ scopeType: 'platform', roles: ['board_chair'] }],
+    sensitive: true,
+  },
 };
 
 /**
@@ -265,4 +273,11 @@ export const ROUTE_ACTION_MAP: Record<string, string> = {
   'POST /api/v1/org-reports/:id/accept': 'report.review',
   'POST /api/v1/org-reports/:id/return': 'report.review',
   'GET /api/v1/org-reports/queue': 'governance.read',
+  // W7 transparency (public routes need no mapping; these are workspace/Board)
+  'GET /api/v1/transparency-policy': 'governance.read',
+  'PATCH /api/v1/transparency-policy/:fieldClass': 'publication.policy.manage',
+  'GET /api/v1/dashboards/board': 'governance.read',
+  'GET /api/v1/dashboards/funds/:id/trends': 'fund.read',
+  'GET /api/v1/transparency/exports/projects/:id/statement.csv': 'project.execute',
+  'GET /api/v1/transparency/exports/organizations/:id/summary.csv': 'org.report.read',
 };

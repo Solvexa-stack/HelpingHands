@@ -83,9 +83,15 @@ export class StudyController {
     return this.studyService.listStudies(filters, user);
   }
 
+  // BUG-8 fix (pilot consolidation): staff-only — the by-id route exposed
+  // drafts, rejection reasons, and unpublished section content (incl. the
+  // beneficiary data the W7 public endpoint redacts) to any authenticated
+  // user. The public read stays on GET /study/project/:projectId (published+,
+  // beneficiary-redacted).
   @Get(':id')
+  @Roles(AdminRole.administrator, AdminRole.employee, AdminRole.financial_officer)
   @ApiBearerAuth('JWT')
-  @ApiOperation({ summary: 'Get study details by ID' })
+  @ApiOperation({ summary: 'Get study details by ID (staff)' })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.studyService.getStudy(id);
   }

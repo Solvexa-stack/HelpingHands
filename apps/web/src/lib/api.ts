@@ -170,3 +170,14 @@ export const notificationsApi = {
   markAllRead: () =>
     api.patch('/notifications/read-all').then((r) => r.data.data),
 };
+
+// ─── W7 — public transparency read layer ─────────────────────────────────────
+export const transparencyApi = {
+  stats: () => api.get('/transparency/stats').then((r) => r.data.data),
+  funds: () => api.get('/transparency/funds').then((r) => r.data.data),
+  fund: (id: number) => api.get(`/transparency/funds/${id}`).then((r) => r.data.data),
+  project: (id: number) => api.get(`/transparency/projects/${id}`).then((r) => r.data.data),
+  organizations: () => api.get('/transparency/organizations').then((r) => r.data.data),
+  organization: (id: number) => api.get(`/transparency/organizations/${id}`).then((r) => r.data.data),
+  decisions: (limit = 50) => api.get('/transparency/decisions', { params: { limit } }).then((r) => r.data.data),
+};
