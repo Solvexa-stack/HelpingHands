@@ -38,6 +38,13 @@ function resolve(obj: any, path: string, params?: TranslateParams): string {
   return typeof value === 'string' ? interpolate(value, params) : path;
 }
 
+function applyLocaleToDocument(l: Locale) {
+  const html = document.documentElement;
+  html.setAttribute('lang', l);
+  html.setAttribute('dir', l === 'ar' ? 'rtl' : 'ltr');
+  html.classList.toggle('font-arabic', l === 'ar');
+}
+
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('en');
 
@@ -45,16 +52,14 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const stored = localStorage.getItem('admin-locale') as Locale | null;
     if (stored && messages[stored]) {
       setLocaleState(stored);
-      document.documentElement.setAttribute('lang', stored);
-      document.documentElement.setAttribute('dir', stored === 'ar' ? 'rtl' : 'ltr');
+      applyLocaleToDocument(stored);
     }
   }, []);
 
   const setLocale = (l: Locale) => {
     setLocaleState(l);
     localStorage.setItem('admin-locale', l);
-    document.documentElement.setAttribute('lang', l);
-    document.documentElement.setAttribute('dir', l === 'ar' ? 'rtl' : 'ltr');
+    applyLocaleToDocument(l);
   };
 
   const t = (key: string, params?: TranslateParams) => resolve(messages[locale], key, params);

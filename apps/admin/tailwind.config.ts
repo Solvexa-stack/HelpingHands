@@ -13,6 +13,10 @@ export default {
         },
         sidebar: { DEFAULT: '#0f172a', hover: '#1e293b', active: '#1d4ed8' },
       },
+      fontFamily: {
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        arabic: ['var(--font-cairo)', 'Arial', 'sans-serif'],
+      },
     },
   },
   plugins: [],

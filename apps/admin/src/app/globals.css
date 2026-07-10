@@ -6,6 +6,10 @@
   * { @apply border-gray-200 dark:border-gray-700; }
   html { scroll-behavior: smooth; }
   body { @apply bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100; }
+
+  [dir="rtl"] {
+    font-family: var(--font-cairo), Arial, sans-serif;
+  }
 }
 
 @layer components {
