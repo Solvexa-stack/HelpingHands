@@ -159,7 +159,8 @@
     "filter": "Filter",
     "sort": "Sort",
     "noResults": "No results found",
-    "readMore": "Read More"
+    "readMore": "Read More",
+    "notAvailable": "N/A"
   },
   "transparency": {
     "title": "Transparency",
@@ -237,6 +238,28 @@
       "successTitle": "Message Sent!",
       "successMessage": "Thank you for reaching out. We'll get back to you within 24 hours.",
       "successConfirmation": "A confirmation has been sent to {email}."
+    }
+  },
+  "donations": {
+    "verify": {
+      "metaTitle": "Donation Verification",
+      "donationNumber": "Donation #{id}",
+      "detailsHeading": "Donation Details",
+      "pendingInstructions": "This donation is awaiting payment. Please visit our office with this QR code to complete the payment.",
+      "backToHome": "Back to Home"
+    },
+    "status": {
+      "pendingPayment": "Pending Payment",
+      "paymentApproved": "Payment Approved"
+    },
+    "fields": {
+      "participant": "Participant",
+      "project": "Project",
+      "amount": "Amount",
+      "date": "Date",
+      "status": "Status",
+      "approvedAt": "Approved At",
+      "notes": "Notes"
     }
   }
 }

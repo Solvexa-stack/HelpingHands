@@ -159,7 +159,8 @@
     "filter": "تصفية",
     "sort": "ترتيب",
     "noResults": "لا توجد نتائج",
-    "readMore": "اقرأ المزيد"
+    "readMore": "اقرأ المزيد",
+    "notAvailable": "غير متاح"
   },
   "transparency": {
     "title": "الشفافية",
@@ -237,6 +238,28 @@
       "successTitle": "تم إرسال الرسالة!",
       "successMessage": "شكرًا لتواصلك معنا. سنرد عليك خلال 24 ساعة.",
       "successConfirmation": "تم إرسال تأكيد إلى {email}."
+    }
+  },
+  "donations": {
+    "verify": {
+      "metaTitle": "التحقق من التبرع",
+      "donationNumber": "التبرع رقم {id}",
+      "detailsHeading": "تفاصيل التبرع",
+      "pendingInstructions": "هذا التبرع بانتظار الدفع. يرجى زيارة مكتبنا مع رمز QR هذا لإتمام الدفع.",
+      "backToHome": "العودة إلى الرئيسية"
+    },
+    "status": {
+      "pendingPayment": "بانتظار الدفع",
+      "paymentApproved": "تم قبول الدفع"
+    },
+    "fields": {
+      "participant": "المشارك",
+      "project": "المشروع",
+      "amount": "المبلغ",
+      "date": "التاريخ",
+      "status": "الحالة",
+      "approvedAt": "تاريخ الموافقة",
+      "notes": "ملاحظات"
     }
   }
 }

@@ -159,7 +159,8 @@
     "filter": "Filtrer",
     "sort": "Trier",
     "noResults": "Aucun résultat trouvé",
-    "readMore": "Lire la suite"
+    "readMore": "Lire la suite",
+    "notAvailable": "N/D"
   },
   "transparency": {
     "title": "Transparence",
@@ -237,6 +238,28 @@
       "successTitle": "Message envoyé !",
       "successMessage": "Merci de nous avoir contactés. Nous vous répondrons sous 24 heures.",
       "successConfirmation": "Une confirmation a été envoyée à {email}."
+    }
+  },
+  "donations": {
+    "verify": {
+      "metaTitle": "Vérification du don",
+      "donationNumber": "Don n° {id}",
+      "detailsHeading": "Détails du don",
+      "pendingInstructions": "Ce don est en attente de paiement. Veuillez vous rendre à notre bureau avec ce code QR pour finaliser le paiement.",
+      "backToHome": "Retour à l'accueil"
+    },
+    "status": {
+      "pendingPayment": "Paiement en attente",
+      "paymentApproved": "Paiement approuvé"
+    },
+    "fields": {
+      "participant": "Participant",
+      "project": "Projet",
+      "amount": "Montant",
+      "date": "Date",
+      "status": "Statut",
+      "approvedAt": "Approuvé le",
+      "notes": "Notes"
     }
   }
 }
