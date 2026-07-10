@@ -102,6 +102,27 @@
       "statusLabel": "الحالة",
       "activeValue": "نشط",
       "memberSince": "عضو منذ"
+    },
+    "welcome": "مرحبًا بعودتك، {name}! 👋",
+    "donateBtn": "تبرّع",
+    "votesTab": "أصواتي",
+    "onlineTab": "التبرعات الإلكترونية",
+    "projectFallback": "مشروع",
+    "noOnlineDonations": "لا توجد تبرعات إلكترونية بعد.",
+    "noVotes": "لم تصوّت على أي دراسة بعد.",
+    "browseProjects": "تصفح المشاريع",
+    "viewQrCode": "عرض رمز QR",
+    "printReceipt": "طباعة الإيصال",
+    "viewStudy": "عرض الدراسة",
+    "stats": {
+      "totalDonations": "إجمالي التبرعات",
+      "totalContributed": "إجمالي المساهمات"
+    },
+    "notifications": {
+      "title": "الإشعارات",
+      "newCount": "{count} جديد",
+      "empty": "لا توجد إشعارات",
+      "markAllRead": "تعليم الكل كمقروء"
     }
   },
   "study": {

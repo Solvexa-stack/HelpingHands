@@ -102,6 +102,27 @@
       "statusLabel": "Statut",
       "activeValue": "Actif",
       "memberSince": "Membre depuis"
+    },
+    "welcome": "Bon retour, {name} ! 👋",
+    "donateBtn": "Faire un don",
+    "votesTab": "Mes votes",
+    "onlineTab": "Dons en ligne",
+    "projectFallback": "Projet",
+    "noOnlineDonations": "Aucun don en ligne pour le moment.",
+    "noVotes": "Vous n'avez encore voté sur aucune étude.",
+    "browseProjects": "Parcourir les projets",
+    "viewQrCode": "Voir le code QR",
+    "printReceipt": "Imprimer le reçu",
+    "viewStudy": "Voir l'étude",
+    "stats": {
+      "totalDonations": "Total des dons",
+      "totalContributed": "Total contribué"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "newCount": "{count} nouvelle(s)",
+      "empty": "Aucune notification",
+      "markAllRead": "Tout marquer comme lu"
     }
   },
   "study": {

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -18,6 +18,7 @@ type Tab = 'donations' | 'votes' | 'online';
 
 // ── Notification Bell ─────────────────────────────────────────────────────────
 function NotificationBell() {
+  const tNotif = useTranslations('dashboard.notifications');
   const locale = useLocale();
   const router = useRouter();
   const qc = useQueryClient();
@@ -86,13 +87,13 @@ function NotificationBell() {
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900 text-sm">Notifications</h3>
-            {unread > 0 && <span className="badge bg-red-100 text-red-600 text-xs">{unread} new</span>}
+            <h3 className="font-semibold text-gray-900 text-sm">{tNotif('title')}</h3>
+            {unread > 0 && <span className="badge bg-red-100 text-red-600 text-xs">{tNotif('newCount', { count: unread })}</span>}
           </div>
 
           <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
             {notifications.length === 0 ? (
-              <p className="text-center py-6 text-sm text-gray-400">No notifications</p>
+              <p className="text-center py-6 text-sm text-gray-400">{tNotif('empty')}</p>
             ) : (
               notifications.slice(0, 10).map((n: any) => {
                 const link = notifLink(n);
@@ -110,7 +111,7 @@ function NotificationBell() {
                       {isUnread && <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />}
                       <div className={cn('flex-1 min-w-0', !isUnread && 'pl-4')}>
                         <p className="text-sm text-gray-800 line-clamp-2">{n.title || n.type?.replace(/_/g, ' ')}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{n.createdAt ? formatDate(n.createdAt, 'en') : ''}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{n.createdAt ? formatDate(n.createdAt, locale) : ''}</p>
                       </div>
                     </div>
                   </div>
@@ -126,7 +127,7 @@ function NotificationBell() {
               className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 disabled:opacity-40 py-1"
             >
               <CheckCheck className="w-3.5 h-3.5" />
-              Mark all read
+              {tNotif('markAllRead')}
             </button>
           </div>
         </div>
@@ -160,6 +161,7 @@ function VoteBadge({ choice }: { choice: string }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const { user, loading } = useAuth();
+  const t = useTranslations('dashboard');
   const locale = useLocale();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('donations');
@@ -196,25 +198,25 @@ export default function DashboardPage() {
 
   const statsCards = [
     {
-      label: 'Total Donations',
+      label: t('stats.totalDonations'),
       value: donations.length,
       icon: Heart,
       color: 'text-rose-500 bg-rose-50',
     },
     {
-      label: 'Approved',
+      label: t('status.approved'),
       value: donations.filter((d: any) => d.status === 'approved').length,
       icon: CheckCircle,
       color: 'text-green-500 bg-green-50',
     },
     {
-      label: 'Pending',
+      label: t('status.pending'),
       value: donations.filter((d: any) => d.status === 'pending').length,
       icon: Clock,
       color: 'text-yellow-500 bg-yellow-50',
     },
     {
-      label: 'Total Contributed',
+      label: t('stats.totalContributed'),
       value: formatCurrency(
         donations.filter((d: any) => d.status === 'approved').reduce((sum: number, d: any) => sum + Number(d.amount), 0),
       ),
@@ -224,9 +226,9 @@ export default function DashboardPage() {
   ];
 
   const tabs = [
-    { id: 'donations' as Tab, label: 'My Donations', icon: Heart },
-    { id: 'votes' as Tab, label: 'My Votes', icon: Vote },
-    { id: 'online' as Tab, label: 'Online Donations', icon: CreditCard },
+    { id: 'donations' as Tab, label: t('donations'), icon: Heart },
+    { id: 'votes' as Tab, label: t('votesTab'), icon: Vote },
+    { id: 'online' as Tab, label: t('onlineTab'), icon: CreditCard },
   ];
 
   return (
@@ -235,16 +237,16 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="flex items-start justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-2xl font-extrabold text-gray-900">Welcome back, {name}! 👋</h1>
+            <h1 className="text-2xl font-extrabold text-gray-900">{t('welcome', { name })}</h1>
             <p className="text-gray-500 mt-1">{email}</p>
           </div>
           <div className="flex items-center gap-2">
             <NotificationBell />
             <Link href={`/${locale}/dashboard/profile`} className="btn-secondary text-sm py-2 px-4 flex items-center gap-2">
-              <User className="w-4 h-4" /> Profile
+              <User className="w-4 h-4" /> {t('profile')}
             </Link>
             <Link href={`/${locale}/projects`} className="btn-primary text-sm py-2 px-4 flex items-center gap-2">
-              <Heart className="w-4 h-4" /> Donate
+              <Heart className="w-4 h-4" /> {t('donateBtn')}
             </Link>
           </div>
         </div>
@@ -291,9 +293,9 @@ export default function DashboardPage() {
             ) : donations.length === 0 ? (
               <div className="p-12 text-center">
                 <Heart className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                <p className="text-gray-400 mb-4">You haven't made any donations yet.</p>
+                <p className="text-gray-400 mb-4">{t('noDonations')}</p>
                 <Link href={`/${locale}/projects`} className="btn-primary text-sm py-2 px-5">
-                  Explore Projects
+                  {t('explorProjects')}
                 </Link>
               </div>
             ) : (
@@ -303,7 +305,7 @@ export default function DashboardPage() {
                   return (
                     <div key={donation.id} className="p-5 flex items-center justify-between gap-4 hover:bg-gray-50 transition-colors">
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 truncate">{translation?.name || 'Project'}</p>
+                        <p className="font-semibold text-gray-900 truncate">{translation?.name || t('projectFallback')}</p>
                         <p className="text-sm text-gray-400 mt-0.5">{formatDate(donation.createdAt, locale)}</p>
                       </div>
                       <div className="text-right">
@@ -316,7 +318,7 @@ export default function DashboardPage() {
                         <Link
                           href={`/${locale}/donations/${donation.qrToken}`}
                           className="flex-shrink-0 p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                          title="View QR Code"
+                          title={t('viewQrCode')}
                         >
                           <QrCode className="w-5 h-5" />
                         </Link>
@@ -344,9 +346,9 @@ export default function DashboardPage() {
             ) : onlineDonations.length === 0 ? (
               <div className="p-12 text-center">
                 <CreditCard className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                <p className="text-gray-400 mb-4">No online donations yet.</p>
+                <p className="text-gray-400 mb-4">{t('noOnlineDonations')}</p>
                 <Link href={`/${locale}/projects`} className="btn-primary text-sm py-2 px-5">
-                  Explore Projects
+                  {t('explorProjects')}
                 </Link>
               </div>
             ) : (
@@ -356,7 +358,7 @@ export default function DashboardPage() {
                   return (
                     <div key={d.id} className="p-5 flex items-center justify-between gap-4 hover:bg-gray-50 transition-colors">
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 truncate">{translation?.name || 'Project'}</p>
+                        <p className="font-semibold text-gray-900 truncate">{translation?.name || t('projectFallback')}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <ProviderBadge provider={d.provider} />
                           <span className="text-xs text-gray-400">{formatDate(d.createdAt, locale)}</span>
@@ -374,7 +376,7 @@ export default function DashboardPage() {
                             window.print();
                           }}
                           className="flex-shrink-0 p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-                          title="Print receipt"
+                          title={t('printReceipt')}
                         >
                           <Printer className="w-4 h-4" />
                         </a>
@@ -393,6 +395,7 @@ export default function DashboardPage() {
 
 // ── My Votes sub-component ────────────────────────────────────────────────────
 function MyVotesTab({ locale }: { locale: string }) {
+  const t = useTranslations('dashboard');
   const { data, isLoading } = useQuery({
     queryKey: ['my-votes'],
     queryFn: () => votingApi.getMyVotes(),
@@ -412,10 +415,10 @@ function MyVotesTab({ locale }: { locale: string }) {
     return (
       <div className="card p-8 text-center space-y-4">
         <Vote className="w-12 h-12 text-gray-200 mx-auto" />
-        <p className="text-gray-400">You haven't voted on any studies yet.</p>
+        <p className="text-gray-400">{t('noVotes')}</p>
         <Link href={`/${locale}/projects`} className="btn-primary text-sm py-2 px-5 inline-flex items-center gap-2">
           <ExternalLink className="w-4 h-4" />
-          Browse Projects
+          {t('browseProjects')}
         </Link>
       </div>
     );
@@ -440,7 +443,7 @@ function MyVotesTab({ locale }: { locale: string }) {
               <Link
                 href={`/${locale}/projects/${projectId}/study`}
                 className="flex-shrink-0 p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-                title="View study"
+                title={t('viewStudy')}
               >
                 <ExternalLink className="w-4 h-4" />
               </Link>
