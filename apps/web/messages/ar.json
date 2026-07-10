@@ -48,7 +48,18 @@
     "collected": "المجموع",
     "location": "الموقع",
     "donate": "تبرع الآن",
-    "noProjects": "لا توجد مشاريع"
+    "noProjects": "لا توجد مشاريع",
+    "home": "الرئيسية",
+    "implementedWith": "تنفيذ بالشراكة مع:",
+    "startsOn": "يبدأ في {date}",
+    "donationsCount": "تبرعات",
+    "aboutProject": "عن هذا المشروع",
+    "projectStudy": "دراسة المشروع",
+    "readStudyReport": "اقرأ تقرير الدراسة التفصيلي",
+    "viewStudy": "عرض الدراسة ←",
+    "gallery": "معرض الصور",
+    "financialOfficer": "الموظف المالي",
+    "projectFallback": "مشروع"
   },
   "donate": {
     "title": "قدم تبرعك",

@@ -13,11 +13,12 @@ import type { Metadata } from 'next';
 interface Props { params: { locale: string; id: string } }
 
 export async function generateMetadata({ params: { locale, id } }: Props): Promise<Metadata> {
+  const t = await getTranslations({ locale, namespace: 'projects' });
   try {
     const project = await projectsApi.get(Number(id), locale);
     const translation = getTranslation(project?.block?.translations || [], locale);
-    return { title: translation?.name || 'Project' };
-  } catch { return { title: 'Project' }; }
+    return { title: translation?.name || t('projectFallback') };
+  } catch { return { title: t('projectFallback') }; }
 }
 
 export const revalidate = 30;
@@ -50,7 +51,7 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
       <div className="container max-w-6xl">
         {/* Breadcrumb */}
         <nav className="mb-6 text-sm text-gray-500">
-          <Link href={`/${locale}`} className="hover:text-primary-600">Home</Link>
+          <Link href={`/${locale}`} className="hover:text-primary-600">{t('home')}</Link>
           <span className="mx-2">/</span>
           <Link href={`/${locale}/projects`} className="hover:text-primary-600">{t('title')}</Link>
           <span className="mx-2">/</span>
@@ -73,7 +74,7 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
                 {project.isCompleted && (
                   <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-green-500 text-white px-3 py-1.5 rounded-full text-sm font-semibold">
                     <CheckCircle className="w-4 h-4" />
-                    Completed
+                    {t('filters.completed')}
                   </div>
                 )}
               </div>
@@ -93,7 +94,7 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
                 {/* W6-E5-S2: participating organizations (joint projects, additive) */}
                 {(project.participations ?? []).filter((p: any) => p.status === 'active').length > 0 && (
                   <div className="flex flex-wrap items-center gap-2 mb-4 text-sm text-gray-600">
-                    <span className="text-gray-400">Implemented with:</span>
+                    <span className="text-gray-400">{t('implementedWith')}</span>
                     {project.participations
                       .filter((p: any) => p.status === 'active')
                       .map((p: any) => (
@@ -117,7 +118,7 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
                   )}
                   {project.expectedStartDate && (
                     <span className="flex items-center gap-1.5">
-                      <Calendar className="w-4 h-4" /> Starts {formatDate(project.expectedStartDate, locale)}
+                      <Calendar className="w-4 h-4" /> {t('startsOn', { date: formatDate(project.expectedStartDate, locale) })}
                     </span>
                   )}
                 </div>
@@ -127,15 +128,15 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
                 <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
                   <div className="text-center">
                     <p className="text-2xl font-extrabold text-primary-600">{formatCurrency(project.collectedAmount || 0)}</p>
-                    <p className="text-xs text-gray-400 mt-1">Collected</p>
+                    <p className="text-xs text-gray-400 mt-1">{t('collected')}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-2xl font-extrabold text-gray-800">{formatCurrency(Number(project.value))}</p>
-                    <p className="text-xs text-gray-400 mt-1">Target</p>
+                    <p className="text-xs text-gray-400 mt-1">{t('target')}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-2xl font-extrabold text-gray-800">{project._count?.donations || 0}</p>
-                    <p className="text-xs text-gray-400 mt-1">Donations</p>
+                    <p className="text-xs text-gray-400 mt-1">{t('donationsCount')}</p>
                   </div>
                 </div>
               </div>
@@ -144,7 +145,7 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
             {/* Description */}
             {translation?.description && (
               <div className="card p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">About This Project</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">{t('aboutProject')}</h2>
                 <div
                   className="prose prose-gray max-w-none text-gray-600 leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: translation.description }}
@@ -166,18 +167,18 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
                     <BookOpen className="w-5 h-5 text-primary-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">Project Study</p>
-                    <p className="text-sm text-gray-500">Read the detailed study report</p>
+                    <p className="font-semibold text-gray-900">{t('projectStudy')}</p>
+                    <p className="text-sm text-gray-500">{t('readStudyReport')}</p>
                   </div>
                 </div>
-                <span className="text-primary-600 text-sm font-medium group-hover:underline">View Study →</span>
+                <span className="text-primary-600 text-sm font-medium group-hover:underline">{t('viewStudy')}</span>
               </Link>
             )}
 
             {/* Gallery */}
             {galleryFiles.length > 0 && (
               <div className="card p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Gallery</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">{t('gallery')}</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {galleryFiles.map((file: any) => (
                     <div key={file.id} className="relative h-32 rounded-xl overflow-hidden">
@@ -200,7 +201,7 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
 
             {project.financialOfficer && (
               <div className="card p-5">
-                <h3 className="text-sm font-semibold text-gray-500 mb-2 uppercase tracking-wide">Financial Officer</h3>
+                <h3 className="text-sm font-semibold text-gray-500 mb-2 uppercase tracking-wide">{t('financialOfficer')}</h3>
                 <p className="font-semibold text-gray-900">
                   {project.financialOfficer.firstName} {project.financialOfficer.lastName}
                 </p>

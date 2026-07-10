@@ -48,7 +48,18 @@
     "collected": "Collected",
     "location": "Location",
     "donate": "Donate Now",
-    "noProjects": "No projects found"
+    "noProjects": "No projects found",
+    "home": "Home",
+    "implementedWith": "Implemented with:",
+    "startsOn": "Starts {date}",
+    "donationsCount": "Donations",
+    "aboutProject": "About This Project",
+    "projectStudy": "Project Study",
+    "readStudyReport": "Read the detailed study report",
+    "viewStudy": "View Study →",
+    "gallery": "Gallery",
+    "financialOfficer": "Financial Officer",
+    "projectFallback": "Project"
   },
   "donate": {
     "title": "Make a Donation",
