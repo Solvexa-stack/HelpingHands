@@ -1,0 +1,128 @@
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import { AlarmClock, BarChart3, Gavel, Landmark, ShieldCheck } from 'lucide-react';
+import { transparencyApi } from '@/lib/api';
+import { cn, formatDatetime } from '@/lib/utils';
+
+const fmt = (n: number) => Number(n ?? 0).toLocaleString();
+
+/**
+ * W7-E3-S1 — Board dashboard on the transparency read layer: cross-entity
+ * KPIs, funds comparison, decision throughput, overdue reports. The same
+ * aggregates the public portal serves — parity by construction.
+ */
+export function BoardDashboardTab() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['board-dashboard'],
+    queryFn: () => transparencyApi.boardDashboard(),
+    refetchInterval: 60_000,
+  });
+  const { data: policy } = useQuery({ queryKey: ['publication-policy'], queryFn: () => transparencyApi.policy() });
+
+  if (isLoading || !data) return <div className="card p-8 text-center text-gray-400">Loading dashboard…</div>;
+
+  const platform = data.platform;
+  const throughput = data.decisionThroughput;
+
+  return (
+    <div className="space-y-5">
+      <p className="text-xs text-gray-400">
+        All figures from the transparency read layer (public parity) · as of {formatDatetime(data.asOf)}
+      </p>
+
+      {/* KPI row */}
+      <div className="grid md:grid-cols-4 gap-4">
+        {[
+          { icon: Gavel, label: 'Decisions (30d)', value: fmt(throughput.last30Days), sub: `queue ${throughput.openQueueSize} · median age ${throughput.medianQueueAgeDays}d` },
+          { icon: AlarmClock, label: 'Reports awaiting review', value: fmt(data.reports.awaitingReview), sub: `${data.reports.overdueAgreements} agreement(s) overdue` },
+          { icon: Landmark, label: 'Funds', value: fmt(platform.funds.length), sub: `${fmt(platform.funds.reduce((s: number, f: any) => s + f.balance, 0))} combined balance` },
+          { icon: BarChart3, label: 'QR intake', value: fmt(platform.intakeByChannel.qr_cash_donations.amount), sub: `${fmt(platform.intakeByChannel.online_project_donations.amount + platform.intakeByChannel.online_fund_donations.amount)} online` },
+        ].map(({ icon: Icon, label, value, sub }) => (
+          <div key={label} className="card p-4">
+            <div className="flex items-center gap-2 text-gray-500 text-sm"><Icon className="w-4 h-4" /> {label}</div>
+            <p className="text-2xl font-bold mt-1">{value}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Funds comparison */}
+      <div className="card overflow-hidden">
+        <div className="px-5 py-3 border-b border-gray-100 font-semibold flex items-center gap-2">
+          <Landmark className="w-4 h-4" /> Funds comparison
+        </div>
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="table-header">Fund</th>
+              <th className="table-header">Status</th>
+              <th className="table-header">Intake</th>
+              <th className="table-header">Allocated</th>
+              <th className="table-header">Disbursed</th>
+              <th className="table-header">Balance</th>
+              <th className="table-header">Statement</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {platform.funds.map((f: any) => (
+              <tr key={f.id}>
+                <td className="table-cell font-medium">{f.name}</td>
+                <td className="table-cell">
+                  <span className={cn('badge', f.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500')}>{f.status}</span>
+                </td>
+                <td className="table-cell">{fmt(f.intake)}</td>
+                <td className="table-cell">{fmt(f.allocated)}</td>
+                <td className="table-cell">{fmt(f.disbursed)}</td>
+                <td className="table-cell font-semibold">{fmt(f.balance)}</td>
+                <td className="table-cell">
+                  <a className="text-primary-600 text-sm hover:underline" href={transparencyApi.fundStatementUrl(f.id)} target="_blank" rel="noreferrer">
+                    CSV
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        {/* Decision throughput */}
+        <div className="card p-5 space-y-2">
+          <div className="font-semibold flex items-center gap-2"><Gavel className="w-4 h-4" /> Decision throughput</div>
+          {Object.entries(throughput.byType).map(([type, count]) => (
+            <div key={type} className="flex justify-between text-sm">
+              <span className="capitalize text-gray-600">{type.replace(/_/g, ' ')}</span>
+              <span className="font-medium">{count as number}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Publication policy snapshot (W7-E1-S2) */}
+        <div className="card p-5 space-y-2">
+          <div className="font-semibold flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> Publication policy</div>
+          {(policy ?? []).map((p: any) => (
+            <div key={p.fieldClass} className="flex justify-between items-center text-sm gap-2">
+              <span className="text-gray-600 font-mono text-xs">{p.fieldClass}</span>
+              {p.visibility === 'never_public' ? (
+                <span className="badge bg-red-100 text-red-700">never public</span>
+              ) : (
+                <select
+                  className="input py-0.5 px-2 text-xs w-auto"
+                  value={p.visibility}
+                  onChange={(e) =>
+                    transparencyApi.setPolicy(p.fieldClass, e.target.value).then(() => window.location.reload())
+                  }
+                >
+                  <option value="public">public</option>
+                  <option value="workspace_only">workspace only</option>
+                </select>
+              )}
+            </div>
+          ))}
+          <p className="text-xs text-gray-400 pt-1">Changes are Board-audited and flow to the public portal immediately.</p>
+        </div>
+      </div>
+    </div>
+  );
+}

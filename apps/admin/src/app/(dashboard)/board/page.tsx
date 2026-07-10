@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/toaster';
 import { cn, formatDatetime } from '@/lib/utils';
 import { VerificationsTab } from './verifications-tab';
 import { ReportsTab } from './reports-tab';
+import { BoardDashboardTab } from './board-dashboard-tab';
 
 /**
  * W3-E5 — Board workspace: cross-org review queue, decision recording with
@@ -46,7 +47,7 @@ export default function BoardPage() {
   const { hasBoardWorkspace } = useAuth();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<'queue' | 'verifications' | 'reports' | 'history' | 'projects'>('queue');
+  const [tab, setTab] = useState<'queue' | 'verifications' | 'reports' | 'dashboard' | 'history' | 'projects'>('queue');
   const [decide, setDecide] = useState<{ studyId: number; projectName: string; kind: 'approved' | 'rejected' | 'changes_requested' } | null>(null);
   const [rationale, setRationale] = useState('');
 
@@ -132,6 +133,7 @@ export default function BoardPage() {
           ['queue', 'Review queue', ListTodo],
           ['verifications', 'Verifications', BadgeCheck],
           ['reports', 'Reports', FileText],
+          ['dashboard', 'Dashboard', Landmark],
           ['history', 'Decision history', History],
           ['projects', 'All projects', Gavel],
         ] as const).map(
@@ -169,6 +171,8 @@ export default function BoardPage() {
       {tab === 'verifications' && <VerificationsTab />}
       {/* W6: report review queue + overdue flags */}
       {tab === 'reports' && <ReportsTab />}
+      {/* W7: cross-entity KPIs on the transparency read layer */}
+      {tab === 'dashboard' && <BoardDashboardTab />}
 
       {/* Review queue */}
       {tab === 'queue' && (

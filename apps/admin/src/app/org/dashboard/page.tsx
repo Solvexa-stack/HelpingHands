@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { FolderKanban, Heart, TrendingUp, Vote, ArrowRight, Plus, UserPlus } from 'lucide-react';
-import { dashboardApi } from '@/lib/api';
+import { AlarmClock, FolderKanban, Heart, Landmark, TrendingUp, Vote, ArrowRight, Plus, UserPlus } from 'lucide-react';
+import { dashboardApi, transparencyApi } from '@/lib/api';
 import { useAuth } from '@/contexts/auth-context';
-import { formatDatetime } from '@/lib/utils';
+import { cn, formatDatetime } from '@/lib/utils';
 
 /**
  * W3 UI isolation — the Organization Workspace home. Every number on this
@@ -23,6 +23,11 @@ export default function OrgDashboardPage() {
   const { data: recentProjects } = useQuery({
     queryKey: ['org-recent-projects'],
     queryFn: () => dashboardApi.recentProjects(),
+  });
+  // W7-E3-S2: read-layer portfolio + funding received + report calendar
+  const { data: orgDash } = useQuery({
+    queryKey: ['org-dashboard-w7'],
+    queryFn: () => transparencyApi.orgDashboard(),
   });
 
   const tiles = [
@@ -65,6 +70,53 @@ export default function OrgDashboardPage() {
           </Link>
         ))}
       </div>
+
+      {/* W7: funding received + report calendar (read layer) */}
+      {orgDash && (
+        <div className="grid lg:grid-cols-2 gap-5">
+          <div className="card p-5 space-y-2">
+            <div className="font-semibold flex items-center gap-2">
+              <Landmark className="w-4 h-4 text-emerald-600" /> Funding received
+            </div>
+            {orgDash.fundingReceived.allocations.length === 0 && (
+              <p className="text-sm text-gray-400">No fund allocations yet.</p>
+            )}
+            {orgDash.fundingReceived.allocations.map((a: any, i: number) => (
+              <div key={i} className="flex justify-between text-sm">
+                <span className="text-gray-600">{a.fund?.name}</span>
+                <span className="font-medium">{Number(a.amount).toLocaleString()}</span>
+              </div>
+            ))}
+            {orgDash.fundingReceived.allocations.length > 0 && (
+              <div className="flex justify-between text-sm pt-2 border-t border-gray-100 font-semibold">
+                <span>Total allocated</span>
+                <span>{Number(orgDash.fundingReceived.totalAllocated).toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+          <div className="card p-5 space-y-2">
+            <div className="font-semibold flex items-center gap-2">
+              <AlarmClock className="w-4 h-4 text-emerald-600" /> Report calendar
+            </div>
+            {orgDash.reportCalendar.length === 0 && (
+              <p className="text-sm text-gray-400">No open reporting obligations.</p>
+            )}
+            {orgDash.reportCalendar.map((o: any, i: number) => (
+              <div key={i} className="flex items-center justify-between text-sm gap-2">
+                <span className="text-gray-600 truncate">
+                  {o.type} · {o.agreementTitle}
+                </span>
+                <span className={cn('badge text-xs whitespace-nowrap', o.overdue ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800')}>
+                  {o.overdue ? 'overdue' : `due ${formatDatetime(o.dueAt)}`}
+                </span>
+              </div>
+            ))}
+            <Link href="/org/reports" className="text-sm text-emerald-700 hover:underline inline-flex items-center gap-1">
+              Go to reports <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-5">
         {/* Recent donations */}

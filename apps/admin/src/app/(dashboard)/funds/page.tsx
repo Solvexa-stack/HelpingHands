@@ -3,9 +3,36 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Banknote, CheckCircle2, Landmark, PauseCircle, Plus, Send, UserPlus, X } from 'lucide-react';
-import { fundsApi, governanceApi } from '@/lib/api';
+import { fundsApi, governanceApi, transparencyApi } from '@/lib/api';
 import { useToast } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+
+/** W7-E3-S2 — monthly intake/outflow trend rows from the ledger read layer. */
+function FundTrends({ fundId }: { fundId: number }) {
+  const { data } = useQuery({
+    queryKey: ['fund-trends', fundId],
+    queryFn: () => transparencyApi.fundTrends(fundId),
+  });
+  const months = data?.data ?? [];
+  if (months.length === 0) return null;
+  const peak = Math.max(...months.map((m: any) => Math.max(m.intake, m.outflow)), 1);
+  return (
+    <div className="space-y-2">
+      <div className="text-xs font-semibold text-gray-500 uppercase">Monthly trends</div>
+      {months.map((m: any) => (
+        <div key={m.month} className="flex items-center gap-2 text-xs">
+          <span className="w-16 text-gray-500 font-mono">{m.month}</span>
+          <div className="flex-1 space-y-0.5">
+            <div className="h-1.5 rounded bg-emerald-500" style={{ width: `${(m.intake / peak) * 100}%` }} />
+            <div className="h-1.5 rounded bg-amber-500" style={{ width: `${(m.outflow / peak) * 100}%` }} />
+          </div>
+          <span className="w-32 text-right text-gray-500">+{Number(m.intake).toLocaleString()} / −{Number(m.outflow).toLocaleString()}</span>
+        </div>
+      ))}
+      <p className="text-[10px] text-gray-400">green = intake · amber = outflow · source: ledger read layer</p>
+    </div>
+  );
+}
 
 const FUND_ROLES = ['fund_director', 'fund_deputy', 'fund_secretary', 'fund_accountant', 'fund_controller'];
 const STATUS_BADGE: Record<string, string> = {
@@ -132,8 +159,8 @@ export default function FundsPage() {
               ))}
             </div>
 
-            {/* Freeze / unfreeze */}
-            <div className="flex gap-2">
+            {/* Freeze / unfreeze + W7 statement export */}
+            <div className="flex gap-2 items-center">
               {dashboard.fund.status === 'active' ? (
                 <button className="btn-secondary btn-sm gap-1" onClick={() => mutate(() => fundsApi.update(selectedId, { status: 'frozen' }), 'Fund frozen')}>
                   <PauseCircle className="w-3 h-3" /> Freeze
@@ -143,7 +170,18 @@ export default function FundsPage() {
                   <CheckCircle2 className="w-3 h-3" /> Reactivate
                 </button>
               ) : null}
+              <a
+                className="btn-secondary btn-sm"
+                href={transparencyApi.fundStatementUrl(selectedId)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Statement (CSV)
+              </a>
             </div>
+
+            {/* W7: monthly trends from the ledger */}
+            <FundTrends fundId={selectedId} />
 
             {/* Officers */}
             <div className="space-y-2">

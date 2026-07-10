@@ -6,6 +6,7 @@ import { MapPin, Calendar, Target, CheckCircle, BookOpen } from 'lucide-react';
 import { projectsApi, studyApi } from '@/lib/api';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { ProjectDonateSidebar } from '@/components/projects/project-donate-sidebar';
+import { ProjectTransparency } from '@/components/projects/project-transparency';
 import { getTranslation, formatCurrency, formatDate } from '@/lib/utils';
 import type { Metadata } from 'next';
 
@@ -150,6 +151,9 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
                 />
               </div>
             )}
+
+            {/* W7-E2-S2: public money trail, funding sources, decisions */}
+            <ProjectTransparency projectId={Number(id)} locale={locale} />
 
             {/* Study link */}
             {hasStudy && (
