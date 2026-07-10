@@ -303,7 +303,7 @@ function VotingTab({ study, isAdmin, onStatusChange, statusLoading }: {
         )}
 
         {isAdmin && (
-          <div className="text-right">
+          <div className="text-end">
             <Link
               href={`/studies/${study.id}/votes`}
               className="text-sm text-primary-600 hover:underline flex items-center gap-1 justify-end"
@@ -375,7 +375,7 @@ function VotingTab({ study, isAdmin, onStatusChange, statusLoading }: {
         )}
 
         {isAdmin && (
-          <div className="text-right">
+          <div className="text-end">
             <Link
               href={`/studies/${study.id}/votes`}
               className="text-sm text-primary-600 hover:underline flex items-center gap-1 justify-end"
@@ -445,7 +445,7 @@ function VotingTab({ study, isAdmin, onStatusChange, statusLoading }: {
         </div>
 
         {isAdmin && (
-          <div className="text-right">
+          <div className="text-end">
             <Link
               href={`/studies/${study.id}/votes`}
               className="text-sm text-primary-600 hover:underline flex items-center gap-1 justify-end"
@@ -680,7 +680,7 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
               <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                 <h2 className="font-semibold text-gray-900 dark:text-gray-100">
                   {t('studies.sectionsTitle')}
-                  <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                  <span className="ms-2 text-sm font-normal text-gray-500 dark:text-gray-400">
                     ({completedSections}/{sections.length} {t('studies.completed')})
                   </span>
                 </h2>

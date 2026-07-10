@@ -284,7 +284,7 @@ export default function ExecutionPage() {
                   <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
                       {['Name', t('execution.status'), 'Order', t('execution.progress'), t('execution.startDate'), ''].map((h, i) => (
-                        <th key={i} className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                        <th key={i} className="text-start py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -331,7 +331,7 @@ export default function ExecutionPage() {
                   <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
                       {['Name', t('execution.status'), t('execution.priority'), t('execution.progress'), t('execution.startDate'), ''].map((h, i) => (
-                        <th key={i} className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                        <th key={i} className="text-start py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -353,7 +353,7 @@ export default function ExecutionPage() {
                   <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
                       {['Name', 'Phase', t('execution.status'), t('execution.assignedTo'), t('execution.startDate'), ''].map((h, i) => (
-                        <th key={i} className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                        <th key={i} className="text-start py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
                   </thead>

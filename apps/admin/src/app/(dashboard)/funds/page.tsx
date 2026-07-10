@@ -28,7 +28,7 @@ function FundTrends({ fundId }: { fundId: number }) {
             <div className="h-1.5 rounded bg-emerald-500" style={{ width: `${(m.intake / peak) * 100}%` }} />
             <div className="h-1.5 rounded bg-amber-500" style={{ width: `${(m.outflow / peak) * 100}%` }} />
           </div>
-          <span className="w-32 text-right text-gray-500">+{Number(m.intake).toLocaleString(locale)} / −{Number(m.outflow).toLocaleString(locale)}</span>
+          <span className="w-32 text-end text-gray-500">+{Number(m.intake).toLocaleString(locale)} / −{Number(m.outflow).toLocaleString(locale)}</span>
         </div>
       ))}
       <p className="text-[10px] text-gray-400">{t('funds.trends.legend')}</p>
@@ -113,7 +113,7 @@ export default function FundsPage() {
 
       <div className="grid sm:grid-cols-3 gap-4">
         {(funds ?? []).map((fund: any) => (
-          <button key={fund.id} onClick={() => setSelectedId(fund.id)} className="card p-5 text-left hover:shadow-md transition-shadow">
+          <button key={fund.id} onClick={() => setSelectedId(fund.id)} className="card p-5 text-start hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <p className="font-semibold">{fund.name}</p>
               <span className={cn('badge', STATUS_BADGE[fund.status])}>{fund.status}</span>
@@ -323,7 +323,7 @@ export default function FundsPage() {
                   <span className={e.direction === 'credit' ? 'text-green-600' : 'text-red-600'}>
                     {e.direction === 'credit' ? '+' : '−'}{e.amount}
                   </span>
-                  <span className="w-20 text-right font-medium">{e.runningBalance}</span>
+                  <span className="w-20 text-end font-medium">{e.runningBalance}</span>
                 </div>
               ))}
             </div>

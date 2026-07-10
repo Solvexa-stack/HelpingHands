@@ -132,7 +132,7 @@ export default function MilestonesPage() {
       ) : (
         <div className="relative">
           {/* Timeline line */}
-          <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700" />
+          <div className="absolute start-6 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700" />
           <div className="space-y-4">
             {milestones.map((m) => {
               const cfg = STATUS_CONFIG[m.status] || STATUS_CONFIG.pending;
@@ -169,7 +169,7 @@ export default function MilestonesPage() {
                         </div>
                       </div>
                       {canEdit && (
-                        <div className="flex gap-1 flex-shrink-0 ml-4">
+                        <div className="flex gap-1 flex-shrink-0 ms-4">
                           <button onClick={() => openEdit(m)} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
                             <Pencil className="w-4 h-4" />
                           </button>

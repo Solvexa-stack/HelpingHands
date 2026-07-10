@@ -69,7 +69,7 @@ export function ReportsTab() {
               {o.obligations
                 .map((ob: any) => t('board.reportsTab.obligationDue', { type: ob.type, date: formatDatetime(ob.dueAt, locale) }))
                 .join(' · ')}
-              <span className="text-xs text-amber-600 ml-2">{t('board.reportsTab.disbursementsBlockedNote')}</span>
+              <span className="text-xs text-amber-600 ms-2">{t('board.reportsTab.disbursementsBlockedNote')}</span>
             </div>
           ))}
         </div>

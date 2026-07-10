@@ -33,8 +33,8 @@ export default function ParticipantsPage() {
   return (
     <div className="space-y-5">
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="input pl-9" placeholder="Search participants..." />
+        <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="input ps-9" placeholder="Search participants..." />
       </div>
 
       <div className="card overflow-hidden">

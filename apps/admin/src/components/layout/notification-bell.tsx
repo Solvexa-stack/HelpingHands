@@ -76,14 +76,14 @@ export function NotificationBell({ linkBase = '' }: { linkBase?: string }) {
       >
         <Bell className="w-4 h-4" />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+          <span className="absolute -top-0.5 -end-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl z-50 overflow-hidden">
+        <div className="absolute end-0 top-full mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{t('header.notifications')}</h3>
             {unread > 0 && (
@@ -115,7 +115,7 @@ export function NotificationBell({ linkBase = '' }: { linkBase?: string }) {
                     >
                       <div className="flex items-start gap-2">
                         {isUnread && <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />}
-                        <div className={cn('flex-1 min-w-0', !isUnread && 'pl-4')}>
+                        <div className={cn('flex-1 min-w-0', !isUnread && 'ps-4')}>
                           <p className="text-sm text-gray-800 dark:text-gray-200 leading-snug line-clamp-2">
                             {n.title || n.type?.replace(/_/g, ' ')}
                           </p>

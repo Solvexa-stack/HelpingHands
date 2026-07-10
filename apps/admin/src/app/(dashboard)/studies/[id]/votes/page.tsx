@@ -149,7 +149,7 @@ export default function VoteAuditLogPage({ params }: { params: { id: string } })
           <option value="abstain">{t('studies.choices.abstain')}</option>
         </select>
         {meta.total > 0 && (
-          <span className="text-xs text-gray-400 ml-auto">
+          <span className="text-xs text-gray-400 ms-auto">
             {meta.total} {meta.total !== 1 ? t('studies.votes_') : t('studies.vote')}
           </span>
         )}
@@ -166,7 +166,7 @@ export default function VoteAuditLogPage({ params }: { params: { id: string } })
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50 text-left">
+                  <tr className="border-b border-gray-100 bg-gray-50 text-start">
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('studies.auditLog.colVoter')}</th>
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('studies.auditLog.colRole')}</th>
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('studies.auditLog.colChoice')}</th>

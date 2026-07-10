@@ -207,7 +207,7 @@ export default function FinancialPage() {
                   <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
                       {['Name', t('financial.estimatedAmount'), t('financial.approvedAmount'), t('financial.actualSpent'), ''].map((h, i) => (
-                        <th key={i} className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                        <th key={i} className="text-start py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -248,7 +248,7 @@ export default function FinancialPage() {
                   <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
                       {['Name', t('financial.amount'), t('financial.invoiceRef'), 'Status', t('financial.budget'), ''].map((h, i) => (
-                        <th key={i} className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                        <th key={i} className="text-start py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -301,7 +301,7 @@ export default function FinancialPage() {
                   <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
                       {['Type', t('financial.amount'), 'Reference', t('financial.notes'), 'Date'].map((h, i) => (
-                        <th key={i} className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                        <th key={i} className="text-start py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
                   </thead>

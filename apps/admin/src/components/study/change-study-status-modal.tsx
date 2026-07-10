@@ -73,7 +73,7 @@ export function ChangeStudyStatusModal({ study, onClose, onSubmit, loading }: Pr
                     className={btnClass(tr.variant) + (selected === tr.status ? ' ring-2 ring-offset-1 ring-primary-500' : '')}
                   >
                     <ArrowRight className="w-4 h-4 flex-shrink-0" />
-                    <div className="text-left">
+                    <div className="text-start">
                       <p className="font-medium text-sm">{t(tr.labelKey)}</p>
                       <p className="text-xs opacity-70">{t(tr.descKey)}</p>
                     </div>

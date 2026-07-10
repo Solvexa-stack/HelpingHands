@@ -61,7 +61,7 @@ export function ImageUpload({ value, onChange, referenceId, referenceType }: Pro
         <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
           <img src={value} alt="Preview" className="w-full h-48 object-cover" />
           <button onClick={() => onChange('')}
-            className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full shadow flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors">
+            className="absolute top-2 end-2 w-7 h-7 bg-white rounded-full shadow flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>

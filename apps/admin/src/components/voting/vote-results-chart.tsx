@@ -57,10 +57,10 @@ export function VoteResultsChart({ results }: VoteResultsChartProps) {
               style={{ width: `${pct(value)}%`, backgroundColor: color }}
             />
           </div>
-          <span className="text-sm font-semibold text-gray-900 w-14 text-right flex-shrink-0">
+          <span className="text-sm font-semibold text-gray-900 w-14 text-end flex-shrink-0">
             {pct(value)}%
           </span>
-          <span className="text-xs text-gray-400 w-16 text-right flex-shrink-0">
+          <span className="text-xs text-gray-400 w-16 text-end flex-shrink-0">
             ({value} vote{value !== 1 ? 's' : ''})
           </span>
         </div>

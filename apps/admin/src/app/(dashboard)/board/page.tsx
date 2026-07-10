@@ -195,7 +195,7 @@ export default function BoardPage() {
                     <Link href={`/studies/${item.studyId}`} className="text-primary-600 hover:underline">
                       {item.projectName}
                     </Link>
-                    <span className="text-xs text-gray-400 ml-2">{item.category}</span>
+                    <span className="text-xs text-gray-400 ms-2">{item.category}</span>
                   </td>
                   <td className="table-cell">{item.organization?.name}</td>
                   <td className="table-cell">

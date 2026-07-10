@@ -65,7 +65,7 @@ export function Sidebar() {
             {/* W2 isolation: unambiguous workspace identity */}
             {activeOrg && (
               <p className="text-blue-300 text-xs truncate mt-0.5" title={activeOrg.name}>
-                <Building2 className="w-3 h-3 inline mr-1 align-[-1px]" />
+                <Building2 className="w-3 h-3 inline me-1 align-[-1px]" />
                 {activeOrg.name}
               </p>
             )}

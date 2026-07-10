@@ -83,7 +83,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                 <div className="h-full bg-primary-600 rounded-full transition-all duration-700"
                   style={{ width: `${Math.min(progression, 100)}%` }} />
               </div>
-              <p className="text-right text-sm font-semibold text-gray-700">{progression.toFixed(1)}% funded</p>
+              <p className="text-end text-sm font-semibold text-gray-700">{progression.toFixed(1)}% funded</p>
             </div>
 
             {/* Mini stats */}

@@ -125,7 +125,7 @@ export function WorkflowTimeline({ projectId, studyId }: { projectId: number; st
             <span className="text-gray-400 text-xs">
               {step.fromStateKey ? `${step.fromStateKey} → ` : ''}{step.toStateKey}
             </span>
-            <span className="text-gray-400 text-xs ml-auto">{formatDatetime(step.createdAt, locale)}</span>
+            <span className="text-gray-400 text-xs ms-auto">{formatDatetime(step.createdAt, locale)}</span>
           </li>
         ))}
       </ol>

@@ -140,7 +140,7 @@ export default function OrgDashboardPage() {
                     {d.project?.block?.translations?.[0]?.name ?? `Project #${d.projectId}`}
                   </p>
                 </div>
-                <div className="text-right flex-shrink-0 ml-3">
+                <div className="text-end flex-shrink-0 ms-3">
                   <p className="font-semibold">{Number(d.amount).toLocaleString(locale)}</p>
                   <p className="text-xs text-gray-400">{formatDatetime(d.createdAt, locale)}</p>
                 </div>
@@ -167,7 +167,7 @@ export default function OrgDashboardPage() {
                   <p className="font-medium truncate">{p.block?.translations?.[0]?.name ?? `Project #${p.id}`}</p>
                   <p className="text-xs text-gray-400">{p._count?.donations ?? 0} donations</p>
                 </div>
-                <div className="text-right flex-shrink-0 ml-3">
+                <div className="text-end flex-shrink-0 ms-3">
                   <p className="font-semibold">{Number(p.progression)}%</p>
                   <p className="text-xs text-gray-400">of {Number(p.value).toLocaleString(locale)}</p>
                 </div>

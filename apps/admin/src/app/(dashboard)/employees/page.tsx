@@ -53,8 +53,8 @@ export default function EmployeesPage() {
     <div className="space-y-5">
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} className="input pl-9" placeholder="Search team members..." />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} className="input ps-9" placeholder="Search team members..." />
         </div>
         <button onClick={() => setCreateOpen(true)} className="btn-primary btn-md gap-2">
           <Plus className="w-4 h-4" /> Add Member

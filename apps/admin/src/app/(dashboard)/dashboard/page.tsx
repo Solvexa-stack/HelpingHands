@@ -122,7 +122,7 @@ export default function DashboardPage() {
                     {getTranslation(d.project?.block?.translations || [])?.name}
                   </p>
                 </div>
-                <div className="text-right flex-shrink-0">
+                <div className="text-end flex-shrink-0">
                   <p className="text-sm font-bold text-gray-900">{formatCurrency(Number(d.amount), undefined, locale)}</p>
                   <span className={cn('badge text-xs', STATUS_COLORS[d.status])}>{d.status}</span>
                 </div>
