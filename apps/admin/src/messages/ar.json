@@ -174,7 +174,8 @@
     "inactive": "غير نشط",
     "publish": "نشر",
     "draft": "مسودة",
-    "total": "الإجمالي"
+    "total": "الإجمالي",
+    "failed": "فشل"
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -421,6 +422,42 @@
       "hours": "ساعات",
       "min": "دقيقة",
       "mins": "دقائق"
+    }
+  },
+  "board": {
+    "verificationsTab": {
+      "colOrganization": "المنظمة",
+      "colType": "النوع",
+      "colRegistrationNumber": "رقم التسجيل",
+      "colDocuments": "المستندات",
+      "colState": "الحالة",
+      "colWaiting": "الانتظار",
+      "empty": "لا توجد تسجيلات بانتظار التحقق.",
+      "onFile": "مرفوعة",
+      "noInstance": "لا يوجد سجل",
+      "actions": {
+        "beginReview": "بدء المراجعة",
+        "decide": "اتخاذ قرار",
+        "verify": "توثيق",
+        "verifyHint": "يتطلب وجود مستندات مرفوعة وقرارًا معتمدًا من المجلس",
+        "reject": "رفض",
+        "rejectHint": "يتطلب قرار رفض من المجلس",
+        "activate": "تفعيل"
+      },
+      "kind": {
+        "approved": "موافقة",
+        "rejected": "رفض"
+      },
+      "modal": {
+        "title": "قرار المجلس — {name}",
+        "rationalePlaceholder": "المبرر (مطلوب) — مثال: تم التحقق من مرسوم التسجيل مقابل الجريدة الرسمية",
+        "submit": "تسجيل القرار"
+      },
+      "toast": {
+        "blockedFallback": "محظور بواسطة ضابط تحقق",
+        "stepRecorded": "تم تسجيل خطوة التحقق",
+        "decisionRecorded": "تم تسجيل قرار المجلس — نفّذ الآن خطوة سير العمل"
+      }
     }
   }
 }

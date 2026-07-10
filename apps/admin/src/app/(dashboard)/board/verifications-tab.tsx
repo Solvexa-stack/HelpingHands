@@ -6,6 +6,7 @@ import { BadgeCheck, FileCheck2, Gavel, ShieldQuestion, X } from 'lucide-react';
 import { governanceApi, verificationApi } from '@/lib/api';
 import { useToast } from '@/components/ui/toaster';
 import { cn, formatDatetime } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 const STATE_BADGE: Record<string, string> = {
   submitted: 'bg-yellow-100 text-yellow-800',
@@ -21,6 +22,7 @@ const STATE_BADGE: Record<string, string> = {
  * gate is a workflow guard, the buttons only ask.
  */
 export function VerificationsTab() {
+  const { t } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [decide, setDecide] = useState<{ organizationId: number; name: string; kind: 'approved' | 'rejected' } | null>(null);
@@ -33,12 +35,12 @@ export function VerificationsTab() {
   });
 
   const refresh = () => qc.invalidateQueries({ queryKey: ['verification-queue'] });
-  const onError = (err: any) => toastError(err?.response?.data?.message || 'Blocked by a verification guard');
+  const onError = (err: any) => toastError(err?.response?.data?.message || t('board.verificationsTab.toast.blockedFallback'));
 
   const action = useMutation({
     mutationFn: ({ organizationId, verb }: { organizationId: number; verb: 'beginReview' | 'verify' | 'reject' | 'activate' }) =>
       verificationApi[verb](organizationId),
-    onSuccess: () => { success('Verification step recorded'); refresh(); },
+    onSuccess: () => { success(t('board.verificationsTab.toast.stepRecorded')); refresh(); },
     onError,
   });
 
@@ -50,7 +52,7 @@ export function VerificationsTab() {
         decision: decide!.kind,
         rationale,
       }),
-    onSuccess: () => { success('Board decision recorded — now run the workflow step'); setDecide(null); setRationale(''); refresh(); },
+    onSuccess: () => { success(t('board.verificationsTab.toast.decisionRecorded')); setDecide(null); setRationale(''); refresh(); },
     onError,
   });
 
@@ -61,19 +63,19 @@ export function VerificationsTab() {
       <table className="w-full">
         <thead className="bg-gray-50 border-b border-gray-200">
           <tr>
-            <th className="table-header">Organization</th>
-            <th className="table-header">Type</th>
-            <th className="table-header">Registration #</th>
-            <th className="table-header">Documents</th>
-            <th className="table-header">State</th>
-            <th className="table-header">Waiting</th>
-            <th className="table-header">Actions</th>
+            <th className="table-header">{t('board.verificationsTab.colOrganization')}</th>
+            <th className="table-header">{t('board.verificationsTab.colType')}</th>
+            <th className="table-header">{t('board.verificationsTab.colRegistrationNumber')}</th>
+            <th className="table-header">{t('board.verificationsTab.colDocuments')}</th>
+            <th className="table-header">{t('board.verificationsTab.colState')}</th>
+            <th className="table-header">{t('board.verificationsTab.colWaiting')}</th>
+            <th className="table-header">{t('common.actions')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {isLoading && <tr><td colSpan={7} className="p-6 text-center text-gray-400">Loading…</td></tr>}
+          {isLoading && <tr><td colSpan={7} className="p-6 text-center text-gray-400">{t('common.loading')}</td></tr>}
           {!isLoading && items.length === 0 && (
-            <tr><td colSpan={7} className="p-8 text-center text-gray-400">No registrations await verification.</td></tr>
+            <tr><td colSpan={7} className="p-8 text-center text-gray-400">{t('board.verificationsTab.empty')}</td></tr>
           )}
           {items.map((item: any) => (
             <tr key={item.organizationId}>
@@ -82,12 +84,12 @@ export function VerificationsTab() {
               <td className="table-cell text-sm text-gray-500">{item.registrationNumber ?? '—'}</td>
               <td className="table-cell">
                 <span className={cn('flex items-center gap-1 text-sm', item.documentsOnFile > 0 ? 'text-green-600' : 'text-amber-600')}>
-                  <FileCheck2 className="w-3.5 h-3.5" /> {item.documentsOnFile} on file
+                  <FileCheck2 className="w-3.5 h-3.5" /> {item.documentsOnFile} {t('board.verificationsTab.onFile')}
                 </span>
               </td>
               <td className="table-cell">
                 <span className={cn('badge', STATE_BADGE[item.workflowState] ?? 'bg-gray-100 text-gray-500')}>
-                  {item.workflowState ?? 'no instance'}
+                  {item.workflowState ?? t('board.verificationsTab.noInstance')}
                 </span>
               </td>
               <td className="table-cell text-gray-500">{item.ageDays}d</td>
@@ -98,7 +100,7 @@ export function VerificationsTab() {
                       className="btn-primary btn-sm gap-1"
                       onClick={() => action.mutate({ organizationId: item.organizationId, verb: 'beginReview' })}
                     >
-                      <ShieldQuestion className="w-3 h-3" /> Begin review
+                      <ShieldQuestion className="w-3 h-3" /> {t('board.verificationsTab.actions.beginReview')}
                     </button>
                   )}
                   {item.workflowState === 'under_review' && (
@@ -107,21 +109,21 @@ export function VerificationsTab() {
                         className="btn-secondary btn-sm gap-1"
                         onClick={() => setDecide({ organizationId: item.organizationId, name: item.name, kind: 'approved' })}
                       >
-                        <Gavel className="w-3 h-3" /> Decide
+                        <Gavel className="w-3 h-3" /> {t('board.verificationsTab.actions.decide')}
                       </button>
                       <button
                         className="btn-primary btn-sm gap-1"
                         onClick={() => action.mutate({ organizationId: item.organizationId, verb: 'verify' })}
-                        title="Requires documents on file + an approved Board decision"
+                        title={t('board.verificationsTab.actions.verifyHint')}
                       >
-                        <BadgeCheck className="w-3 h-3" /> Verify
+                        <BadgeCheck className="w-3 h-3" /> {t('board.verificationsTab.actions.verify')}
                       </button>
                       <button
                         className="btn-secondary btn-sm text-red-600"
                         onClick={() => action.mutate({ organizationId: item.organizationId, verb: 'reject' })}
-                        title="Requires a rejected Board decision"
+                        title={t('board.verificationsTab.actions.rejectHint')}
                       >
-                        Reject
+                        {t('board.verificationsTab.actions.reject')}
                       </button>
                     </>
                   )}
@@ -130,7 +132,7 @@ export function VerificationsTab() {
                       className="btn-primary btn-sm gap-1"
                       onClick={() => action.mutate({ organizationId: item.organizationId, verb: 'activate' })}
                     >
-                      <BadgeCheck className="w-3 h-3" /> Activate
+                      <BadgeCheck className="w-3 h-3" /> {t('board.verificationsTab.actions.activate')}
                     </button>
                   )}
                 </div>
@@ -145,7 +147,7 @@ export function VerificationsTab() {
           <div className="card p-6 w-full max-w-lg space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="font-semibold flex items-center gap-2">
-                <Gavel className="w-4 h-4" /> Board decision — {decide.name}
+                <Gavel className="w-4 h-4" /> {t('board.verificationsTab.modal.title', { name: decide.name })}
               </h2>
               <button onClick={() => setDecide(null)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"><X className="w-4 h-4" /></button>
             </div>
@@ -156,13 +158,13 @@ export function VerificationsTab() {
                   className={cn('badge cursor-pointer', decide.kind === kind ? 'bg-primary-100 text-primary-800' : 'bg-gray-100 text-gray-500')}
                   onClick={() => setDecide({ ...decide, kind })}
                 >
-                  {kind}
+                  {t(`board.verificationsTab.kind.${kind}`)}
                 </button>
               ))}
             </div>
             <textarea
               className="input min-h-24 w-full"
-              placeholder="Rationale (required) — e.g. registration decree verified against the official gazette"
+              placeholder={t('board.verificationsTab.modal.rationalePlaceholder')}
               value={rationale}
               onChange={(e) => setRationale(e.target.value)}
             />
@@ -171,7 +173,7 @@ export function VerificationsTab() {
               disabled={!rationale.trim() || decision.isPending}
               onClick={() => decision.mutate()}
             >
-              Record decision
+              {t('board.verificationsTab.modal.submit')}
             </button>
           </div>
         </div>

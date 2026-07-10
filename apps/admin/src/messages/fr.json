@@ -174,7 +174,8 @@
     "inactive": "Inactif",
     "publish": "Publier",
     "draft": "Brouillon",
-    "total": "Total"
+    "total": "Total",
+    "failed": "Échec"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -421,6 +422,42 @@
       "hours": "heures",
       "min": "min",
       "mins": "mins"
+    }
+  },
+  "board": {
+    "verificationsTab": {
+      "colOrganization": "Organisation",
+      "colType": "Type",
+      "colRegistrationNumber": "N° d'enregistrement",
+      "colDocuments": "Documents",
+      "colState": "État",
+      "colWaiting": "Attente",
+      "empty": "Aucune inscription en attente de vérification.",
+      "onFile": "au dossier",
+      "noInstance": "aucune instance",
+      "actions": {
+        "beginReview": "Démarrer la revue",
+        "decide": "Décider",
+        "verify": "Vérifier",
+        "verifyHint": "Nécessite des documents au dossier et une décision approuvée par le conseil",
+        "reject": "Rejeter",
+        "rejectHint": "Nécessite une décision de rejet du conseil",
+        "activate": "Activer"
+      },
+      "kind": {
+        "approved": "approuvé",
+        "rejected": "rejeté"
+      },
+      "modal": {
+        "title": "Décision du conseil — {name}",
+        "rationalePlaceholder": "Justification (requise) — ex. décret d'enregistrement vérifié auprès du journal officiel",
+        "submit": "Enregistrer la décision"
+      },
+      "toast": {
+        "blockedFallback": "Bloqué par un contrôle de vérification",
+        "stepRecorded": "Étape de vérification enregistrée",
+        "decisionRecorded": "Décision du conseil enregistrée — exécutez maintenant l'étape du workflow"
+      }
     }
   }
 }

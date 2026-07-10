@@ -174,7 +174,8 @@
     "inactive": "Inactive",
     "publish": "Publish",
     "draft": "Draft",
-    "total": "Total"
+    "total": "Total",
+    "failed": "Failed"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -421,6 +422,42 @@
       "hours": "hours",
       "min": "min",
       "mins": "mins"
+    }
+  },
+  "board": {
+    "verificationsTab": {
+      "colOrganization": "Organization",
+      "colType": "Type",
+      "colRegistrationNumber": "Registration #",
+      "colDocuments": "Documents",
+      "colState": "State",
+      "colWaiting": "Waiting",
+      "empty": "No registrations await verification.",
+      "onFile": "on file",
+      "noInstance": "no instance",
+      "actions": {
+        "beginReview": "Begin review",
+        "decide": "Decide",
+        "verify": "Verify",
+        "verifyHint": "Requires documents on file + an approved Board decision",
+        "reject": "Reject",
+        "rejectHint": "Requires a rejected Board decision",
+        "activate": "Activate"
+      },
+      "kind": {
+        "approved": "approved",
+        "rejected": "rejected"
+      },
+      "modal": {
+        "title": "Board decision — {name}",
+        "rationalePlaceholder": "Rationale (required) — e.g. registration decree verified against the official gazette",
+        "submit": "Record decision"
+      },
+      "toast": {
+        "blockedFallback": "Blocked by a verification guard",
+        "stepRecorded": "Verification step recorded",
+        "decisionRecorded": "Board decision recorded — now run the workflow step"
+      }
     }
   }
 }
