@@ -5,6 +5,7 @@ import { CircleDot, GitBranch, Lock } from 'lucide-react';
 import { studiesApi, workflowApi } from '@/lib/api';
 import { useToast } from '@/components/ui/toaster';
 import { cn, formatDatetime } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 /**
  * W4-E5-S1 — the project's lifecycle as the engine sees it: current state,
@@ -42,6 +43,7 @@ const STATE_BADGE: Record<string, string> = {
 };
 
 export function WorkflowTimeline({ projectId, studyId }: { projectId: number; studyId?: number | null }) {
+  const { locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
 
@@ -123,7 +125,7 @@ export function WorkflowTimeline({ projectId, studyId }: { projectId: number; st
             <span className="text-gray-400 text-xs">
               {step.fromStateKey ? `${step.fromStateKey} → ` : ''}{step.toStateKey}
             </span>
-            <span className="text-gray-400 text-xs ml-auto">{formatDatetime(step.createdAt)}</span>
+            <span className="text-gray-400 text-xs ml-auto">{formatDatetime(step.createdAt, locale)}</span>
           </li>
         ))}
       </ol>

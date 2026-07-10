@@ -8,10 +8,12 @@ import { blocksApi } from '@/lib/api';
 import { formatDate, getTranslation, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toaster';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useLanguage } from '@/contexts/language-context';
 
 const LIMIT = 15;
 
 export default function EventsPage() {
+  const { locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
@@ -73,8 +75,8 @@ export default function EventsPage() {
                 return (
                   <tr key={b.id} className="hover:bg-gray-50 transition-colors">
                     <td className="table-cell font-medium max-w-48 truncate">{t?.name || 'Untitled'}</td>
-                    <td className="table-cell text-gray-400">{b.startDate ? formatDate(b.startDate) : '—'}</td>
-                    <td className="table-cell text-gray-400">{b.endDate ? formatDate(b.endDate) : '—'}</td>
+                    <td className="table-cell text-gray-400">{b.startDate ? formatDate(b.startDate, locale) : '—'}</td>
+                    <td className="table-cell text-gray-400">{b.endDate ? formatDate(b.endDate, locale) : '—'}</td>
                     <td className="table-cell"><span className={cn('badge', b.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')}>{b.isActive ? 'Active' : 'Hidden'}</span></td>
                     <td className="table-cell">
                       <div className="flex gap-1.5">

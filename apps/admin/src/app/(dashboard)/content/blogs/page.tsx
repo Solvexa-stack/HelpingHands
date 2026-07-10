@@ -8,10 +8,12 @@ import { blocksApi } from '@/lib/api';
 import { formatDate, getTranslation, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toaster';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useLanguage } from '@/contexts/language-context';
 
 const LIMIT = 15;
 
 export default function BlogsPage() {
+  const { locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
@@ -73,7 +75,7 @@ export default function BlogsPage() {
                   <tr key={b.id} className="hover:bg-gray-50 transition-colors">
                     <td className="table-cell font-medium max-w-56 truncate">{t?.name || 'Untitled'}</td>
                     <td className="table-cell text-gray-400 font-mono text-xs max-w-40 truncate">{t?.slug}</td>
-                    <td className="table-cell text-gray-400">{formatDate(b.createdAt)}</td>
+                    <td className="table-cell text-gray-400">{formatDate(b.createdAt, locale)}</td>
                     <td className="table-cell">
                       <span className={cn('badge', b.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')}>
                         {b.isActive ? 'Published' : 'Draft'}

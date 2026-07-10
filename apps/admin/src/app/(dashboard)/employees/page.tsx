@@ -8,6 +8,7 @@ import { formatDate, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toaster';
 import { CreateAdminModal } from '@/components/admins/create-admin-modal';
 import { EditAdminModal } from '@/components/admins/edit-admin-modal';
+import { useLanguage } from '@/contexts/language-context';
 
 const ROLE_COLORS: Record<string, string> = {
   administrator: 'bg-purple-100 text-purple-700',
@@ -16,6 +17,7 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 export default function EmployeesPage() {
+  const { locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
@@ -93,7 +95,7 @@ export default function EmployeesPage() {
                       {a.role.replace('_', ' ')}
                     </span>
                   </td>
-                  <td className="table-cell text-gray-400">{a.user?.joiningDate ? formatDate(a.user.joiningDate) : '—'}</td>
+                  <td className="table-cell text-gray-400">{a.user?.joiningDate ? formatDate(a.user.joiningDate, locale) : '—'}</td>
                   <td className="table-cell">
                     <span className={cn('badge', a.user?.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
                       {a.user?.isActive ? 'Active' : 'Inactive'}
