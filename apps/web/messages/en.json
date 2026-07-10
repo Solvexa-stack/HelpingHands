@@ -89,7 +89,20 @@
       "cancelled": "Cancelled"
     },
     "noDonations": "You haven't made any donations yet.",
-    "explorProjects": "Explore Projects"
+    "explorProjects": "Explore Projects",
+    "profilePage": {
+      "subtitle": "Update your personal information",
+      "personalInfo": "Personal Information",
+      "firstNamePlaceholder": "First name",
+      "lastNamePlaceholder": "Last name",
+      "emailLocked": "Email cannot be changed",
+      "saveSuccess": "Profile updated successfully",
+      "saveChanges": "Save Changes",
+      "accountSection": "Account",
+      "statusLabel": "Status",
+      "activeValue": "Active",
+      "memberSince": "Member since"
+    }
   },
   "study": {
     "underReview": "This project is currently under review. Donations open after approval.",

@@ -89,7 +89,20 @@
       "cancelled": "Annulé"
     },
     "noDonations": "Vous n'avez pas encore fait de don.",
-    "explorProjects": "Explorer les projets"
+    "explorProjects": "Explorer les projets",
+    "profilePage": {
+      "subtitle": "Mettez à jour vos informations personnelles",
+      "personalInfo": "Informations personnelles",
+      "firstNamePlaceholder": "Prénom",
+      "lastNamePlaceholder": "Nom",
+      "emailLocked": "L'e-mail ne peut pas être modifié",
+      "saveSuccess": "Profil mis à jour avec succès",
+      "saveChanges": "Enregistrer les modifications",
+      "accountSection": "Compte",
+      "statusLabel": "Statut",
+      "activeValue": "Actif",
+      "memberSince": "Membre depuis"
+    }
   },
   "study": {
     "underReview": "Ce projet est actuellement en cours d'examen. Les dons ouvriront après approbation.",

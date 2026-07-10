@@ -89,7 +89,20 @@
       "cancelled": "ملغي"
     },
     "noDonations": "لم تقم بأي تبرعات بعد",
-    "explorProjects": "استكشف المشاريع"
+    "explorProjects": "استكشف المشاريع",
+    "profilePage": {
+      "subtitle": "حدّث معلوماتك الشخصية",
+      "personalInfo": "المعلومات الشخصية",
+      "firstNamePlaceholder": "الاسم الأول",
+      "lastNamePlaceholder": "اسم العائلة",
+      "emailLocked": "لا يمكن تغيير البريد الإلكتروني",
+      "saveSuccess": "تم تحديث الملف الشخصي بنجاح",
+      "saveChanges": "حفظ التغييرات",
+      "accountSection": "الحساب",
+      "statusLabel": "الحالة",
+      "activeValue": "نشط",
+      "memberSince": "عضو منذ"
+    }
   },
   "study": {
     "underReview": "هذا المشروع قيد المراجعة حالياً. تُفتح التبرعات بعد الموافقة.",

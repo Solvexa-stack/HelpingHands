@@ -2,17 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useMutation } from '@tanstack/react-query';
 import { ArrowLeft, User, Mail, Save, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { participantsApi } from '@/lib/api';
 
-const REPRESENTATIONS = ['personal', 'company', 'organization'];
+const REPRESENTATIONS = ['personal', 'company', 'organization'] as const;
 
 export default function ProfilePage() {
   const { user, loading, refreshUser } = useAuth();
+  const t = useTranslations('dashboard');
+  const tAuth = useTranslations('auth');
   const locale = useLocale();
   const router = useRouter();
 
@@ -61,8 +63,8 @@ export default function ProfilePage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-extrabold text-gray-900">My Profile</h1>
-            <p className="text-gray-500 text-sm">Update your personal information</p>
+            <h1 className="text-2xl font-extrabold text-gray-900">{t('profile')}</h1>
+            <p className="text-gray-500 text-sm">{t('profilePage.subtitle')}</p>
           </div>
         </div>
 
@@ -78,39 +80,39 @@ export default function ProfilePage() {
             <div>
               <p className="font-bold text-gray-900 text-lg">{form.firstName} {form.lastName}</p>
               <p className="text-gray-500 text-sm">{user.email}</p>
-              <span className="inline-block mt-1 text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full font-medium capitalize">
-                {form.representation}
+              <span className="inline-block mt-1 text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full font-medium">
+                {tAuth(form.representation)}
               </span>
             </div>
           </div>
 
           {/* Edit form */}
           <div className="card p-6 space-y-5">
-            <h2 className="font-semibold text-gray-900">Personal Information</h2>
+            <h2 className="font-semibold text-gray-900">{t('profilePage.personalInfo')}</h2>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">First Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{tAuth('firstName')}</label>
                 <input
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   value={form.firstName}
                   onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                  placeholder="First name"
+                  placeholder={t('profilePage.firstNamePlaceholder')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Last Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{tAuth('lastName')}</label>
                 <input
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   value={form.lastName}
                   onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                  placeholder="Last name"
+                  placeholder={t('profilePage.lastNamePlaceholder')}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{tAuth('email')}</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -119,18 +121,18 @@ export default function ProfilePage() {
                   disabled
                 />
               </div>
-              <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+              <p className="text-xs text-gray-400 mt-1">{t('profilePage.emailLocked')}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Account Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{tAuth('representation')}</label>
               <select
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 value={form.representation}
                 onChange={(e) => setForm({ ...form, representation: e.target.value })}
               >
                 {REPRESENTATIONS.map((r) => (
-                  <option key={r} value={r} className="capitalize">{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                  <option key={r} value={r}>{tAuth(r)}</option>
                 ))}
               </select>
             </div>
@@ -139,7 +141,7 @@ export default function ProfilePage() {
               {saved && (
                 <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
                   <CheckCircle className="w-4 h-4" />
-                  Profile updated successfully
+                  {t('profilePage.saveSuccess')}
                 </div>
               )}
               <div className="ml-auto">
@@ -152,7 +154,7 @@ export default function ProfilePage() {
                     ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
                     : <Save className="w-4 h-4" />
                   }
-                  Save Changes
+                  {t('profilePage.saveChanges')}
                 </button>
               </div>
             </div>
@@ -160,15 +162,15 @@ export default function ProfilePage() {
 
           {/* Account info */}
           <div className="card p-6 space-y-3">
-            <h2 className="font-semibold text-gray-900">Account</h2>
+            <h2 className="font-semibold text-gray-900">{t('profilePage.accountSection')}</h2>
             <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-sm text-gray-500">Status</span>
-              <span className="text-sm font-medium text-green-600 bg-green-50 px-2.5 py-0.5 rounded-full">Active</span>
+              <span className="text-sm text-gray-500">{t('profilePage.statusLabel')}</span>
+              <span className="text-sm font-medium text-green-600 bg-green-50 px-2.5 py-0.5 rounded-full">{t('profilePage.activeValue')}</span>
             </div>
             <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-gray-500">Member since</span>
+              <span className="text-sm text-gray-500">{t('profilePage.memberSince')}</span>
               <span className="text-sm font-medium text-gray-900">
-                {user.joiningDate ? new Date(user.joiningDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : '—'}
+                {user.joiningDate ? new Date(user.joiningDate).toLocaleDateString(locale, { year: 'numeric', month: 'long' }) : '—'}
               </span>
             </div>
           </div>
