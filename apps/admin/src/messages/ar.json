@@ -642,5 +642,46 @@
       "reconciled": "تمت التسوية",
       "closed": "تم الإغلاق"
     }
+  },
+  "orgDashboard": {
+    "tiles": {
+      "projects": "المشاريع",
+      "projectsSub": "{count} مكتمل",
+      "donations": "التبرعات",
+      "donationsSub": "{count} معلق",
+      "collected": "المحصَّل",
+      "collectedSub": "{rate}% معدل الإنجاز",
+      "openVotings": "التصويتات المفتوحة",
+      "openVotingsSub": "دراسات قيد التصويت"
+    },
+    "hero": {
+      "eyebrow": "مساحة عمل المنظمة",
+      "welcome": "مرحبًا بعودتك{name} — كل ما في هذه الصفحة يخص منظمتك فقط.",
+      "newProject": "مشروع جديد",
+      "inviteTeamMember": "دعوة عضو فريق"
+    },
+    "fundingReceived": {
+      "heading": "التمويل المستلم",
+      "empty": "لا توجد مخصصات صناديق بعد.",
+      "totalAllocated": "إجمالي المخصص"
+    },
+    "reportCalendar": {
+      "heading": "تقويم التقارير",
+      "empty": "لا توجد التزامات إبلاغ مفتوحة.",
+      "line": "{type} · {agreementTitle}",
+      "overdue": "متأخر",
+      "dueDate": "الاستحقاق {date}",
+      "goToReports": "الذهاب إلى التقارير"
+    },
+    "recentDonations": {
+      "heading": "أحدث التبرعات",
+      "viewAll": "جميع التبرعات",
+      "empty": "لا توجد تبرعات بعد."
+    },
+    "recentProjects": {
+      "heading": "مشاريعك",
+      "viewAll": "جميع المشاريع",
+      "empty": "لا توجد مشاريع بعد — أنشئ مشروعك الأول."
+    }
   }
 }

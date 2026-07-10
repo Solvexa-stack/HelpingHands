@@ -642,5 +642,46 @@
       "reconciled": "Reconciled",
       "closed": "Closed"
     }
+  },
+  "orgDashboard": {
+    "tiles": {
+      "projects": "Projects",
+      "projectsSub": "{count} completed",
+      "donations": "Donations",
+      "donationsSub": "{count} pending",
+      "collected": "Collected",
+      "collectedSub": "{rate}% completion rate",
+      "openVotings": "Open votings",
+      "openVotingsSub": "studies in voting"
+    },
+    "hero": {
+      "eyebrow": "Organization workspace",
+      "welcome": "Welcome back{name} — everything on this page belongs to your organization only.",
+      "newProject": "New project",
+      "inviteTeamMember": "Invite team member"
+    },
+    "fundingReceived": {
+      "heading": "Funding received",
+      "empty": "No fund allocations yet.",
+      "totalAllocated": "Total allocated"
+    },
+    "reportCalendar": {
+      "heading": "Report calendar",
+      "empty": "No open reporting obligations.",
+      "line": "{type} · {agreementTitle}",
+      "overdue": "overdue",
+      "dueDate": "due {date}",
+      "goToReports": "Go to reports"
+    },
+    "recentDonations": {
+      "heading": "Recent donations",
+      "viewAll": "All donations",
+      "empty": "No donations yet."
+    },
+    "recentProjects": {
+      "heading": "Your projects",
+      "viewAll": "All projects",
+      "empty": "No projects yet — create your first one."
+    }
   }
 }

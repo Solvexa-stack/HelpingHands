@@ -6,6 +6,7 @@ import { AlarmClock, FolderKanban, Heart, Landmark, TrendingUp, Vote, ArrowRight
 import { dashboardApi, transparencyApi } from '@/lib/api';
 import { useAuth } from '@/contexts/auth-context';
 import { cn, formatDatetime } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 /**
  * W3 UI isolation — the Organization Workspace home. Every number on this
@@ -13,6 +14,7 @@ import { cn, formatDatetime } from '@/lib/utils';
  * donations and studies. No platform-wide statistics exist here.
  */
 export default function OrgDashboardPage() {
+  const { t } = useLanguage();
   const { activeOrg, user } = useAuth();
 
   const { data: stats } = useQuery({ queryKey: ['org-stats'], queryFn: () => dashboardApi.stats() });
@@ -31,28 +33,28 @@ export default function OrgDashboardPage() {
   });
 
   const tiles = [
-    { label: 'Projects', value: stats?.totalProjects ?? '—', sub: `${stats?.completedProjects ?? 0} completed`, icon: FolderKanban, href: '/org/projects' },
-    { label: 'Donations', value: stats?.totalDonations ?? '—', sub: `${stats?.pendingDonations ?? 0} pending`, icon: Heart, href: '/org/donations' },
-    { label: 'Collected', value: stats ? Number(stats.totalCollected).toLocaleString() : '—', sub: `${stats?.projectCompletionRate ?? 0}% completion rate`, icon: TrendingUp, href: '/org/projects' },
-    { label: 'Open votings', value: stats?.pendingVotes ?? '—', sub: 'studies in voting', icon: Vote, href: '/org/studies' },
+    { label: t('orgDashboard.tiles.projects'), value: stats?.totalProjects ?? '—', sub: t('orgDashboard.tiles.projectsSub', { count: stats?.completedProjects ?? 0 }), icon: FolderKanban, href: '/org/projects' },
+    { label: t('orgDashboard.tiles.donations'), value: stats?.totalDonations ?? '—', sub: t('orgDashboard.tiles.donationsSub', { count: stats?.pendingDonations ?? 0 }), icon: Heart, href: '/org/donations' },
+    { label: t('orgDashboard.tiles.collected'), value: stats ? Number(stats.totalCollected).toLocaleString() : '—', sub: t('orgDashboard.tiles.collectedSub', { rate: stats?.projectCompletionRate ?? 0 }), icon: TrendingUp, href: '/org/projects' },
+    { label: t('orgDashboard.tiles.openVotings'), value: stats?.pendingVotes ?? '—', sub: t('orgDashboard.tiles.openVotingsSub'), icon: Vote, href: '/org/studies' },
   ];
 
   return (
     <div className="space-y-6">
       {/* Workspace hero */}
       <div className="card p-6 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white">
-        <p className="text-emerald-100 text-sm">Organization workspace</p>
+        <p className="text-emerald-100 text-sm">{t('orgDashboard.hero.eyebrow')}</p>
         <h1 className="text-2xl font-bold mt-1">{activeOrg?.name}</h1>
         <p className="text-emerald-100 text-sm mt-2">
-          Welcome back{user?.admin?.firstName ? `, ${user.admin.firstName}` : ''} — everything on this page belongs to your organization only.
+          {t('orgDashboard.hero.welcome', { name: user?.admin?.firstName ? `, ${user.admin.firstName}` : '' })}
         </p>
         {/* Quick actions: the two things a fresh workspace needs first */}
         <div className="flex flex-wrap gap-2 mt-4">
           <Link href="/org/projects/new" className="inline-flex items-center gap-1.5 bg-white/15 hover:bg-white/25 transition-colors rounded-lg px-3 py-1.5 text-sm font-medium">
-            <Plus className="w-4 h-4" /> New project
+            <Plus className="w-4 h-4" /> {t('orgDashboard.hero.newProject')}
           </Link>
           <Link href="/org/team" className="inline-flex items-center gap-1.5 bg-white/15 hover:bg-white/25 transition-colors rounded-lg px-3 py-1.5 text-sm font-medium">
-            <UserPlus className="w-4 h-4" /> Invite team member
+            <UserPlus className="w-4 h-4" /> {t('orgDashboard.hero.inviteTeamMember')}
           </Link>
         </div>
       </div>
@@ -76,10 +78,10 @@ export default function OrgDashboardPage() {
         <div className="grid lg:grid-cols-2 gap-5">
           <div className="card p-5 space-y-2">
             <div className="font-semibold flex items-center gap-2">
-              <Landmark className="w-4 h-4 text-emerald-600" /> Funding received
+              <Landmark className="w-4 h-4 text-emerald-600" /> {t('orgDashboard.fundingReceived.heading')}
             </div>
             {orgDash.fundingReceived.allocations.length === 0 && (
-              <p className="text-sm text-gray-400">No fund allocations yet.</p>
+              <p className="text-sm text-gray-400">{t('orgDashboard.fundingReceived.empty')}</p>
             )}
             {orgDash.fundingReceived.allocations.map((a: any, i: number) => (
               <div key={i} className="flex justify-between text-sm">
@@ -89,30 +91,30 @@ export default function OrgDashboardPage() {
             ))}
             {orgDash.fundingReceived.allocations.length > 0 && (
               <div className="flex justify-between text-sm pt-2 border-t border-gray-100 font-semibold">
-                <span>Total allocated</span>
+                <span>{t('orgDashboard.fundingReceived.totalAllocated')}</span>
                 <span>{Number(orgDash.fundingReceived.totalAllocated).toLocaleString()}</span>
               </div>
             )}
           </div>
           <div className="card p-5 space-y-2">
             <div className="font-semibold flex items-center gap-2">
-              <AlarmClock className="w-4 h-4 text-emerald-600" /> Report calendar
+              <AlarmClock className="w-4 h-4 text-emerald-600" /> {t('orgDashboard.reportCalendar.heading')}
             </div>
             {orgDash.reportCalendar.length === 0 && (
-              <p className="text-sm text-gray-400">No open reporting obligations.</p>
+              <p className="text-sm text-gray-400">{t('orgDashboard.reportCalendar.empty')}</p>
             )}
             {orgDash.reportCalendar.map((o: any, i: number) => (
               <div key={i} className="flex items-center justify-between text-sm gap-2">
                 <span className="text-gray-600 truncate">
-                  {o.type} · {o.agreementTitle}
+                  {t('orgDashboard.reportCalendar.line', { type: o.type, agreementTitle: o.agreementTitle })}
                 </span>
                 <span className={cn('badge text-xs whitespace-nowrap', o.overdue ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800')}>
-                  {o.overdue ? 'overdue' : `due ${formatDatetime(o.dueAt)}`}
+                  {o.overdue ? t('orgDashboard.reportCalendar.overdue') : t('orgDashboard.reportCalendar.dueDate', { date: formatDatetime(o.dueAt) })}
                 </span>
               </div>
             ))}
             <Link href="/org/reports" className="text-sm text-emerald-700 hover:underline inline-flex items-center gap-1">
-              Go to reports <ArrowRight className="w-3 h-3" />
+              {t('orgDashboard.reportCalendar.goToReports')} <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
         </div>
@@ -122,9 +124,9 @@ export default function OrgDashboardPage() {
         {/* Recent donations */}
         <div className="card overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-            <h2 className="font-semibold text-sm">Recent donations</h2>
+            <h2 className="font-semibold text-sm">{t('orgDashboard.recentDonations.heading')}</h2>
             <Link href="/org/donations" className="text-xs text-emerald-600 flex items-center gap-1">
-              All donations <ArrowRight className="w-3 h-3" />
+              {t('orgDashboard.recentDonations.viewAll')} <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
           <div className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -145,7 +147,7 @@ export default function OrgDashboardPage() {
               </div>
             ))}
             {(recentDonations ?? []).length === 0 && (
-              <p className="px-5 py-8 text-center text-sm text-gray-400">No donations yet.</p>
+              <p className="px-5 py-8 text-center text-sm text-gray-400">{t('orgDashboard.recentDonations.empty')}</p>
             )}
           </div>
         </div>
@@ -153,9 +155,9 @@ export default function OrgDashboardPage() {
         {/* Recent projects */}
         <div className="card overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-            <h2 className="font-semibold text-sm">Your projects</h2>
+            <h2 className="font-semibold text-sm">{t('orgDashboard.recentProjects.heading')}</h2>
             <Link href="/org/projects" className="text-xs text-emerald-600 flex items-center gap-1">
-              All projects <ArrowRight className="w-3 h-3" />
+              {t('orgDashboard.recentProjects.viewAll')} <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
           <div className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -172,7 +174,7 @@ export default function OrgDashboardPage() {
               </Link>
             ))}
             {(recentProjects ?? []).length === 0 && (
-              <p className="px-5 py-8 text-center text-sm text-gray-400">No projects yet — create your first one.</p>
+              <p className="px-5 py-8 text-center text-sm text-gray-400">{t('orgDashboard.recentProjects.empty')}</p>
             )}
           </div>
         </div>

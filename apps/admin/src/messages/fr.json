@@ -642,5 +642,46 @@
       "reconciled": "Rapproché",
       "closed": "Clôturé"
     }
+  },
+  "orgDashboard": {
+    "tiles": {
+      "projects": "Projets",
+      "projectsSub": "{count} terminé(s)",
+      "donations": "Dons",
+      "donationsSub": "{count} en attente",
+      "collected": "Collecté",
+      "collectedSub": "{rate}% taux d'achèvement",
+      "openVotings": "Votes ouverts",
+      "openVotingsSub": "études en cours de vote"
+    },
+    "hero": {
+      "eyebrow": "Espace de travail de l'organisation",
+      "welcome": "Bon retour{name} — tout sur cette page appartient uniquement à votre organisation.",
+      "newProject": "Nouveau projet",
+      "inviteTeamMember": "Inviter un membre de l'équipe"
+    },
+    "fundingReceived": {
+      "heading": "Financement reçu",
+      "empty": "Aucune allocation de fonds pour le moment.",
+      "totalAllocated": "Total alloué"
+    },
+    "reportCalendar": {
+      "heading": "Calendrier des rapports",
+      "empty": "Aucune obligation de déclaration ouverte.",
+      "line": "{type} · {agreementTitle}",
+      "overdue": "en retard",
+      "dueDate": "échéance {date}",
+      "goToReports": "Aller aux rapports"
+    },
+    "recentDonations": {
+      "heading": "Dons récents",
+      "viewAll": "Tous les dons",
+      "empty": "Aucun don pour le moment."
+    },
+    "recentProjects": {
+      "heading": "Vos projets",
+      "viewAll": "Tous les projets",
+      "empty": "Aucun projet pour le moment — créez le premier."
+    }
   }
 }
