@@ -626,6 +626,11 @@
     "subtitle": "خزينة بقيد مزدوج · تتطلب المخصصات قرار مجلس عند الإطلاق",
     "newFund": "صندوق جديد",
     "empty": "لا توجد صناديق بعد.",
+    "statuses": {
+      "active": "نشط",
+      "frozen": "مجمّد",
+      "closed": "مغلق"
+    },
     "card": {
       "officersAllocations": "{officers} موظفين · {allocations} مخصصات"
     },

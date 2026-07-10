@@ -626,6 +626,11 @@
     "subtitle": "trésorerie en partie double · les allocations nécessitent des décisions du conseil au lancement",
     "newFund": "Nouveau fonds",
     "empty": "Aucun fonds pour le moment.",
+    "statuses": {
+      "active": "actif",
+      "frozen": "gelé",
+      "closed": "clôturé"
+    },
     "card": {
       "officersAllocations": "{officers} responsables · {allocations} allocations"
     },

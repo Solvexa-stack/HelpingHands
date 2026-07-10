@@ -626,6 +626,11 @@
     "subtitle": "double-entry treasury · allocations require Board decisions at launch",
     "newFund": "New fund",
     "empty": "No funds yet.",
+    "statuses": {
+      "active": "active",
+      "frozen": "frozen",
+      "closed": "closed"
+    },
     "card": {
       "officersAllocations": "{officers} officers · {allocations} allocations"
     },

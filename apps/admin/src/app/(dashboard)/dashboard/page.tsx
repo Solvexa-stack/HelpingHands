@@ -12,10 +12,14 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/language-context';
 
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function getMonthLabels(locale: string): string[] {
+  const fmt = new Intl.DateTimeFormat(locale, { month: 'short' });
+  return Array.from({ length: 12 }, (_, i) => fmt.format(new Date(2000, i, 1)));
+}
 
 export default function DashboardPage() {
   const { t, locale } = useLanguage();
+  const MONTHS = getMonthLabels(locale);
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: dashboardApi.stats,

@@ -116,7 +116,7 @@ export default function FundsPage() {
           <button key={fund.id} onClick={() => setSelectedId(fund.id)} className="card p-5 text-start hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <p className="font-semibold">{fund.name}</p>
-              <span className={cn('badge', STATUS_BADGE[fund.status])}>{fund.status}</span>
+              <span className={cn('badge', STATUS_BADGE[fund.status])}>{t(`funds.statuses.${fund.status}`) || fund.status}</span>
             </div>
             <p className="text-2xl font-bold mt-2">{Number(fund.balance).toLocaleString(locale)}</p>
             <p className="text-xs text-gray-400 mt-1">
@@ -147,7 +147,7 @@ export default function FundsPage() {
             <div className="flex items-center justify-between">
               <h2 className="font-semibold flex items-center gap-2">
                 <Banknote className="w-4 h-4" /> {dashboard.fund.name}
-                <span className={cn('badge', STATUS_BADGE[dashboard.fund.status])}>{dashboard.fund.status}</span>
+                <span className={cn('badge', STATUS_BADGE[dashboard.fund.status])}>{t(`funds.statuses.${dashboard.fund.status}`) || dashboard.fund.status}</span>
               </h2>
               <button onClick={() => setSelectedId(null)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"><X className="w-4 h-4" /></button>
             </div>
