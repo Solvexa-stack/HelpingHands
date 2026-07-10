@@ -21,7 +21,7 @@ function notificationLink(n: any, base: string): string | null {
  * its own routing space ('' for platform, '/org' for organization).
  */
 export function NotificationBell({ linkBase = '' }: { linkBase?: string }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const router = useRouter();
   const qc = useQueryClient();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -120,7 +120,7 @@ export function NotificationBell({ linkBase = '' }: { linkBase?: string }) {
                             {n.title || n.type?.replace(/_/g, ' ')}
                           </p>
                           <p className="text-xs text-gray-400 mt-0.5">
-                            {n.createdAt ? formatDatetime(n.createdAt) : ''}
+                            {n.createdAt ? formatDatetime(n.createdAt, locale) : ''}
                           </p>
                         </div>
                       </div>

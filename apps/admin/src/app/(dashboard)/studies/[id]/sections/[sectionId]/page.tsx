@@ -243,7 +243,7 @@ export default function SectionEditPage({
                   <FileIcon fileType={f.fileType} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{f.name}</p>
-                    <p className="text-xs text-gray-400">{f.fileType} · {formatDate(f.createdAt)}</p>
+                    <p className="text-xs text-gray-400">{f.fileType} · {formatDate(f.createdAt, locale)}</p>
                   </div>
 
                   {f.fileType === 'image' && (

@@ -35,6 +35,7 @@ function SectionStatusBadge({ status }: { status: string }) {
 }
 
 function TimelineEvent({ label, date }: { label: string; date?: string | null }) {
+  const { locale } = useLanguage();
   const done = !!date;
   return (
     <div className="flex gap-3">
@@ -44,7 +45,7 @@ function TimelineEvent({ label, date }: { label: string; date?: string | null })
       </div>
       <div className="pb-4">
         <p className={cn('text-sm font-medium', done ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-600')}>{label}</p>
-        {date && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatDate(date)}</p>}
+        {date && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatDate(date, locale)}</p>}
       </div>
     </div>
   );
@@ -153,7 +154,7 @@ function VotingTab({ study, isAdmin, onStatusChange, statusLoading }: {
   onStatusChange: (status: string, extraData?: Record<string, any>) => void;
   statusLoading: boolean;
 }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const qc = useQueryClient();
   const { success, error: toastError } = useToast();
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 16));
@@ -294,7 +295,7 @@ function VotingTab({ study, isAdmin, onStatusChange, statusLoading }: {
                 <div key={i} className="px-5 py-3 flex items-start gap-3">
                   <ChoiceBadge choice={c.choice} />
                   <p className="text-sm text-gray-600 flex-1 line-clamp-2">{c.comment}</p>
-                  <span className="text-xs text-gray-400 flex-shrink-0">{formatDate(c.createdAt)}</span>
+                  <span className="text-xs text-gray-400 flex-shrink-0">{formatDate(c.createdAt, locale)}</span>
                 </div>
               ))}
             </div>
@@ -417,12 +418,12 @@ function VotingTab({ study, isAdmin, onStatusChange, statusLoading }: {
               </p>
               {isApproved && study.approvedAt && (
                 <p className="text-xs text-green-700">
-                  {formatDate(study.approvedAt)}
+                  {formatDate(study.approvedAt, locale)}
                   {study.approvedBy && ` · ${t('studies.by')} ${study.approvedBy.firstName} ${study.approvedBy.lastName}`}
                 </p>
               )}
               {!isApproved && study.updatedAt && (
-                <p className="text-xs text-red-700">{formatDate(study.updatedAt)}</p>
+                <p className="text-xs text-red-700">{formatDate(study.updatedAt, locale)}</p>
               )}
               {study.rejectionReason && (
                 <p className="text-sm text-red-700 mt-2 bg-red-100 rounded-lg p-2">
@@ -661,13 +662,13 @@ export default function StudyDetailPage({ params }: { params: { id: string } }) 
                   {study.votingStartsAt && (
                     <div>
                       <p className="text-xs text-gray-500 dark:text-gray-400">{t('studies.votingStarts')}</p>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">{formatDate(study.votingStartsAt)}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{formatDate(study.votingStartsAt, locale)}</p>
                     </div>
                   )}
                   {study.votingEndsAt && (
                     <div>
                       <p className="text-xs text-gray-500 dark:text-gray-400">{t('studies.votingEnds')}</p>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">{formatDate(study.votingEndsAt)}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{formatDate(study.votingEndsAt, locale)}</p>
                     </div>
                   )}
                 </div>

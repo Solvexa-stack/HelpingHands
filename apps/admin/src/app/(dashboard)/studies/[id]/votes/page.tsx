@@ -63,7 +63,7 @@ function exportToCsv(votes: any[], studyId: number) {
 export default function VoteAuditLogPage({ params }: { params: { id: string } }) {
   const id = Number(params.id);
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const role = user?.admin?.role || '';
   const isAdmin = role === 'administrator';
 
@@ -192,7 +192,7 @@ export default function VoteAuditLogPage({ params }: { params: { id: string } })
                         </span>
                       </td>
                       <td className="px-5 py-3 text-gray-400 whitespace-nowrap text-xs">
-                        {v.createdAt ? formatDatetime(v.createdAt) : '—'}
+                        {v.createdAt ? formatDatetime(v.createdAt, locale) : '—'}
                       </td>
                     </tr>
                   ))}

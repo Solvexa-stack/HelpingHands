@@ -29,7 +29,7 @@ function VoteCell({ votes, t }: { votes: number; t: (k: string) => string }) {
 }
 
 export default function StudiesPage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
@@ -119,7 +119,7 @@ export default function StudiesPage() {
                       <td className="table-cell">
                         <VoteCell votes={s._count?.votes ?? 0} t={t} />
                       </td>
-                      <td className="table-cell text-gray-400 text-sm">{formatDate(s.createdAt)}</td>
+                      <td className="table-cell text-gray-400 text-sm">{formatDate(s.createdAt, locale)}</td>
                       <td className="table-cell">
                         <Link
                           href={`/studies/${s.id}`}
