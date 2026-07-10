@@ -458,6 +458,38 @@
         "stepRecorded": "Verification step recorded",
         "decisionRecorded": "Board decision recorded — now run the workflow step"
       }
+    },
+    "reportsTab": {
+      "overdueHeading": "Overdue reporting obligations",
+      "obligationDue": "{type} due {date}",
+      "disbursementsBlockedNote": "disbursements may be blocked (agreement terms)",
+      "colReport": "Report",
+      "colOrganization": "Organization",
+      "colType": "Type",
+      "colAgreement": "Agreement",
+      "colSubmitted": "Submitted",
+      "empty": "No reports await review.",
+      "actions": {
+        "review": "Review",
+        "accept": "Accept",
+        "return": "Return"
+      },
+      "inspect": {
+        "typeOrgLine": "{type} · {org}",
+        "periodLine": "· period {start} → {end}",
+        "reviewNoteLabel": "Review note:"
+      },
+      "returnModal": {
+        "title": "Return \"{title}\"",
+        "description": "Comments are mandatory — the submitting organization sees them and resubmits.",
+        "placeholder": "What must be corrected?",
+        "submit": "Return with comments"
+      },
+      "toast": {
+        "beginReview": "Report taken into review",
+        "accepted": "Report accepted",
+        "returned": "Report returned with comments"
+      }
     }
   }
 }

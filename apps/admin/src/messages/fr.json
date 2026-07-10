@@ -458,6 +458,38 @@
         "stepRecorded": "Étape de vérification enregistrée",
         "decisionRecorded": "Décision du conseil enregistrée — exécutez maintenant l'étape du workflow"
       }
+    },
+    "reportsTab": {
+      "overdueHeading": "Obligations de déclaration en retard",
+      "obligationDue": "{type} échéance {date}",
+      "disbursementsBlockedNote": "les décaissements peuvent être bloqués (termes de l'accord)",
+      "colReport": "Rapport",
+      "colOrganization": "Organisation",
+      "colType": "Type",
+      "colAgreement": "Accord",
+      "colSubmitted": "Soumis",
+      "empty": "Aucun rapport en attente de revue.",
+      "actions": {
+        "review": "Revoir",
+        "accept": "Accepter",
+        "return": "Retourner"
+      },
+      "inspect": {
+        "typeOrgLine": "{type} · {org}",
+        "periodLine": "· période {start} → {end}",
+        "reviewNoteLabel": "Note de revue :"
+      },
+      "returnModal": {
+        "title": "Retourner « {title} »",
+        "description": "Les commentaires sont obligatoires — l'organisation soumissionnaire les verra et devra soumettre à nouveau.",
+        "placeholder": "Que faut-il corriger ?",
+        "submit": "Retourner avec commentaires"
+      },
+      "toast": {
+        "beginReview": "Rapport pris en revue",
+        "accepted": "Rapport accepté",
+        "returned": "Rapport retourné avec commentaires"
+      }
     }
   }
 }

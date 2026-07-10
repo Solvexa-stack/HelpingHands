@@ -458,6 +458,38 @@
         "stepRecorded": "تم تسجيل خطوة التحقق",
         "decisionRecorded": "تم تسجيل قرار المجلس — نفّذ الآن خطوة سير العمل"
       }
+    },
+    "reportsTab": {
+      "overdueHeading": "التزامات إبلاغ متأخرة",
+      "obligationDue": "{type} — الاستحقاق {date}",
+      "disbursementsBlockedNote": "قد يتم حظر الصرف (وفق شروط الاتفاقية)",
+      "colReport": "التقرير",
+      "colOrganization": "المنظمة",
+      "colType": "النوع",
+      "colAgreement": "الاتفاقية",
+      "colSubmitted": "تاريخ التقديم",
+      "empty": "لا توجد تقارير بانتظار المراجعة.",
+      "actions": {
+        "review": "مراجعة",
+        "accept": "قبول",
+        "return": "إعادة"
+      },
+      "inspect": {
+        "typeOrgLine": "{type} · {org}",
+        "periodLine": "· الفترة {start} → {end}",
+        "reviewNoteLabel": "ملاحظة المراجعة:"
+      },
+      "returnModal": {
+        "title": "إعادة \"{title}\"",
+        "description": "التعليقات إلزامية — ستراها المنظمة المُقدِّمة وتقوم بإعادة التقديم.",
+        "placeholder": "ما الذي يجب تصحيحه؟",
+        "submit": "إعادة مع التعليقات"
+      },
+      "toast": {
+        "beginReview": "تم أخذ التقرير للمراجعة",
+        "accepted": "تم قبول التقرير",
+        "returned": "تمت إعادة التقرير مع التعليقات"
+      }
     }
   }
 }
