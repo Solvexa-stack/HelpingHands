@@ -41,7 +41,7 @@ function ProgressBar({ value }: { value: number }) {
 
 // ─── Step Row ─────────────────────────────────────────────────────────────────
 function StepRow({ step, onEdit, onDelete, onProgressUpdate, depth = 0 }: any) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [open, setOpen] = useState(false);
   const name = step.block?.translations?.[0]?.name || `Step #${step.id}`;
 
@@ -65,7 +65,7 @@ function StepRow({ step, onEdit, onDelete, onProgressUpdate, depth = 0 }: any) {
           <span className="text-xs text-gray-500 mt-1">{Number(step.progress).toFixed(0)}%</span>
         </td>
         <td className="py-3 px-4 text-sm text-gray-500">
-          {step.startDate ? new Date(step.startDate).toLocaleDateString() : '—'}
+          {step.startDate ? new Date(step.startDate).toLocaleDateString(locale) : '—'}
         </td>
         <td className="py-3 px-4">
           <div className="flex items-center gap-1">
@@ -128,7 +128,7 @@ const SELECT = INPUT;
 export default function ExecutionPage() {
   const { id } = useParams<{ id: string }>();
   const projectId = Number(id);
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { user } = useAuth();
   const role = user?.admin?.role || '';
 
@@ -301,7 +301,7 @@ export default function ExecutionPage() {
                           <span className="text-xs text-gray-500">{Number(phase.progress).toFixed(0)}%</span>
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-500">
-                          {phase.startDate ? new Date(phase.startDate).toLocaleDateString() : '—'}
+                          {phase.startDate ? new Date(phase.startDate).toLocaleDateString(locale) : '—'}
                         </td>
                         <td className="py-3 px-4">
                           {canEdit && (
@@ -371,7 +371,7 @@ export default function ExecutionPage() {
                           {task.assignedTo ? `${task.assignedTo.firstName} ${task.assignedTo.lastName}` : '—'}
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-500">
-                          {task.startDate ? new Date(task.startDate).toLocaleDateString() : '—'}
+                          {task.startDate ? new Date(task.startDate).toLocaleDateString(locale) : '—'}
                         </td>
                         <td className="py-3 px-4">
                           {canEdit && (

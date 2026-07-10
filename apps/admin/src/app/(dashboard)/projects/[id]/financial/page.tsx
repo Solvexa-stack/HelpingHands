@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { financialApi } from '@/lib/api';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import { Plus, Pencil, Trash2, Loader2, TrendingUp, TrendingDown, DollarSign, ArrowLeft } from 'lucide-react';
 
@@ -56,13 +56,14 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function SummaryCard({ label, value, icon: Icon, color }: any) {
+  const { locale } = useLanguage();
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-gray-500 dark:text-gray-400">{label}</span>
         <div className={cn('p-2 rounded-lg', color)}><Icon className="w-4 h-4 text-white" /></div>
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white">${Number(value).toLocaleString()}</p>
+      <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(Number(value), undefined, locale)}</p>
     </div>
   );
 }
@@ -70,7 +71,7 @@ function SummaryCard({ label, value, icon: Icon, color }: any) {
 export default function FinancialPage() {
   const { id } = useParams<{ id: string }>();
   const projectId = Number(id);
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { user } = useAuth();
   const role = user?.admin?.role || '';
 
@@ -214,9 +215,9 @@ export default function FinancialPage() {
                     {budgets.map((b) => (
                       <tr key={b.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                         <td className="py-3 px-4 font-medium text-sm">{b.block?.translations?.[0]?.name || `Budget #${b.id}`}</td>
-                        <td className="py-3 px-4 text-sm">${Number(b.estimatedAmount).toLocaleString()}</td>
-                        <td className="py-3 px-4 text-sm">{b.approvedAmount ? `$${Number(b.approvedAmount).toLocaleString()}` : '—'}</td>
-                        <td className="py-3 px-4 text-sm">${Number(b.actualAmount).toLocaleString()}</td>
+                        <td className="py-3 px-4 text-sm">{formatCurrency(Number(b.estimatedAmount), undefined, locale)}</td>
+                        <td className="py-3 px-4 text-sm">{b.approvedAmount ? formatCurrency(Number(b.approvedAmount), undefined, locale) : '—'}</td>
+                        <td className="py-3 px-4 text-sm">{formatCurrency(Number(b.actualAmount), undefined, locale)}</td>
                         <td className="py-3 px-4">
                           {canFinancial && (
                             <div className="flex gap-1">
@@ -255,7 +256,7 @@ export default function FinancialPage() {
                     {expenses.map((e) => (
                       <tr key={e.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                         <td className="py-3 px-4 font-medium text-sm">{e.block?.translations?.[0]?.name || `Expense #${e.id}`}</td>
-                        <td className="py-3 px-4 text-sm font-medium">${Number(e.amount).toLocaleString()}</td>
+                        <td className="py-3 px-4 text-sm font-medium">{formatCurrency(Number(e.amount), undefined, locale)}</td>
                         <td className="py-3 px-4 text-sm text-gray-500">{e.invoiceRef || '—'}</td>
                         <td className="py-3 px-4">
                           <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', EXPENSE_STATUS_COLORS[e.status])}>
@@ -312,10 +313,10 @@ export default function FinancialPage() {
                             {t(`financial.transactionTypes.${tx.type}`) || tx.type}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-sm font-medium">${Number(tx.amount).toLocaleString()}</td>
+                        <td className="py-3 px-4 text-sm font-medium">{formatCurrency(Number(tx.amount), undefined, locale)}</td>
                         <td className="py-3 px-4 text-sm text-gray-500">{tx.referenceType ? `${tx.referenceType}#${tx.referenceId}` : '—'}</td>
                         <td className="py-3 px-4 text-sm text-gray-500">{tx.notes || '—'}</td>
-                        <td className="py-3 px-4 text-sm text-gray-500">{new Date(tx.createdAt).toLocaleDateString()}</td>
+                        <td className="py-3 px-4 text-sm text-gray-500">{new Date(tx.createdAt).toLocaleDateString(locale)}</td>
                       </tr>
                     ))}
                   </tbody>
