@@ -809,5 +809,45 @@
       "transitionExecuted": "Transition executed",
       "transitionFailed": "Transition failed"
     }
+  },
+  "orgTeam": {
+    "title": "Team",
+    "subtitle": "members of your organization",
+    "restricted": "Team management is available to organization admins.",
+    "inviteHeading": "Invite a member",
+    "emailPlaceholder": "Email",
+    "firstNamePlaceholder": "First name",
+    "lastNamePlaceholder": "Last name",
+    "workspaceRoleTitle": "Workspace role",
+    "passwordPlaceholder": "Password (optional — sets login now)",
+    "createMember": "Create member",
+    "sendInvite": "Send invite",
+    "emailInvalid": "Email must be a full address like name@domain.com",
+    "passwordHint": "Password needs 8+ characters incl. uppercase, lowercase, a number and a special character",
+    "requirementsNote": "Email, first and last name are required. With a password (min 8, uppercase + lowercase + number + special, e.g. {example}) the member can log in immediately; without one they receive an activation link to choose their own.",
+    "memberCreated": "Member created.",
+    "canLoginPrefix": "They can log in right now at",
+    "canLoginMiddle": "with",
+    "canLoginSuffix": "and the password you set.",
+    "devActivationLink": "Dev activation link (no SMTP configured):",
+    "copy": "Copy",
+    "colMember": "Member",
+    "colRoles": "Roles",
+    "addRolePlaceholder": "+ role…",
+    "grant": "Grant",
+    "noMembersYet": "No members yet.",
+    "roles": {
+      "org_admin": "Organization admin",
+      "project_manager": "Project manager",
+      "staff": "Staff",
+      "org_accountant": "Organization accountant",
+      "viewer": "Viewer"
+    },
+    "toast": {
+      "inviteSent": "Invitation sent",
+      "linkCopied": "Link copied",
+      "roleGranted": "Role granted",
+      "roleRevoked": "Role revoked"
+    }
   }
 }

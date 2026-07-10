@@ -809,5 +809,45 @@
       "transitionExecuted": "Transition exécutée",
       "transitionFailed": "Échec de la transition"
     }
+  },
+  "orgTeam": {
+    "title": "Équipe",
+    "subtitle": "membres de votre organisation",
+    "restricted": "La gestion d'équipe est réservée aux administrateurs de l'organisation.",
+    "inviteHeading": "Inviter un membre",
+    "emailPlaceholder": "E-mail",
+    "firstNamePlaceholder": "Prénom",
+    "lastNamePlaceholder": "Nom",
+    "workspaceRoleTitle": "Rôle dans l'espace de travail",
+    "passwordPlaceholder": "Mot de passe (facultatif — active la connexion immédiatement)",
+    "createMember": "Créer le membre",
+    "sendInvite": "Envoyer l'invitation",
+    "emailInvalid": "L'e-mail doit être une adresse complète comme nom@domaine.com",
+    "passwordHint": "Le mot de passe doit comporter au moins 8 caractères, avec majuscule, minuscule, chiffre et caractère spécial",
+    "requirementsNote": "L'e-mail, le prénom et le nom sont requis. Avec un mot de passe (8 caractères min., majuscule + minuscule + chiffre + spécial, ex. {example}), le membre peut se connecter immédiatement ; sans mot de passe, il recevra un lien d'activation pour en choisir un.",
+    "memberCreated": "Membre créé.",
+    "canLoginPrefix": "Il peut se connecter dès maintenant sur",
+    "canLoginMiddle": "avec",
+    "canLoginSuffix": "et le mot de passe que vous avez défini.",
+    "devActivationLink": "Lien d'activation de développement (SMTP non configuré) :",
+    "copy": "Copier",
+    "colMember": "Membre",
+    "colRoles": "Rôles",
+    "addRolePlaceholder": "+ rôle…",
+    "grant": "Attribuer",
+    "noMembersYet": "Aucun membre pour le moment.",
+    "roles": {
+      "org_admin": "Administrateur de l'organisation",
+      "project_manager": "Chef de projet",
+      "staff": "Personnel",
+      "org_accountant": "Comptable de l'organisation",
+      "viewer": "Observateur"
+    },
+    "toast": {
+      "inviteSent": "Invitation envoyée",
+      "linkCopied": "Lien copié",
+      "roleGranted": "Rôle attribué",
+      "roleRevoked": "Rôle révoqué"
+    }
   }
 }

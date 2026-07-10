@@ -809,5 +809,45 @@
       "transitionExecuted": "تم تنفيذ الانتقال",
       "transitionFailed": "فشل الانتقال"
     }
+  },
+  "orgTeam": {
+    "title": "الفريق",
+    "subtitle": "أعضاء منظمتك",
+    "restricted": "إدارة الفريق متاحة لمسؤولي المنظمة فقط.",
+    "inviteHeading": "دعوة عضو",
+    "emailPlaceholder": "البريد الإلكتروني",
+    "firstNamePlaceholder": "الاسم الأول",
+    "lastNamePlaceholder": "اسم العائلة",
+    "workspaceRoleTitle": "دور مساحة العمل",
+    "passwordPlaceholder": "كلمة المرور (اختياري — لتفعيل الدخول فورًا)",
+    "createMember": "إنشاء عضو",
+    "sendInvite": "إرسال الدعوة",
+    "emailInvalid": "يجب أن يكون البريد الإلكتروني بصيغة كاملة مثل name@domain.com",
+    "passwordHint": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل وتتضمن حرفًا كبيرًا وصغيرًا ورقمًا ورمزًا خاصًا",
+    "requirementsNote": "البريد الإلكتروني والاسم الأول والأخير مطلوبة. مع كلمة مرور (8 أحرف على الأقل، حرف كبير + صغير + رقم + رمز خاص، مثل {example}) يمكن للعضو الدخول فورًا؛ بدونها سيتلقى رابط تفعيل لاختيار كلمة المرور بنفسه.",
+    "memberCreated": "تم إنشاء العضو.",
+    "canLoginPrefix": "يمكنه الدخول الآن عبر",
+    "canLoginMiddle": "باستخدام",
+    "canLoginSuffix": "وكلمة المرور التي حددتها.",
+    "devActivationLink": "رابط تفعيل للتطوير (لا يوجد SMTP مُهيأ):",
+    "copy": "نسخ",
+    "colMember": "العضو",
+    "colRoles": "الأدوار",
+    "addRolePlaceholder": "+ دور…",
+    "grant": "منح",
+    "noMembersYet": "لا يوجد أعضاء بعد.",
+    "roles": {
+      "org_admin": "مسؤول المنظمة",
+      "project_manager": "مدير مشروع",
+      "staff": "موظف",
+      "org_accountant": "محاسب المنظمة",
+      "viewer": "مُشاهد"
+    },
+    "toast": {
+      "inviteSent": "تم إرسال الدعوة",
+      "linkCopied": "تم نسخ الرابط",
+      "roleGranted": "تم منح الدور",
+      "roleRevoked": "تم سحب الدور"
+    }
   }
 }

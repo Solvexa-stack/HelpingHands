@@ -49,7 +49,7 @@ export function OrgSidebar() {
             <p className="text-white font-bold text-sm truncate" title={activeOrg?.name}>
               {activeOrg?.name ?? '…'}
             </p>
-            <p className="text-emerald-400 text-xs">Organization workspace</p>
+            <p className="text-emerald-400 text-xs">{t('orgDashboard.hero.eyebrow')}</p>
           </div>
         </div>
       </div>
@@ -91,7 +91,7 @@ export function OrgSidebar() {
               <p className="text-white text-sm font-medium truncate">
                 {user.admin?.firstName} {user.admin?.lastName}
               </p>
-              <p className="text-emerald-400 text-xs">Member</p>
+              <p className="text-emerald-400 text-xs">{t('orgTeam.colMember')}</p>
             </div>
           </div>
         </div>
