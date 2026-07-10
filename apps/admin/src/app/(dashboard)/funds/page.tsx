@@ -6,9 +6,11 @@ import { Banknote, CheckCircle2, Landmark, PauseCircle, Plus, Send, UserPlus, X 
 import { fundsApi, governanceApi, transparencyApi } from '@/lib/api';
 import { useToast } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 /** W7-E3-S2 — monthly intake/outflow trend rows from the ledger read layer. */
 function FundTrends({ fundId }: { fundId: number }) {
+  const { t } = useLanguage();
   const { data } = useQuery({
     queryKey: ['fund-trends', fundId],
     queryFn: () => transparencyApi.fundTrends(fundId),
@@ -18,7 +20,7 @@ function FundTrends({ fundId }: { fundId: number }) {
   const peak = Math.max(...months.map((m: any) => Math.max(m.intake, m.outflow)), 1);
   return (
     <div className="space-y-2">
-      <div className="text-xs font-semibold text-gray-500 uppercase">Monthly trends</div>
+      <div className="text-xs font-semibold text-gray-500 uppercase">{t('funds.trends.heading')}</div>
       {months.map((m: any) => (
         <div key={m.month} className="flex items-center gap-2 text-xs">
           <span className="w-16 text-gray-500 font-mono">{m.month}</span>
@@ -29,7 +31,7 @@ function FundTrends({ fundId }: { fundId: number }) {
           <span className="w-32 text-right text-gray-500">+{Number(m.intake).toLocaleString()} / −{Number(m.outflow).toLocaleString()}</span>
         </div>
       ))}
-      <p className="text-[10px] text-gray-400">green = intake · amber = outflow · source: ledger read layer</p>
+      <p className="text-[10px] text-gray-400">{t('funds.trends.legend')}</p>
     </div>
   );
 }
@@ -55,6 +57,7 @@ const ALLOC_BADGE: Record<string, string> = {
  * disburse tranches → reconcile → close). Board view of all funds.
  */
 export default function FundsPage() {
+  const { t } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -84,14 +87,14 @@ export default function FundsPage() {
   const onError = (err: any) => {
     const data = err?.response?.data;
     const details = Array.isArray(data?.errors) ? `: ${data.errors.join('; ')}` : '';
-    toastError(`${data?.message || 'Failed'}${details}`);
+    toastError(`${data?.message || t('common.failed')}${details}`);
   };
   const mutate = (fn: () => Promise<any>, message: string) =>
     fn().then(() => { success(message); refresh(); }).catch(onError);
 
   const createMutation = useMutation({
     mutationFn: () => fundsApi.create(form),
-    onSuccess: () => { success('Fund created (launch ceiling active)'); setCreateOpen(false); setForm({ name: '', purpose: '' }); refresh(); },
+    onSuccess: () => { success(t('funds.toast.created')); setCreateOpen(false); setForm({ name: '', purpose: '' }); refresh(); },
     onError,
   });
 
@@ -100,11 +103,11 @@ export default function FundsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Banknote className="w-5 h-5 text-primary-600" />
-          <h1 className="text-lg font-semibold">Funds</h1>
-          <span className="text-sm text-gray-400">double-entry treasury · allocations require Board decisions at launch</span>
+          <h1 className="text-lg font-semibold">{t('funds.title')}</h1>
+          <span className="text-sm text-gray-400">{t('funds.subtitle')}</span>
         </div>
         <button onClick={() => setCreateOpen(true)} className="btn-primary btn-md gap-2">
-          <Plus className="w-4 h-4" /> New fund
+          <Plus className="w-4 h-4" /> {t('funds.newFund')}
         </button>
       </div>
 
@@ -117,22 +120,22 @@ export default function FundsPage() {
             </div>
             <p className="text-2xl font-bold mt-2">{Number(fund.balance).toLocaleString()}</p>
             <p className="text-xs text-gray-400 mt-1">
-              {fund._count.memberships} officers · {fund._count.allocations} allocations
+              {t('funds.card.officersAllocations', { officers: fund._count.memberships, allocations: fund._count.allocations })}
             </p>
           </button>
         ))}
-        {(funds ?? []).length === 0 && <p className="text-gray-400 text-sm col-span-3">No funds yet.</p>}
+        {(funds ?? []).length === 0 && <p className="text-gray-400 text-sm col-span-3">{t('funds.empty')}</p>}
       </div>
 
       {/* Create modal */}
       {createOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setCreateOpen(false)}>
           <div className="card p-6 w-full max-w-md space-y-3" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-semibold">New fund</h2>
-            <input className="input w-full" placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <input className="input w-full" placeholder="Purpose" value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} />
-            <p className="text-xs text-gray-400">New funds start with the launch ceiling: every allocation needs a Board decision.</p>
-            <button className="btn-primary btn-md w-full" disabled={!form.name} onClick={() => createMutation.mutate()}>Create</button>
+            <h2 className="font-semibold">{t('funds.newFund')}</h2>
+            <input className="input w-full" placeholder={t('funds.createModal.namePlaceholder')} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input className="input w-full" placeholder={t('funds.createModal.purposePlaceholder')} value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} />
+            <p className="text-xs text-gray-400">{t('funds.createModal.launchCeilingNote')}</p>
+            <button className="btn-primary btn-md w-full" disabled={!form.name} onClick={() => createMutation.mutate()}>{t('common.create')}</button>
           </div>
         </div>
       )}
@@ -151,7 +154,12 @@ export default function FundsPage() {
 
             {/* Dashboard tiles */}
             <div className="grid grid-cols-4 gap-3">
-              {[['Balance', dashboard.balance], ['Intake', dashboard.intake], ['Allocated', dashboard.allocated], ['Disbursed', dashboard.disbursed]].map(([label, value]) => (
+              {[
+                [t('funds.drawer.tileBalance'), dashboard.balance],
+                [t('funds.drawer.tileIntake'), dashboard.intake],
+                [t('funds.drawer.tileAllocated'), dashboard.allocated],
+                [t('funds.drawer.tileDisbursed'), dashboard.disbursed],
+              ].map(([label, value]) => (
                 <div key={label as string} className="card p-3">
                   <p className="text-xs text-gray-500">{label}</p>
                   <p className="text-lg font-bold">{Number(value).toLocaleString()}</p>
@@ -162,12 +170,12 @@ export default function FundsPage() {
             {/* Freeze / unfreeze + W7 statement export */}
             <div className="flex gap-2 items-center">
               {dashboard.fund.status === 'active' ? (
-                <button className="btn-secondary btn-sm gap-1" onClick={() => mutate(() => fundsApi.update(selectedId, { status: 'frozen' }), 'Fund frozen')}>
-                  <PauseCircle className="w-3 h-3" /> Freeze
+                <button className="btn-secondary btn-sm gap-1" onClick={() => mutate(() => fundsApi.update(selectedId, { status: 'frozen' }), t('funds.toast.frozen'))}>
+                  <PauseCircle className="w-3 h-3" /> {t('funds.actions.freeze')}
                 </button>
               ) : dashboard.fund.status === 'frozen' ? (
-                <button className="btn-secondary btn-sm gap-1" onClick={() => mutate(() => fundsApi.update(selectedId, { status: 'active' }), 'Fund reactivated')}>
-                  <CheckCircle2 className="w-3 h-3" /> Reactivate
+                <button className="btn-secondary btn-sm gap-1" onClick={() => mutate(() => fundsApi.update(selectedId, { status: 'active' }), t('funds.toast.reactivated'))}>
+                  <CheckCircle2 className="w-3 h-3" /> {t('funds.actions.reactivate')}
                 </button>
               ) : null}
               <a
@@ -176,7 +184,7 @@ export default function FundsPage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Statement (CSV)
+                {t('funds.actions.statementCsv')}
               </a>
             </div>
 
@@ -185,7 +193,7 @@ export default function FundsPage() {
 
             {/* Officers */}
             <div className="space-y-2">
-              <div className="text-xs font-semibold text-gray-500 uppercase">Officers</div>
+              <div className="text-xs font-semibold text-gray-500 uppercase">{t('funds.drawer.officersHeading')}</div>
               {detail.memberships.map((m: any) => (
                 <div key={m.id} className="flex items-center justify-between text-sm border border-gray-100 dark:border-gray-800 rounded-lg px-3 py-2">
                   <span>{m.user?.email}</span>
@@ -193,59 +201,64 @@ export default function FundsPage() {
                     {m.roles.map((r: string) => (
                       <span key={r} className="badge bg-primary-100 text-primary-800 gap-1">
                         {r.replace('fund_', '')}
-                        <button onClick={() => mutate(() => fundsApi.removeOfficer(selectedId, m.userId, r), 'Role revoked')}>×</button>
+                        <button onClick={() => mutate(() => fundsApi.removeOfficer(selectedId, m.userId, r), t('funds.toast.roleRevoked'))}>×</button>
                       </span>
                     ))}
                   </span>
                 </div>
               ))}
               <div className="flex gap-2">
-                <input className="input" placeholder="User id" value={officer.userId} onChange={(e) => setOfficer({ ...officer, userId: e.target.value })} />
+                <input className="input" placeholder={t('funds.officer.userIdPlaceholder')} value={officer.userId} onChange={(e) => setOfficer({ ...officer, userId: e.target.value })} />
                 <select className="input" value={officer.role} onChange={(e) => setOfficer({ ...officer, role: e.target.value })}>
                   {FUND_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
                 <button
                   className="btn-secondary btn-sm gap-1"
                   disabled={!officer.userId}
-                  onClick={() => mutate(() => fundsApi.addOfficer(selectedId, Number(officer.userId), officer.role), 'Officer added')}
+                  onClick={() => mutate(() => fundsApi.addOfficer(selectedId, Number(officer.userId), officer.role), t('funds.toast.officerAdded'))}
                 >
-                  <UserPlus className="w-3 h-3" /> Add
+                  <UserPlus className="w-3 h-3" /> {t('funds.actions.add')}
                 </button>
               </div>
             </div>
 
             {/* Propose allocation */}
             <div className="space-y-2">
-              <div className="text-xs font-semibold text-gray-500 uppercase">Propose allocation</div>
+              <div className="text-xs font-semibold text-gray-500 uppercase">{t('funds.propose.heading')}</div>
               <div className="grid grid-cols-4 gap-2">
-                <input className="input" placeholder="Project id" value={proposal.projectId} onChange={(e) => setProposal({ ...proposal, projectId: e.target.value })} />
-                <input className="input" placeholder="Amount" value={proposal.amount} onChange={(e) => setProposal({ ...proposal, amount: e.target.value })} />
-                <input className="input" placeholder="Note" value={proposal.note} onChange={(e) => setProposal({ ...proposal, note: e.target.value })} />
+                <input className="input" placeholder={t('funds.propose.projectIdPlaceholder')} value={proposal.projectId} onChange={(e) => setProposal({ ...proposal, projectId: e.target.value })} />
+                <input className="input" placeholder={t('funds.propose.amountPlaceholder')} value={proposal.amount} onChange={(e) => setProposal({ ...proposal, amount: e.target.value })} />
+                <input className="input" placeholder={t('funds.propose.notePlaceholder')} value={proposal.note} onChange={(e) => setProposal({ ...proposal, note: e.target.value })} />
                 <button
                   className="btn-primary btn-sm gap-1"
                   disabled={!proposal.projectId || !proposal.amount}
                   onClick={() =>
                     mutate(
                       () => fundsApi.propose(selectedId, { projectId: Number(proposal.projectId), amount: Number(proposal.amount), note: proposal.note || undefined }),
-                      'Allocation proposed — Board decision required',
+                      t('funds.toast.allocationProposed'),
                     ).then(() => setProposal({ projectId: '', amount: '', note: '' }))
                   }
                 >
-                  <Send className="w-3 h-3" /> Propose
+                  <Send className="w-3 h-3" /> {t('funds.propose.submit')}
                 </button>
               </div>
             </div>
 
             {/* Allocations */}
             <div className="space-y-2">
-              <div className="text-xs font-semibold text-gray-500 uppercase">Allocations</div>
+              <div className="text-xs font-semibold text-gray-500 uppercase">{t('funds.allocations.heading')}</div>
               {detail.allocations.map((a: any) => (
                 <div key={a.id} className="border border-gray-100 dark:border-gray-800 rounded-lg p-3 space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">#{a.id} → project {a.projectId} · {Number(a.amount).toLocaleString()}</span>
+                    <span className="font-medium">
+                      {t('funds.allocations.rowSummary', { id: a.id, projectId: a.projectId, amount: Number(a.amount).toLocaleString() })}
+                    </span>
                     <span className={cn('badge', ALLOC_BADGE[a.status])}>{a.status}</span>
                   </div>
-                  <p className="text-xs text-gray-400">disbursed {a.disbursed} of {Number(a.amount).toLocaleString()}{a.note ? ` · ${a.note}` : ''}</p>
+                  <p className="text-xs text-gray-400">
+                    {t('funds.allocations.disbursedOf', { disbursed: a.disbursed, amount: Number(a.amount).toLocaleString() })}
+                    {a.note ? ` · ${a.note}` : ''}
+                  </p>
                   <div className="flex flex-wrap gap-1">
                     {a.status === 'proposed' && (
                       <>
@@ -255,13 +268,18 @@ export default function FundsPage() {
                             mutate(
                               () =>
                                 governanceApi
-                                  .recordDecision({ subjectType: 'fund_allocation', subjectId: a.id, decision: 'approved', rationale: `Allocation #${a.id} approved by the Board` })
+                                  .recordDecision({
+                                    subjectType: 'fund_allocation',
+                                    subjectId: a.id,
+                                    decision: 'approved',
+                                    rationale: t('funds.allocations.approveRationale', { id: a.id }),
+                                  })
                                   .then(() => fundsApi.approve(a.id)),
-                              'Board decision recorded, allocation approved',
+                              t('funds.toast.decisionApproved'),
                             )
                           }
                         >
-                          Decide + approve (Board)
+                          {t('funds.actions.decideApprove')}
                         </button>
                       </>
                     )}
@@ -269,35 +287,35 @@ export default function FundsPage() {
                       <>
                         <input
                           className="input w-24 text-xs"
-                          placeholder="Tranche"
+                          placeholder={t('funds.actions.tranchePlaceholder')}
                           value={tranche[a.id] ?? ''}
                           onChange={(e) => setTranche({ ...tranche, [a.id]: e.target.value })}
                         />
                         <button
                           className="btn-secondary btn-sm"
                           disabled={!tranche[a.id]}
-                          onClick={() => mutate(() => fundsApi.disburse(a.id, Number(tranche[a.id])), 'Tranche disbursed')}
+                          onClick={() => mutate(() => fundsApi.disburse(a.id, Number(tranche[a.id])), t('funds.toast.trancheDisbursed'))}
                         >
-                          Disburse
+                          {t('funds.actions.disburse')}
                         </button>
                       </>
                     )}
                     {a.status === 'disbursing' && a.disbursed === Number(a.amount) && (
-                      <button className="btn-secondary btn-sm" onClick={() => mutate(() => fundsApi.reconcile(a.id), 'Reconciled')}>Reconcile</button>
+                      <button className="btn-secondary btn-sm" onClick={() => mutate(() => fundsApi.reconcile(a.id), t('funds.toast.reconciled'))}>{t('funds.actions.reconcile')}</button>
                     )}
                     {a.status === 'reconciled' && (
-                      <button className="btn-secondary btn-sm" onClick={() => mutate(() => fundsApi.close(a.id), 'Closed')}>Close</button>
+                      <button className="btn-secondary btn-sm" onClick={() => mutate(() => fundsApi.close(a.id), t('funds.toast.closed'))}>{t('funds.actions.close')}</button>
                     )}
                   </div>
                 </div>
               ))}
-              {detail.allocations.length === 0 && <p className="text-xs text-gray-400">No allocations yet.</p>}
+              {detail.allocations.length === 0 && <p className="text-xs text-gray-400">{t('funds.allocations.empty')}</p>}
             </div>
 
             {/* Recent statement */}
             <div className="space-y-1">
               <div className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1">
-                <Landmark className="w-3 h-3" /> Recent statement
+                <Landmark className="w-3 h-3" /> {t('funds.statement.heading')}
               </div>
               {(dashboard.statement ?? []).map((e: any) => (
                 <div key={e.id} className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300 border-b border-gray-50 dark:border-gray-800 py-1">

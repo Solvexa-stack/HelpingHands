@@ -574,5 +574,73 @@
       "visibilityWorkspaceOnly": "espace de travail uniquement",
       "policyNote": "Les modifications sont auditées par le conseil et se répercutent immédiatement sur le portail public."
     }
+  },
+  "funds": {
+    "title": "Fonds",
+    "subtitle": "trésorerie en partie double · les allocations nécessitent des décisions du conseil au lancement",
+    "newFund": "Nouveau fonds",
+    "empty": "Aucun fonds pour le moment.",
+    "card": {
+      "officersAllocations": "{officers} responsables · {allocations} allocations"
+    },
+    "trends": {
+      "heading": "Tendances mensuelles",
+      "legend": "vert = recettes · ambre = sorties · source : couche de lecture du grand livre"
+    },
+    "createModal": {
+      "namePlaceholder": "Nom",
+      "purposePlaceholder": "Objet",
+      "launchCeilingNote": "Les nouveaux fonds démarrent avec le plafond de lancement : chaque allocation nécessite une décision du conseil."
+    },
+    "drawer": {
+      "tileBalance": "Solde",
+      "tileIntake": "Recettes",
+      "tileAllocated": "Alloué",
+      "tileDisbursed": "Décaissé",
+      "officersHeading": "Responsables"
+    },
+    "officer": {
+      "userIdPlaceholder": "ID utilisateur"
+    },
+    "propose": {
+      "heading": "Proposer une allocation",
+      "projectIdPlaceholder": "ID du projet",
+      "amountPlaceholder": "Montant",
+      "notePlaceholder": "Note",
+      "submit": "Proposer"
+    },
+    "allocations": {
+      "heading": "Allocations",
+      "rowSummary": "#{id} → projet {projectId} · {amount}",
+      "disbursedOf": "décaissé {disbursed} sur {amount}",
+      "approveRationale": "Allocation #{id} approuvée par le conseil",
+      "empty": "Aucune allocation pour le moment."
+    },
+    "actions": {
+      "freeze": "Geler",
+      "reactivate": "Réactiver",
+      "statementCsv": "Relevé (CSV)",
+      "add": "Ajouter",
+      "decideApprove": "Décider + approuver (conseil)",
+      "tranchePlaceholder": "Tranche",
+      "disburse": "Décaisser",
+      "reconcile": "Rapprocher",
+      "close": "Clôturer"
+    },
+    "statement": {
+      "heading": "Relevé récent"
+    },
+    "toast": {
+      "created": "Fonds créé (plafond de lancement actif)",
+      "frozen": "Fonds gelé",
+      "reactivated": "Fonds réactivé",
+      "roleRevoked": "Rôle révoqué",
+      "officerAdded": "Responsable ajouté",
+      "allocationProposed": "Allocation proposée — décision du conseil requise",
+      "decisionApproved": "Décision du conseil enregistrée, allocation approuvée",
+      "trancheDisbursed": "Tranche décaissée",
+      "reconciled": "Rapproché",
+      "closed": "Clôturé"
+    }
   }
 }

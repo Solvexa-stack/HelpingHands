@@ -574,5 +574,73 @@
       "visibilityWorkspaceOnly": "داخل مساحة العمل فقط",
       "policyNote": "يتم تدقيق التغييرات من قبل المجلس وتنعكس على البوابة العامة فورًا."
     }
+  },
+  "funds": {
+    "title": "الصناديق",
+    "subtitle": "خزينة بقيد مزدوج · تتطلب المخصصات قرار مجلس عند الإطلاق",
+    "newFund": "صندوق جديد",
+    "empty": "لا توجد صناديق بعد.",
+    "card": {
+      "officersAllocations": "{officers} موظفين · {allocations} مخصصات"
+    },
+    "trends": {
+      "heading": "الاتجاهات الشهرية",
+      "legend": "أخضر = الإيرادات · كهرماني = المصروفات · المصدر: طبقة قراءة دفتر الأستاذ"
+    },
+    "createModal": {
+      "namePlaceholder": "الاسم",
+      "purposePlaceholder": "الغرض",
+      "launchCeilingNote": "تبدأ الصناديق الجديدة بسقف الإطلاق: كل تخصيص يتطلب قرار مجلس."
+    },
+    "drawer": {
+      "tileBalance": "الرصيد",
+      "tileIntake": "الإيرادات",
+      "tileAllocated": "المخصص",
+      "tileDisbursed": "المصروف",
+      "officersHeading": "الموظفون"
+    },
+    "officer": {
+      "userIdPlaceholder": "معرّف المستخدم"
+    },
+    "propose": {
+      "heading": "اقتراح تخصيص",
+      "projectIdPlaceholder": "معرّف المشروع",
+      "amountPlaceholder": "المبلغ",
+      "notePlaceholder": "ملاحظة",
+      "submit": "اقتراح"
+    },
+    "allocations": {
+      "heading": "المخصصات",
+      "rowSummary": "#{id} ← مشروع {projectId} · {amount}",
+      "disbursedOf": "تم صرف {disbursed} من أصل {amount}",
+      "approveRationale": "تمت الموافقة على التخصيص رقم {id} من قبل المجلس",
+      "empty": "لا توجد مخصصات بعد."
+    },
+    "actions": {
+      "freeze": "تجميد",
+      "reactivate": "إعادة تفعيل",
+      "statementCsv": "كشف الحساب (CSV)",
+      "add": "إضافة",
+      "decideApprove": "اتخاذ قرار + موافقة (المجلس)",
+      "tranchePlaceholder": "الدفعة",
+      "disburse": "صرف",
+      "reconcile": "تسوية",
+      "close": "إغلاق"
+    },
+    "statement": {
+      "heading": "الكشف الأخير"
+    },
+    "toast": {
+      "created": "تم إنشاء الصندوق (سقف الإطلاق مُفعَّل)",
+      "frozen": "تم تجميد الصندوق",
+      "reactivated": "تمت إعادة تفعيل الصندوق",
+      "roleRevoked": "تم سحب الدور",
+      "officerAdded": "تمت إضافة الموظف",
+      "allocationProposed": "تم اقتراح التخصيص — يتطلب قرار مجلس",
+      "decisionApproved": "تم تسجيل قرار المجلس، وتمت الموافقة على التخصيص",
+      "trancheDisbursed": "تم صرف الدفعة",
+      "reconciled": "تمت التسوية",
+      "closed": "تم الإغلاق"
+    }
   }
 }

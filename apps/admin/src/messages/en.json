@@ -574,5 +574,73 @@
       "visibilityWorkspaceOnly": "workspace only",
       "policyNote": "Changes are Board-audited and flow to the public portal immediately."
     }
+  },
+  "funds": {
+    "title": "Funds",
+    "subtitle": "double-entry treasury · allocations require Board decisions at launch",
+    "newFund": "New fund",
+    "empty": "No funds yet.",
+    "card": {
+      "officersAllocations": "{officers} officers · {allocations} allocations"
+    },
+    "trends": {
+      "heading": "Monthly trends",
+      "legend": "green = intake · amber = outflow · source: ledger read layer"
+    },
+    "createModal": {
+      "namePlaceholder": "Name",
+      "purposePlaceholder": "Purpose",
+      "launchCeilingNote": "New funds start with the launch ceiling: every allocation needs a Board decision."
+    },
+    "drawer": {
+      "tileBalance": "Balance",
+      "tileIntake": "Intake",
+      "tileAllocated": "Allocated",
+      "tileDisbursed": "Disbursed",
+      "officersHeading": "Officers"
+    },
+    "officer": {
+      "userIdPlaceholder": "User id"
+    },
+    "propose": {
+      "heading": "Propose allocation",
+      "projectIdPlaceholder": "Project id",
+      "amountPlaceholder": "Amount",
+      "notePlaceholder": "Note",
+      "submit": "Propose"
+    },
+    "allocations": {
+      "heading": "Allocations",
+      "rowSummary": "#{id} → project {projectId} · {amount}",
+      "disbursedOf": "disbursed {disbursed} of {amount}",
+      "approveRationale": "Allocation #{id} approved by the Board",
+      "empty": "No allocations yet."
+    },
+    "actions": {
+      "freeze": "Freeze",
+      "reactivate": "Reactivate",
+      "statementCsv": "Statement (CSV)",
+      "add": "Add",
+      "decideApprove": "Decide + approve (Board)",
+      "tranchePlaceholder": "Tranche",
+      "disburse": "Disburse",
+      "reconcile": "Reconcile",
+      "close": "Close"
+    },
+    "statement": {
+      "heading": "Recent statement"
+    },
+    "toast": {
+      "created": "Fund created (launch ceiling active)",
+      "frozen": "Fund frozen",
+      "reactivated": "Fund reactivated",
+      "roleRevoked": "Role revoked",
+      "officerAdded": "Officer added",
+      "allocationProposed": "Allocation proposed — Board decision required",
+      "decisionApproved": "Board decision recorded, allocation approved",
+      "trancheDisbursed": "Tranche disbursed",
+      "reconciled": "Reconciled",
+      "closed": "Closed"
+    }
   }
 }
