@@ -78,7 +78,7 @@ export function OnlineDonateButton({ projectId }: OnlineDonateButtonProps) {
       {/* Amount + currency */}
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+          <span className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
             {currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '£'}
           </span>
           <input
@@ -87,7 +87,7 @@ export function OnlineDonateButton({ projectId }: OnlineDonateButtonProps) {
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
             min="1"
-            className="input pl-8 w-full"
+            className="input ps-8 w-full"
           />
         </div>
         <select

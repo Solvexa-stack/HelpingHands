@@ -114,9 +114,9 @@ export default function ProfilePage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{tAuth('email')}</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Mail className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                  className="w-full ps-10 pe-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
                   value={user.email}
                   disabled
                 />
@@ -144,7 +144,7 @@ export default function ProfilePage() {
                   {t('profilePage.saveSuccess')}
                 </div>
               )}
-              <div className="ml-auto">
+              <div className="ms-auto">
                 <button
                   onClick={() => mutation.mutate()}
                   disabled={mutation.isPending || !form.firstName || !form.lastName}

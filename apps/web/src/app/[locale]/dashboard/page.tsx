@@ -78,14 +78,14 @@ function NotificationBell() {
       >
         <Bell className="w-5 h-5" />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -end-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden">
+        <div className="absolute end-0 top-full mt-2 w-80 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <h3 className="font-semibold text-gray-900 text-sm">{tNotif('title')}</h3>
             {unread > 0 && <span className="badge bg-red-100 text-red-600 text-xs">{tNotif('newCount', { count: unread })}</span>}
@@ -109,7 +109,7 @@ function NotificationBell() {
                   >
                     <div className="flex items-start gap-2">
                       {isUnread && <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />}
-                      <div className={cn('flex-1 min-w-0', !isUnread && 'pl-4')}>
+                      <div className={cn('flex-1 min-w-0', !isUnread && 'ps-4')}>
                         <p className="text-sm text-gray-800 line-clamp-2">{n.title || n.type?.replace(/_/g, ' ')}</p>
                         <p className="text-xs text-gray-400 mt-0.5">{n.createdAt ? formatDate(n.createdAt, locale) : ''}</p>
                       </div>
@@ -310,7 +310,7 @@ export default function DashboardPage() {
                         <p className="font-semibold text-gray-900 truncate">{translation?.name || t('projectFallback')}</p>
                         <p className="text-sm text-gray-400 mt-0.5">{formatDate(donation.createdAt, locale)}</p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-end">
                         <p className="font-bold text-gray-900">{formatCurrency(Number(donation.amount), undefined, locale)}</p>
                         <span className={`badge mt-1 ${getStatusColor(donation.status)}`}>
                           {donation.status}
@@ -366,7 +366,7 @@ export default function DashboardPage() {
                           <span className="text-xs text-gray-400">{formatDate(d.createdAt, locale)}</span>
                         </div>
                       </div>
-                      <div className="text-right space-y-1">
+                      <div className="text-end space-y-1">
                         <p className="font-bold text-gray-900">{formatCurrency(Number(d.amount), d.currency, locale)}</p>
                         <span className={`badge text-xs ${getStatusColor(d.status)}`}>{d.status}</span>
                       </div>

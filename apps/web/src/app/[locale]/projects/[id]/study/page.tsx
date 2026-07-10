@@ -62,7 +62,7 @@ export default async function StudyPage({ params: { locale, id } }: Props) {
             <div className="relative h-52">
               <Image src={coverFile.url} alt={translation?.name || ''} fill className="object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              <div className="absolute bottom-4 left-6 text-white">
+              <div className="absolute bottom-4 start-6 text-white">
                 <h1 className="text-2xl font-extrabold">{translation?.name}</h1>
                 {project.location && (
                   <p className="flex items-center gap-1.5 text-sm opacity-80 mt-1">

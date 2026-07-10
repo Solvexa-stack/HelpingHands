@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 
 const navLinks = [
   { href: '/projects', label: 'projects' },
+  { href: '/transparency', label: 'transparency' },
   { href: '/news', label: 'news' },
   { href: '/blogs', label: 'blogs' },
   { href: '/events', label: 'events' },
@@ -83,13 +84,13 @@ export function Navbar() {
               <ChevronDown className="w-3 h-3" />
             </button>
             {langOpen && (
-              <div className="absolute top-full mt-1 right-0 bg-white border border-gray-100 rounded-xl shadow-lg py-1 min-w-[120px]">
+              <div className="absolute top-full mt-1 end-0 bg-white border border-gray-100 rounded-xl shadow-lg py-1 min-w-[120px]">
                 {languages.map((l) => (
                   <button
                     key={l.code}
                     onClick={() => switchLocale(l.code)}
                     className={cn(
-                      'w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors',
+                      'w-full text-start px-4 py-2 text-sm hover:bg-gray-50 transition-colors',
                       l.code === locale ? 'text-primary-600 font-medium' : 'text-gray-700',
                     )}
                   >
@@ -108,14 +109,14 @@ export function Navbar() {
                 </div>
                 <ChevronDown className="w-3 h-3" />
               </button>
-              <div className="absolute top-full mt-1 right-0 bg-white border border-gray-100 rounded-xl shadow-lg py-1 min-w-[160px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+              <div className="absolute top-full mt-1 end-0 bg-white border border-gray-100 rounded-xl shadow-lg py-1 min-w-[160px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                 <Link href={`/${locale}/dashboard`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                   {t('dashboard')}
                 </Link>
                 <hr className="my-1 border-gray-100" />
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  className="w-full text-start px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                 >
                   {t('logout')}
                 </button>

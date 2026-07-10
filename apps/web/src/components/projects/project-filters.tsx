@@ -38,13 +38,13 @@ export function ProjectFilters({ locale }: { locale: string }) {
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Search */}
         <form onSubmit={handleSearch} className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('search')}
-            className="input pl-10 pr-4"
+            className="input ps-10 pe-4"
           />
         </form>
 

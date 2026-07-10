@@ -72,7 +72,7 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
                   </div>
                 )}
                 {project.isCompleted && (
-                  <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-green-500 text-white px-3 py-1.5 rounded-full text-sm font-semibold">
+                  <div className="absolute top-4 end-4 flex items-center gap-1.5 bg-green-500 text-white px-3 py-1.5 rounded-full text-sm font-semibold">
                     <CheckCircle className="w-4 h-4" />
                     {t('filters.completed')}
                   </div>
@@ -100,7 +100,7 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
                       .map((p: any) => (
                         <span key={p.id} className="badge bg-emerald-50 text-emerald-700 whitespace-nowrap">
                           {p.organization?.name}
-                          <span className="text-emerald-400 ml-1">· {String(p.role).replace(/_/g, ' ')}</span>
+                          <span className="text-emerald-400 ms-1">· {String(p.role).replace(/_/g, ' ')}</span>
                         </span>
                       ))}
                   </div>

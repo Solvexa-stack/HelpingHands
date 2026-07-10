@@ -113,7 +113,7 @@ export function VoteForm({ studyId, studyStatus, votingStartsAt, votingEndsAt }:
           <span className="font-semibold capitalize">{t(myVote as any)}</span>
           <button
             onClick={() => setChoice(myVote)}
-            className="ml-3 text-blue-600 hover:underline text-xs"
+            className="ms-3 text-blue-600 hover:underline text-xs"
           >
             {t('change')}
           </button>

@@ -33,13 +33,13 @@ export function ProjectCard({ project, locale, className }: ProjectCardProps) {
           </div>
         )}
         {/* Status badge */}
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-3 end-3">
           <span className={cn('badge text-xs', isCompleted ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700')}>
             {isCompleted ? 'Completed' : 'Active'}
           </span>
         </div>
         {/* Category badge */}
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-3 start-3">
           <span className="badge bg-white/90 text-gray-700 capitalize text-xs backdrop-blur-sm">
             {project.category}
           </span>
@@ -72,11 +72,11 @@ export function ProjectCard({ project, locale, className }: ProjectCardProps) {
             <p className="text-gray-400 text-xs">Collected</p>
             <p className="font-bold text-primary-600">{formatCurrency(project.collectedAmount || 0, undefined, locale)}</p>
           </div>
-          <div className="text-right">
+          <div className="text-end">
             <p className="text-gray-400 text-xs">Target</p>
             <p className="font-bold text-gray-700">{formatCurrency(Number(project.value), undefined, locale)}</p>
           </div>
-          <div className="text-right">
+          <div className="text-end">
             <p className="text-gray-400 text-xs">Progress</p>
             <p className="font-bold text-gray-700">{progression.toFixed(1)}%</p>
           </div>

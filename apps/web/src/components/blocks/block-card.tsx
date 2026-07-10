@@ -31,7 +31,7 @@ export function BlockCard({ block, locale, category }: BlockCardProps) {
           <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200" />
         )}
         {block.startDate && (
-          <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-lg px-2.5 py-1 flex items-center gap-1.5 text-xs text-gray-700">
+          <div className="absolute bottom-3 start-3 bg-white/90 backdrop-blur-sm rounded-lg px-2.5 py-1 flex items-center gap-1.5 text-xs text-gray-700">
             <Calendar className="w-3 h-3" />
             {formatDate(block.startDate, locale)}
           </div>

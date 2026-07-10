@@ -110,14 +110,14 @@ export function DonateButton({ projectId, locale }: DonateButtonProps) {
       <div>
         <label className="label">{t('amount')}</label>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
+          <span className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
           <input
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder={t('amountPlaceholder')}
             min="1"
-            className="input pl-8"
+            className="input ps-8"
           />
         </div>
       </div>

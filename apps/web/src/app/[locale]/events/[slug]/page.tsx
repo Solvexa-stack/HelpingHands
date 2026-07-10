@@ -44,7 +44,7 @@ export default async function EventDetailPage({ params: { locale, slug } }: Prop
           <div className="w-full h-full bg-gradient-to-br from-primary-600 to-primary-800" />
         )}
         <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute bottom-0 left-0 right-0 p-8 container">
+        <div className="absolute bottom-0 start-0 end-0 p-8 container">
           <Link
             href={`/${locale}/events`}
             className="inline-flex items-center gap-2 text-white/80 hover:text-white text-sm mb-4 transition-colors"
@@ -78,7 +78,7 @@ export default async function EventDetailPage({ params: { locale, slug } }: Prop
         )}
 
         {t?.brief && (
-          <p className="text-xl text-gray-600 font-medium leading-relaxed mb-8 border-l-4 border-primary-500 pl-5">
+          <p className="text-xl text-gray-600 font-medium leading-relaxed mb-8 border-l-4 border-primary-500 ps-5">
             {t.brief}
           </p>
         )}
