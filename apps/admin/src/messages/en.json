@@ -176,7 +176,8 @@
     "draft": "Draft",
     "total": "Total",
     "failed": "Failed",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "notAvailable": "N/A"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -205,7 +206,39 @@
     "exportCsv": "Export CSV",
     "exporting": "Exporting…",
     "allStatuses": "All Statuses",
-    "searchPlaceholder": "Search donations..."
+    "searchPlaceholder": "Search donations...",
+    "status": "Status",
+    "actions": "Actions",
+    "loadingRow": "Loading...",
+    "noDonationsFound": "No donations found",
+    "statuses": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
+    "totalCount": "{count} total",
+    "updateStatusTitle": "Update Status",
+    "downloadQrTitle": "Download QR Code",
+    "toast": {
+      "updated": "Donation status updated",
+      "updateFailed": "Update failed"
+    },
+    "scanner": {
+      "title": "QR Code Verification",
+      "instructions": "Enter the donation token or paste the full QR code URL to look up a donation.",
+      "placeholder": "Token or full URL...",
+      "notFound": "No donation found for this token or QR code",
+      "donationHash": "Donation #{id}",
+      "process": "Process This Donation"
+    },
+    "verify": {
+      "title": "Verify Donation #{id}",
+      "notesLabel": "Notes (optional)",
+      "notesPlaceholder": "Add any notes about this payment verification...",
+      "reject": "Reject",
+      "approve": "Approve"
+    }
   },
   "projects": {
     "title": "Projects",

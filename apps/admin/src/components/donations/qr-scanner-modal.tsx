@@ -13,7 +13,7 @@ interface Props {
 }
 
 export function QrScannerModal({ onClose, onFound }: Props) {
-  const { locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -32,7 +32,7 @@ export function QrScannerModal({ onClose, onFound }: Props) {
       const donation = await donationsApi.getByToken(extracted);
       setResult(donation);
     } catch {
-      setError('No donation found for this token or QR code');
+      setError(t('donations.scanner.notFound'));
     } finally {
       setLoading(false);
     }
@@ -44,7 +44,7 @@ export function QrScannerModal({ onClose, onFound }: Props) {
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <ScanBarcode className="w-5 h-5 text-primary-600" />
-            <h2 className="font-semibold text-gray-900">QR Code Verification</h2>
+            <h2 className="font-semibold text-gray-900">{t('donations.scanner.title')}</h2>
           </div>
           <button onClick={onClose} className="btn-ghost btn-sm p-1.5 rounded-lg">
             <X className="w-4 h-4" />
@@ -53,7 +53,7 @@ export function QrScannerModal({ onClose, onFound }: Props) {
 
         <div className="p-6 space-y-4">
           <p className="text-sm text-gray-500">
-            Enter the donation token or paste the full QR code URL to look up a donation.
+            {t('donations.scanner.instructions')}
           </p>
 
           <div className="flex gap-2">
@@ -62,7 +62,7 @@ export function QrScannerModal({ onClose, onFound }: Props) {
               onChange={(e) => setToken(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && lookup()}
               className="input flex-1"
-              placeholder="Token or full URL..."
+              placeholder={t('donations.scanner.placeholder')}
               autoFocus
             />
             <button onClick={lookup} disabled={loading || !token} className="btn-primary btn-md">
@@ -75,16 +75,16 @@ export function QrScannerModal({ onClose, onFound }: Props) {
           {result && (
             <div className="bg-gray-50 rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-gray-900">Donation #{result.id}</h3>
-                <span className={cn('badge', STATUS_COLORS[result.status])}>{result.status}</span>
+                <h3 className="font-semibold text-gray-900">{t('donations.scanner.donationHash', { id: result.id })}</h3>
+                <span className={cn('badge', STATUS_COLORS[result.status])}>{t(`donations.statuses.${result.status}`) || result.status}</span>
               </div>
 
               <table className="w-full text-sm">
                 <tbody className="space-y-1">
                   {[
-                    ['Participant', `${result.participant?.firstName} ${result.participant?.lastName}`],
-                    ['Project', getTranslation(result.project?.block?.translations || [])?.name || '—'],
-                    ['Amount', formatCurrency(Number(result.amount), undefined, locale)],
+                    [t('donations.participant'), `${result.participant?.firstName} ${result.participant?.lastName}`],
+                    [t('donations.project'), getTranslation(result.project?.block?.translations || [])?.name || '—'],
+                    [t('donations.amount'), formatCurrency(Number(result.amount), undefined, locale)],
                   ].map(([l, v]) => (
                     <tr key={l}>
                       <td className="py-1 text-gray-500 w-24">{l}</td>
@@ -99,7 +99,7 @@ export function QrScannerModal({ onClose, onFound }: Props) {
                   onClick={() => onFound(result)}
                   className="btn-primary btn-md w-full mt-2 justify-center"
                 >
-                  Process This Donation
+                  {t('donations.scanner.process')}
                 </button>
               )}
             </div>

@@ -176,7 +176,8 @@
     "draft": "مسودة",
     "total": "الإجمالي",
     "failed": "فشل",
-    "confirm": "تأكيد"
+    "confirm": "تأكيد",
+    "notAvailable": "غير متاح"
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -205,7 +206,39 @@
     "exportCsv": "تصدير CSV",
     "exporting": "جار التصدير…",
     "allStatuses": "كل الحالات",
-    "searchPlaceholder": "البحث في التبرعات..."
+    "searchPlaceholder": "البحث في التبرعات...",
+    "status": "الحالة",
+    "actions": "إجراءات",
+    "loadingRow": "جار التحميل...",
+    "noDonationsFound": "لا توجد تبرعات",
+    "statuses": {
+      "pending": "قيد الانتظار",
+      "approved": "معتمد",
+      "rejected": "مرفوض",
+      "cancelled": "ملغى"
+    },
+    "totalCount": "{count} إجمالاً",
+    "updateStatusTitle": "تحديث الحالة",
+    "downloadQrTitle": "تنزيل رمز QR",
+    "toast": {
+      "updated": "تم تحديث حالة التبرع",
+      "updateFailed": "فشل التحديث"
+    },
+    "scanner": {
+      "title": "التحقق من رمز QR",
+      "instructions": "أدخل رمز التبرع أو الصق رابط رمز QR الكامل للبحث عن تبرع.",
+      "placeholder": "الرمز أو الرابط الكامل...",
+      "notFound": "لم يتم العثور على تبرع لهذا الرمز أو رمز QR",
+      "donationHash": "التبرع رقم {id}",
+      "process": "معالجة هذا التبرع"
+    },
+    "verify": {
+      "title": "التحقق من التبرع رقم {id}",
+      "notesLabel": "ملاحظات (اختياري)",
+      "notesPlaceholder": "أضف أي ملاحظات حول التحقق من هذه الدفعة...",
+      "reject": "رفض",
+      "approve": "اعتماد"
+    }
   },
   "projects": {
     "title": "المشاريع",

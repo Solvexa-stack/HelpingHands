@@ -54,7 +54,7 @@ function downloadQr(token: string) {
 }
 
 export default function DonationsPage() {
-  const { locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
@@ -85,12 +85,12 @@ export default function DonationsPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, status, notes }: any) => donationsApi.updateStatus(id, { status, notes }),
     onSuccess: () => {
-      success('Donation status updated');
+      success(t('donations.toast.updated'));
       qc.invalidateQueries({ queryKey: ['donations'] });
       qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
       setStatusModal(null);
     },
-    onError: (err: any) => toastError(err?.response?.data?.message || 'Update failed'),
+    onError: (err: any) => toastError(err?.response?.data?.message || t('donations.toast.updateFailed')),
   });
 
   return (
@@ -104,7 +104,7 @@ export default function DonationsPage() {
             type="text"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Search donations..."
+            placeholder={t('donations.searchPlaceholder')}
             className="input ps-9"
           />
         </div>
@@ -115,22 +115,22 @@ export default function DonationsPage() {
           onChange={(e) => { setStatus(e.target.value); setPage(1); }}
           className="input w-40"
         >
-          <option value="">All Statuses</option>
+          <option value="">{t('donations.allStatuses')}</option>
           {statuses.filter(Boolean).map((s) => (
-            <option key={s} value={s} className="capitalize">{s}</option>
+            <option key={s} value={s}>{t(`donations.statuses.${s}`) || s}</option>
           ))}
         </select>
 
         {/* Export CSV */}
         <button onClick={handleExport} disabled={exporting} className="btn-secondary btn-md gap-2">
           <Download className="w-4 h-4" />
-          {exporting ? 'Exporting…' : 'Export CSV'}
+          {exporting ? t('donations.exporting') : t('donations.exportCsv')}
         </button>
 
         {/* QR Scanner */}
         <button onClick={() => setScanOpen(true)} className="btn-primary btn-md gap-2">
           <ScanBarcode className="w-4 h-4" />
-          Scan QR
+          {t('donations.scanQr')}
         </button>
       </div>
 
@@ -140,23 +140,23 @@ export default function DonationsPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="table-header">ID</th>
-                <th className="table-header">Participant</th>
-                <th className="table-header">Project</th>
-                <th className="table-header">Amount</th>
-                <th className="table-header">Status</th>
-                <th className="table-header">Date</th>
-                <th className="table-header">Actions</th>
+                <th className="table-header">{t('donations.id')}</th>
+                <th className="table-header">{t('donations.participant')}</th>
+                <th className="table-header">{t('donations.project')}</th>
+                <th className="table-header">{t('donations.amount')}</th>
+                <th className="table-header">{t('donations.status')}</th>
+                <th className="table-header">{t('donations.date')}</th>
+                <th className="table-header">{t('donations.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="table-cell text-center py-12 text-gray-400">Loading...</td>
+                  <td colSpan={7} className="table-cell text-center py-12 text-gray-400">{t('donations.loadingRow')}</td>
                 </tr>
               ) : donations.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="table-cell text-center py-12 text-gray-400">No donations found</td>
+                  <td colSpan={7} className="table-cell text-center py-12 text-gray-400">{t('donations.noDonationsFound')}</td>
                 </tr>
               ) : (
                 donations.map((d: any) => {
@@ -175,7 +175,7 @@ export default function DonationsPage() {
                       </td>
                       <td className="table-cell font-semibold">{formatCurrency(Number(d.amount), undefined, locale)}</td>
                       <td className="table-cell">
-                        <span className={cn('badge', STATUS_COLORS[d.status])}>{d.status}</span>
+                        <span className={cn('badge', STATUS_COLORS[d.status])}>{t(`donations.statuses.${d.status}`) || d.status}</span>
                       </td>
                       <td className="table-cell text-gray-400">{formatDate(d.createdAt, locale)}</td>
                       <td className="table-cell">
@@ -184,7 +184,7 @@ export default function DonationsPage() {
                             <button
                               onClick={() => setStatusModal({ donation: d })}
                               className="btn btn-sm bg-primary-50 text-primary-600 hover:bg-primary-100 p-1.5 rounded-lg"
-                              title="Update Status"
+                              title={t('donations.updateStatusTitle')}
                             >
                               <CheckCircle className="w-3.5 h-3.5" />
                             </button>
@@ -193,7 +193,7 @@ export default function DonationsPage() {
                             <button
                               onClick={() => downloadQr(d.qrToken)}
                               className="btn btn-sm bg-gray-100 text-gray-600 hover:bg-gray-200 p-1.5 rounded-lg"
-                              title="Download QR Code"
+                              title={t('donations.downloadQrTitle')}
                             >
                               <QrCode className="w-3.5 h-3.5" />
                             </button>
@@ -211,7 +211,7 @@ export default function DonationsPage() {
         {/* Pagination */}
         {meta?.totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-            <p className="text-sm text-gray-500">{meta.total} total</p>
+            <p className="text-sm text-gray-500">{t('donations.totalCount', { count: meta.total })}</p>
             <div className="flex gap-1">
               {Array.from({ length: meta.totalPages }, (_, i) => i + 1).map((p) => (
                 <button

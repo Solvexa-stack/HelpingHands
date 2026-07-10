@@ -176,7 +176,8 @@
     "draft": "Brouillon",
     "total": "Total",
     "failed": "Échec",
-    "confirm": "Confirmer"
+    "confirm": "Confirmer",
+    "notAvailable": "N/D"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -205,7 +206,39 @@
     "exportCsv": "Exporter CSV",
     "exporting": "Exportation…",
     "allStatuses": "Tous les statuts",
-    "searchPlaceholder": "Rechercher des dons..."
+    "searchPlaceholder": "Rechercher des dons...",
+    "status": "Statut",
+    "actions": "Actions",
+    "loadingRow": "Chargement...",
+    "noDonationsFound": "Aucun don trouvé",
+    "statuses": {
+      "pending": "En attente",
+      "approved": "Approuvé",
+      "rejected": "Rejeté",
+      "cancelled": "Annulé"
+    },
+    "totalCount": "{count} au total",
+    "updateStatusTitle": "Mettre à jour le statut",
+    "downloadQrTitle": "Télécharger le code QR",
+    "toast": {
+      "updated": "Statut du don mis à jour",
+      "updateFailed": "Échec de la mise à jour"
+    },
+    "scanner": {
+      "title": "Vérification du code QR",
+      "instructions": "Saisissez le jeton du don ou collez l'URL complète du code QR pour rechercher un don.",
+      "placeholder": "Jeton ou URL complète...",
+      "notFound": "Aucun don trouvé pour ce jeton ou ce code QR",
+      "donationHash": "Don n°{id}",
+      "process": "Traiter ce don"
+    },
+    "verify": {
+      "title": "Vérifier le don n°{id}",
+      "notesLabel": "Notes (facultatif)",
+      "notesPlaceholder": "Ajoutez des notes sur la vérification de ce paiement...",
+      "reject": "Rejeter",
+      "approve": "Approuver"
+    }
   },
   "projects": {
     "title": "Projets",
