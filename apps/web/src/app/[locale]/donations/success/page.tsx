@@ -88,7 +88,7 @@ export default function PaymentSuccessPage() {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">{tDonations('fields.amount')}</span>
-            <span className="font-bold text-gray-900">{formatCurrency(Number(donation.amount), donation.currency)}</span>
+            <span className="font-bold text-gray-900">{formatCurrency(Number(donation.amount), donation.currency, locale)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">{tDonations('fields.provider')}</span>

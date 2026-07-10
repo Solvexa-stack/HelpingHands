@@ -72,7 +72,7 @@ export default async function TransparencyPage({ params: { locale } }: Props) {
               [`${t('online')} → ${t('funds')}`, intake.online_fund_donations],
             ].map(([label, channel]: any) => (
               <div key={label} className="p-4 bg-gray-50 rounded-xl text-center">
-                <p className="text-2xl font-extrabold text-primary-600">{formatCurrency(channel.amount)}</p>
+                <p className="text-2xl font-extrabold text-primary-600">{formatCurrency(channel.amount, undefined, locale)}</p>
                 <p className="text-sm text-gray-500 mt-1">{label}</p>
                 <p className="text-xs text-gray-400">{channel.count}×</p>
               </div>
@@ -95,9 +95,9 @@ export default async function TransparencyPage({ params: { locale } }: Props) {
                 <p className="font-semibold text-gray-900">{fund.name}</p>
                 <div className="mt-2 grid grid-cols-2 gap-1 text-sm">
                   <span className="text-gray-400">{t('balance')}</span>
-                  <span className="text-right font-medium">{formatCurrency(fund.balance)}</span>
+                  <span className="text-right font-medium">{formatCurrency(fund.balance, undefined, locale)}</span>
                   <span className="text-gray-400">{t('disbursed')}</span>
-                  <span className="text-right font-medium">{formatCurrency(fund.disbursed)}</span>
+                  <span className="text-right font-medium">{formatCurrency(fund.disbursed, undefined, locale)}</span>
                 </div>
               </Link>
             ))}

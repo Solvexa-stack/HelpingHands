@@ -219,6 +219,8 @@ export default function DashboardPage() {
       label: t('stats.totalContributed'),
       value: formatCurrency(
         donations.filter((d: any) => d.status === 'approved').reduce((sum: number, d: any) => sum + Number(d.amount), 0),
+        undefined,
+        locale,
       ),
       icon: ArrowRight,
       color: 'text-primary-500 bg-primary-50',
@@ -309,7 +311,7 @@ export default function DashboardPage() {
                         <p className="text-sm text-gray-400 mt-0.5">{formatDate(donation.createdAt, locale)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-gray-900">{formatCurrency(Number(donation.amount))}</p>
+                        <p className="font-bold text-gray-900">{formatCurrency(Number(donation.amount), undefined, locale)}</p>
                         <span className={`badge mt-1 ${getStatusColor(donation.status)}`}>
                           {donation.status}
                         </span>
@@ -365,7 +367,7 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <div className="text-right space-y-1">
-                        <p className="font-bold text-gray-900">{formatCurrency(Number(d.amount), d.currency)}</p>
+                        <p className="font-bold text-gray-900">{formatCurrency(Number(d.amount), d.currency, locale)}</p>
                         <span className={`badge text-xs ${getStatusColor(d.status)}`}>{d.status}</span>
                       </div>
                       {d.status === 'completed' && (

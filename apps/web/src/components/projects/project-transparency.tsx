@@ -44,16 +44,16 @@ export async function ProjectTransparency({ projectId, locale }: { projectId: nu
         <h3 className="text-sm font-semibold text-gray-500 mb-2">{t('fundingSources')}</h3>
         <div className="grid sm:grid-cols-3 gap-3">
           <div className="p-3 bg-gray-50 rounded-xl text-center">
-            <p className="font-bold text-primary-600">{formatCurrency(data.funding.byChannel.qr_cash_donations.amount)}</p>
+            <p className="font-bold text-primary-600">{formatCurrency(data.funding.byChannel.qr_cash_donations.amount, undefined, locale)}</p>
             <p className="text-xs text-gray-500">{t('qrCash')}</p>
           </div>
           <div className="p-3 bg-gray-50 rounded-xl text-center">
-            <p className="font-bold text-primary-600">{formatCurrency(data.funding.byChannel.online_donations.amount)}</p>
+            <p className="font-bold text-primary-600">{formatCurrency(data.funding.byChannel.online_donations.amount, undefined, locale)}</p>
             <p className="text-xs text-gray-500">{t('online')}</p>
           </div>
           <div className="p-3 bg-gray-50 rounded-xl text-center">
             <p className="font-bold text-primary-600">
-              {formatCurrency(data.funding.allocations.reduce((s: number, a: any) => s + a.disbursed, 0))}
+              {formatCurrency(data.funding.allocations.reduce((s: number, a: any) => s + a.disbursed, 0), undefined, locale)}
             </p>
             <p className="text-xs text-gray-500">
               {t('fundAllocations')}
@@ -77,7 +77,7 @@ export async function ProjectTransparency({ projectId, locale }: { projectId: nu
             {trail.intake.map((row: any) => (
               <div key={row.source} className="flex justify-between text-sm py-0.5">
                 <span className="text-gray-600">{label(row.source)}</span>
-                <span className="font-medium text-emerald-600">+{formatCurrency(row.amount)}</span>
+                <span className="font-medium text-emerald-600">+{formatCurrency(row.amount, undefined, locale)}</span>
               </div>
             ))}
           </div>
@@ -89,12 +89,12 @@ export async function ProjectTransparency({ projectId, locale }: { projectId: nu
             {trail.spend.map((row: any) => (
               <div key={row.category} className="flex justify-between text-sm py-0.5">
                 <span className="text-gray-600">{label(row.category)}</span>
-                <span className="font-medium text-amber-600">−{formatCurrency(row.amount)}</span>
+                <span className="font-medium text-amber-600">−{formatCurrency(row.amount, undefined, locale)}</span>
               </div>
             ))}
             <div className="flex justify-between text-sm pt-2 mt-2 border-t border-gray-100 font-semibold">
               <span>{t('remaining')}</span>
-              <span>{formatCurrency(trail.balance)}</span>
+              <span>{formatCurrency(trail.balance, undefined, locale)}</span>
             </div>
           </div>
         </div>

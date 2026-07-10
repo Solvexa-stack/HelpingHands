@@ -65,8 +65,8 @@ export default async function OrgTransparencyPage({ params: { locale, id } }: Pr
             {[
               [t('portfolio'), org.totals.projects],
               ['✓', org.totals.completed],
-              ['Σ', formatCurrency(org.totals.targetValue)],
-              [t('intake'), formatCurrency(org.totals.collected)],
+              ['Σ', formatCurrency(org.totals.targetValue, undefined, locale)],
+              [t('intake'), formatCurrency(org.totals.collected, undefined, locale)],
             ].map(([label, value]: any, i) => (
               <div key={i} className="p-4 bg-gray-50 rounded-xl text-center">
                 <p className="text-xl font-extrabold text-primary-600">{value}</p>
@@ -93,7 +93,7 @@ export default async function OrgTransparencyPage({ params: { locale, id } }: Pr
                     <div className="h-full bg-primary-500 rounded-full" style={{ width: `${Math.min(p.progression, 100)}%` }} />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    {formatCurrency(p.collected)} / {formatCurrency(p.target)}
+                    {formatCurrency(p.collected, undefined, locale)} / {formatCurrency(p.target, undefined, locale)}
                   </p>
                 </Link>
               );

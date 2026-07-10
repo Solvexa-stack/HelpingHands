@@ -54,7 +54,7 @@ export default async function DonationVerifyPage({ params: { locale, token } }: 
               {[
                 [t('fields.participant'), `${donation.participant?.firstName} ${donation.participant?.lastName}`],
                 [t('fields.project'), translation?.name || tCommon('notAvailable')],
-                [t('fields.amount'), formatCurrency(Number(donation.amount))],
+                [t('fields.amount'), formatCurrency(Number(donation.amount), undefined, locale)],
                 [t('fields.date'), formatDate(donation.createdAt, locale)],
                 [t('fields.status'), donation.status],
                 ...(donation.approvedAt ? [[t('fields.approvedAt'), formatDate(donation.approvedAt, locale)]] : []),

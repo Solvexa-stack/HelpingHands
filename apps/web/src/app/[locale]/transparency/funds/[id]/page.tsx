@@ -75,7 +75,7 @@ export default async function FundTransparencyPage({ params: { locale, id } }: P
               [t('disbursed'), fund.disbursed],
             ].map(([label, value]: any) => (
               <div key={label} className="p-4 bg-gray-50 rounded-xl text-center">
-                <p className="text-xl font-extrabold text-primary-600">{formatCurrency(value)}</p>
+                <p className="text-xl font-extrabold text-primary-600">{formatCurrency(value, undefined, locale)}</p>
                 <p className="text-xs text-gray-500 mt-1">{label}</p>
               </div>
             ))}
@@ -90,7 +90,7 @@ export default async function FundTransparencyPage({ params: { locale, id } }: P
                 <div key={i} className="flex justify-between text-sm">
                   <span className="text-gray-600">{categoryLabel(row.category, locale)}</span>
                   <span className="font-medium">
-                    {formatCurrency(row.disbursed)} / {formatCurrency(row.allocated)}
+                    {formatCurrency(row.disbursed, undefined, locale)} / {formatCurrency(row.allocated, undefined, locale)}
                   </span>
                 </div>
               ))}
@@ -115,8 +115,8 @@ export default async function FundTransparencyPage({ params: { locale, id } }: P
                     </p>
                   </div>
                   <div className="text-right text-sm">
-                    <p className="font-semibold">{formatCurrency(a.disbursed)}</p>
-                    <p className="text-xs text-gray-400">/ {formatCurrency(a.amount)}</p>
+                    <p className="font-semibold">{formatCurrency(a.disbursed, undefined, locale)}</p>
+                    <p className="text-xs text-gray-400">/ {formatCurrency(a.amount, undefined, locale)}</p>
                   </div>
                 </Link>
               ))}

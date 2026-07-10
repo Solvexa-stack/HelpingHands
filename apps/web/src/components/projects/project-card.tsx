@@ -70,11 +70,11 @@ export function ProjectCard({ project, locale, className }: ProjectCardProps) {
         <div className="flex justify-between text-sm">
           <div>
             <p className="text-gray-400 text-xs">Collected</p>
-            <p className="font-bold text-primary-600">{formatCurrency(project.collectedAmount || 0)}</p>
+            <p className="font-bold text-primary-600">{formatCurrency(project.collectedAmount || 0, undefined, locale)}</p>
           </div>
           <div className="text-right">
             <p className="text-gray-400 text-xs">Target</p>
-            <p className="font-bold text-gray-700">{formatCurrency(Number(project.value))}</p>
+            <p className="font-bold text-gray-700">{formatCurrency(Number(project.value), undefined, locale)}</p>
           </div>
           <div className="text-right">
             <p className="text-gray-400 text-xs">Progress</p>
