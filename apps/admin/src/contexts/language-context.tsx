@@ -9,10 +9,12 @@ export type Locale = 'en' | 'ar' | 'fr';
 
 const messages: Record<Locale, any> = { en, ar, fr };
 
+type TranslateParams = Record<string, string | number>;
+
 interface LanguageContextValue {
   locale: Locale;
   setLocale: (l: Locale) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: TranslateParams) => string;
   dir: 'ltr' | 'rtl';
 }
 
@@ -23,8 +25,17 @@ const LanguageContext = createContext<LanguageContextValue>({
   dir: 'ltr',
 });
 
-function resolve(obj: any, path: string): string {
-  return path.split('.').reduce((cur, k) => (cur && typeof cur === 'object' ? cur[k] : undefined), obj) ?? path;
+function interpolate(str: string, params?: TranslateParams): string {
+  if (!params) return str;
+  return str.replace(/\{(\w+)\}/g, (match, k) => (params[k] !== undefined ? String(params[k]) : match));
+}
+
+// Only ever returns a string: a key that resolves to an object (namespace
+// collision) or undefined (missing key) both fall back to the raw path
+// instead of leaking a non-string value into React.
+function resolve(obj: any, path: string, params?: TranslateParams): string {
+  const value = path.split('.').reduce((cur, k) => (cur && typeof cur === 'object' ? cur[k] : undefined), obj);
+  return typeof value === 'string' ? interpolate(value, params) : path;
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
@@ -46,7 +57,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.setAttribute('dir', l === 'ar' ? 'rtl' : 'ltr');
   };
 
-  const t = (key: string) => resolve(messages[locale], key);
+  const t = (key: string, params?: TranslateParams) => resolve(messages[locale], key, params);
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
   return (
