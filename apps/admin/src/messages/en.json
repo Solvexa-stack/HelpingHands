@@ -1151,5 +1151,55 @@
     "backToPlatform": "Back to platform",
     "platform": "Platform",
     "switchOrganization": "Switch organization"
+  },
+  "projectForm": {
+    "newProjectTitle": "New Project",
+    "editProjectTitle": "Edit Project",
+    "coverImageLabel": "Cover Image",
+    "nameLabel": "Name *",
+    "namePlaceholder": "Project name",
+    "slugPlaceholder": "project-slug",
+    "briefPlaceholder": "Short description",
+    "descriptionPlaceholder": "Full project description...",
+    "detailsHeading": "Project Details",
+    "categoryLabel": "Category *",
+    "targetAmountLabel": "Target Amount ($) *",
+    "targetAmountPlaceholder": "50000",
+    "locationLabel": "Location",
+    "locationPlaceholder": "City, Country",
+    "none": "None",
+    "expectedStartDateLabel": "Expected Start Date",
+    "completionDateLabel": "Completion Date",
+    "createProject": "Create Project",
+    "imageGalleryHeading": "Image Gallery",
+    "imageGalleryHint": "The first image or the one marked as cover will be shown as the project thumbnail. Hover an image to set cover or delete.",
+    "categories": {
+      "agricultural": "Agricultural",
+      "industrial": "Industrial",
+      "trading": "Trading"
+    },
+    "toast": {
+      "created": "Project created",
+      "createFailed": "Failed to create project",
+      "updated": "Project updated",
+      "updateFailed": "Failed to update project"
+    }
+  },
+  "categoryPicker": {
+    "selectPlaceholder": "Select a category…",
+    "generalSuffix": "(general)"
+  },
+  "imageGallery": {
+    "cover": "Cover",
+    "setAsCover": "Set as cover",
+    "dropImagesHere": "Drop images here or",
+    "sizeHintMultiple": "PNG, JPG, WEBP up to 10MB · select multiple",
+    "toast": {
+      "imageRemoved": "Image removed",
+      "deleteFailed": "Delete failed",
+      "coverUpdated": "Cover updated",
+      "setCoverFailed": "Failed to set cover",
+      "uploaded": "{count} image(s) uploaded"
+    }
   }
 }

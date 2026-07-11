@@ -6,6 +6,7 @@ import { Upload, X, Star, ImageIcon, Loader2 } from 'lucide-react';
 import { filesApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toaster';
+import { useLanguage } from '@/contexts/language-context';
 
 interface Props {
   referenceId: number;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function ImageGallery({ referenceId, referenceType = 'block' }: Props) {
+  const { t } = useLanguage();
   const qc = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
   const { success, error: toastError } = useToast();
@@ -28,14 +30,14 @@ export function ImageGallery({ referenceId, referenceType = 'block' }: Props) {
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => filesApi.delete(id),
-    onSuccess: () => { success('Image removed'); qc.invalidateQueries({ queryKey }); },
-    onError: () => toastError('Delete failed'),
+    onSuccess: () => { success(t('imageGallery.toast.imageRemoved')); qc.invalidateQueries({ queryKey }); },
+    onError: () => toastError(t('imageGallery.toast.deleteFailed')),
   });
 
   const coverMutation = useMutation({
     mutationFn: (id: number) => filesApi.setCover(id),
-    onSuccess: () => { success('Cover updated'); qc.invalidateQueries({ queryKey }); },
-    onError: () => toastError('Failed to set cover'),
+    onSuccess: () => { success(t('imageGallery.toast.coverUpdated')); qc.invalidateQueries({ queryKey }); },
+    onError: () => toastError(t('imageGallery.toast.setCoverFailed')),
   });
 
   const upload = async (files: FileList | File[]) => {
@@ -53,9 +55,9 @@ export function ImageGallery({ referenceId, referenceType = 'block' }: Props) {
         await filesApi.upload(form);
       }
       qc.invalidateQueries({ queryKey });
-      success(`${list.length} image${list.length > 1 ? 's' : ''} uploaded`);
+      success(t('imageGallery.toast.uploaded', { count: list.length }));
     } catch (e: any) {
-      toastError(e?.response?.data?.message || 'Upload failed');
+      toastError(e?.response?.data?.message || t('blockForm.imageUpload.uploadFailed'));
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';
@@ -87,7 +89,7 @@ export function ImageGallery({ referenceId, referenceType = 'block' }: Props) {
               {/* Cover badge */}
               {img.isCover && (
                 <div className="absolute top-1.5 start-1.5 bg-yellow-400 text-yellow-900 text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                  <Star className="w-2.5 h-2.5" /> Cover
+                  <Star className="w-2.5 h-2.5" /> {t('imageGallery.cover')}
                 </div>
               )}
               {/* Overlay actions */}
@@ -96,7 +98,7 @@ export function ImageGallery({ referenceId, referenceType = 'block' }: Props) {
                   <button
                     onClick={() => coverMutation.mutate(img.id)}
                     disabled={coverMutation.isPending}
-                    title="Set as cover"
+                    title={t('imageGallery.setAsCover')}
                     className="w-7 h-7 bg-yellow-400 rounded-full flex items-center justify-center hover:bg-yellow-300 transition-colors"
                   >
                     <Star className="w-3.5 h-3.5 text-yellow-900" />
@@ -105,7 +107,7 @@ export function ImageGallery({ referenceId, referenceType = 'block' }: Props) {
                 <button
                   onClick={() => deleteMutation.mutate(img.id)}
                   disabled={deleteMutation.isPending}
-                  title="Delete"
+                  title={t('common.delete')}
                   className="w-7 h-7 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
                 >
                   <X className="w-3.5 h-3.5 text-white" />
@@ -131,7 +133,7 @@ export function ImageGallery({ referenceId, referenceType = 'block' }: Props) {
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-            <p className="text-sm text-gray-500">Uploading...</p>
+            <p className="text-sm text-gray-500">{t('blockForm.imageUpload.uploading')}</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
@@ -139,9 +141,9 @@ export function ImageGallery({ referenceId, referenceType = 'block' }: Props) {
               {dragging ? <Upload className="w-5 h-5 text-primary-500" /> : <ImageIcon className="w-5 h-5 text-gray-400" />}
             </div>
             <p className="text-sm font-medium text-gray-700">
-              Drop images here or <span className="text-primary-600">browse</span>
+              {t('imageGallery.dropImagesHere')} <span className="text-primary-600">{t('blockForm.imageUpload.browse')}</span>
             </p>
-            <p className="text-xs text-gray-400">PNG, JPG, WEBP up to 10MB · select multiple</p>
+            <p className="text-xs text-gray-400">{t('imageGallery.sizeHintMultiple')}</p>
           </div>
         )}
       </div>

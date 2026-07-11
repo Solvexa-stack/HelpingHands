@@ -1151,5 +1151,55 @@
     "backToPlatform": "العودة إلى المنصة",
     "platform": "المنصة",
     "switchOrganization": "تبديل المنظمة"
+  },
+  "projectForm": {
+    "newProjectTitle": "مشروع جديد",
+    "editProjectTitle": "تعديل المشروع",
+    "coverImageLabel": "صورة الغلاف",
+    "nameLabel": "الاسم *",
+    "namePlaceholder": "اسم المشروع",
+    "slugPlaceholder": "رابط-المشروع",
+    "briefPlaceholder": "وصف قصير",
+    "descriptionPlaceholder": "وصف كامل للمشروع...",
+    "detailsHeading": "تفاصيل المشروع",
+    "categoryLabel": "الفئة *",
+    "targetAmountLabel": "المبلغ المستهدف ($) *",
+    "targetAmountPlaceholder": "50000",
+    "locationLabel": "الموقع",
+    "locationPlaceholder": "المدينة، الدولة",
+    "none": "بدون",
+    "expectedStartDateLabel": "تاريخ البدء المتوقع",
+    "completionDateLabel": "تاريخ الإنجاز",
+    "createProject": "إنشاء المشروع",
+    "imageGalleryHeading": "معرض الصور",
+    "imageGalleryHint": "ستظهر أول صورة أو الصورة المحددة كغلاف كصورة مصغرة للمشروع. مرّر فوق صورة لتعيينها كغلاف أو حذفها.",
+    "categories": {
+      "agricultural": "زراعي",
+      "industrial": "صناعي",
+      "trading": "تجاري"
+    },
+    "toast": {
+      "created": "تم إنشاء المشروع",
+      "createFailed": "فشل إنشاء المشروع",
+      "updated": "تم تحديث المشروع",
+      "updateFailed": "فشل تحديث المشروع"
+    }
+  },
+  "categoryPicker": {
+    "selectPlaceholder": "اختر فئة…",
+    "generalSuffix": "(عام)"
+  },
+  "imageGallery": {
+    "cover": "الغلاف",
+    "setAsCover": "تعيين كغلاف",
+    "dropImagesHere": "أفلت الصور هنا أو",
+    "sizeHintMultiple": "PNG أو JPG أو WEBP بحد أقصى 10 ميجابايت · يمكن اختيار عدة صور",
+    "toast": {
+      "imageRemoved": "تمت إزالة الصورة",
+      "deleteFailed": "فشل الحذف",
+      "coverUpdated": "تم تحديث الغلاف",
+      "setCoverFailed": "فشل تعيين الغلاف",
+      "uploaded": "تم رفع {count} صورة"
+    }
   }
 }

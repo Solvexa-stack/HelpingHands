@@ -9,12 +9,7 @@ import { blocksApi, projectsApi, adminsApi } from '@/lib/api';
 import { useToast } from '@/components/ui/toaster';
 import { ImageGallery } from '@/components/ui/image-gallery';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-
-const LANGS = [
-  { code: 'en', label: 'English' },
-  { code: 'ar', label: 'Arabic' },
-  { code: 'fr', label: 'French' },
-];
+import { useLanguage } from '@/contexts/language-context';
 
 const CATEGORIES = ['agricultural', 'industrial', 'trading'];
 
@@ -24,9 +19,16 @@ function slugify(text: string) {
 
 export default function EditProjectPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const { t } = useLanguage();
   const { success, error: toastError } = useToast();
   const [activeLang, setActiveLang] = useState('en');
   const [ready, setReady] = useState(false);
+
+  const LANGS = [
+    { code: 'en', label: t('blockForm.langEnglish') },
+    { code: 'ar', label: t('blockForm.langArabic') },
+    { code: 'fr', label: t('blockForm.langFrench') },
+  ];
 
   const [translations, setTranslations] = useState<Record<string, any>>({
     en: { name: '', slug: '', brief: '', description: '' },
@@ -71,8 +73,8 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
       ar: { name: '', slug: '', brief: '', description: '' },
       fr: { name: '', slug: '', brief: '', description: '' },
     };
-    (projectData.block?.translations || []).forEach((t: any) => {
-      if (trans[t.languageCode]) trans[t.languageCode] = { name: t.name, slug: t.slug, brief: t.brief, description: t.description };
+    (projectData.block?.translations || []).forEach((tr: any) => {
+      if (trans[tr.languageCode]) trans[tr.languageCode] = { name: tr.name, slug: tr.slug, brief: tr.brief, description: tr.description };
     });
     setTranslations(trans);
     setReady(true);
@@ -82,7 +84,7 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
     mutationFn: async () => {
       if (blockId) {
         await blocksApi.update(blockId, {
-          translations: LANGS.map((l) => ({ languageCode: l.code, ...translations[l.code] })).filter((t) => t.name),
+          translations: LANGS.map((l) => ({ languageCode: l.code, ...translations[l.code] })).filter((tr) => tr.name),
         });
       }
       return projectsApi.update(Number(params.id), {
@@ -94,8 +96,8 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
         financialOfficerId: project.financialOfficerId ? Number(project.financialOfficerId) : undefined,
       });
     },
-    onSuccess: () => { success('Project updated'); router.push('/projects'); },
-    onError: (err: any) => toastError(err?.response?.data?.message || 'Failed to update project'),
+    onSuccess: () => { success(t('projectForm.toast.updated')); router.push('/projects'); },
+    onError: (err: any) => toastError(err?.response?.data?.message || t('projectForm.toast.updateFailed')),
   });
 
   const setTrans = (lang: string, field: string, value: string) => {
@@ -105,17 +107,17 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
     }));
   };
 
-  if (!ready) return <div className="flex items-center justify-center py-20 text-gray-400">Loading...</div>;
+  if (!ready) return <div className="flex items-center justify-center py-20 text-gray-400">{t('common.loading')}</div>;
 
   return (
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-3">
         <Link href="/projects" className="btn-ghost btn-sm p-1.5 rounded-lg"><ArrowLeft className="w-4 h-4" /></Link>
-        <h1 className="page-title">Edit Project</h1>
+        <h1 className="page-title">{t('projectForm.editProjectTitle')}</h1>
       </div>
 
       <div className="card p-6 space-y-6">
-        <h2 className="font-semibold text-gray-900">Content & Translations</h2>
+        <h2 className="font-semibold text-gray-900">{t('blockForm.contentTranslations')}</h2>
         <div className="flex gap-1 border-b border-gray-200">
           {LANGS.map((l) => (
             <button key={l.code} onClick={() => setActiveLang(l.code)}
@@ -128,23 +130,23 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
           <div key={l.code} className={l.code === activeLang ? 'space-y-4' : 'hidden'}>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">Name *</label>
+                <label className="label">{t('projectForm.nameLabel')}</label>
                 <input className="input" value={translations[l.code].name}
-                  onChange={(e) => setTrans(l.code, 'name', e.target.value)} placeholder="Project name" />
+                  onChange={(e) => setTrans(l.code, 'name', e.target.value)} placeholder={t('projectForm.namePlaceholder')} />
               </div>
               <div>
-                <label className="label">Slug *</label>
+                <label className="label">{t('blockForm.slugLabel')}</label>
                 <input className="input font-mono text-sm" value={translations[l.code].slug}
                   onChange={(e) => setTrans(l.code, 'slug', e.target.value)} />
               </div>
             </div>
             <div>
-              <label className="label">Brief *</label>
+              <label className="label">{t('blockForm.briefLabel')}</label>
               <input className="input" value={translations[l.code].brief}
                 onChange={(e) => setTrans(l.code, 'brief', e.target.value)} />
             </div>
             <div>
-              <label className="label">Description *</label>
+              <label className="label">{t('blockForm.descriptionLabel')}</label>
               <RichTextEditor
                 value={translations[l.code].description}
                 onChange={(val) => setTrans(l.code, 'description', val)}
@@ -156,47 +158,47 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
 
       {blockId && (
         <div className="card p-6 space-y-4">
-          <h2 className="font-semibold text-gray-900">Image Gallery</h2>
-          <p className="text-sm text-gray-400">The first image or the one marked as cover will be shown as the project thumbnail. Hover an image to set cover or delete.</p>
+          <h2 className="font-semibold text-gray-900">{t('projectForm.imageGalleryHeading')}</h2>
+          <p className="text-sm text-gray-400">{t('projectForm.imageGalleryHint')}</p>
           <ImageGallery referenceId={blockId} referenceType="block" />
         </div>
       )}
 
       <div className="card p-6 space-y-4">
-        <h2 className="font-semibold text-gray-900">Project Details</h2>
+        <h2 className="font-semibold text-gray-900">{t('projectForm.detailsHeading')}</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="label">Category *</label>
+            <label className="label">{t('projectForm.categoryLabel')}</label>
             <select className="input" value={project.category} onChange={(e) => setProject({ ...project, category: e.target.value })}>
-              {CATEGORIES.map((c) => <option key={c} value={c} className="capitalize">{c}</option>)}
+              {CATEGORIES.map((c) => <option key={c} value={c}>{t(`projectForm.categories.${c}`)}</option>)}
             </select>
           </div>
           <div>
-            <label className="label">Target Amount ($) *</label>
+            <label className="label">{t('projectForm.targetAmountLabel')}</label>
             <input type="number" className="input" value={project.value}
               onChange={(e) => setProject({ ...project, value: e.target.value })} min="1" />
           </div>
           <div>
-            <label className="label">Location</label>
+            <label className="label">{t('projectForm.locationLabel')}</label>
             <input className="input" value={project.location}
               onChange={(e) => setProject({ ...project, location: e.target.value })} />
           </div>
           <div>
-            <label className="label">Financial Officer</label>
+            <label className="label">{t('projects.detail.financialOfficer')}</label>
             <select className="input" value={project.financialOfficerId} onChange={(e) => setProject({ ...project, financialOfficerId: e.target.value })}>
-              <option value="">None</option>
+              <option value="">{t('projectForm.none')}</option>
               {(officers as any[])?.map((o: any) => (
                 <option key={o.id} value={o.id}>{o.firstName} {o.lastName}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="label">Expected Start Date</label>
+            <label className="label">{t('projectForm.expectedStartDateLabel')}</label>
             <input type="date" className="input" value={project.expectedStartDate}
               onChange={(e) => setProject({ ...project, expectedStartDate: e.target.value })} />
           </div>
           <div>
-            <label className="label">Completion Date</label>
+            <label className="label">{t('projectForm.completionDateLabel')}</label>
             <input type="date" className="input" value={project.dateOfCompletion}
               onChange={(e) => setProject({ ...project, dateOfCompletion: e.target.value })} />
           </div>
@@ -204,11 +206,11 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
       </div>
 
       <div className="flex justify-end gap-3">
-        <Link href="/projects" className="btn-secondary btn-md">Cancel</Link>
+        <Link href="/projects" className="btn-secondary btn-md">{t('common.cancel')}</Link>
         <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !translations.en.name || !project.value}
           className="btn-primary btn-md gap-2">
           {mutation.isPending ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Save className="w-4 h-4" />}
-          Save Changes
+          {t('common.save')}
         </button>
       </div>
     </div>

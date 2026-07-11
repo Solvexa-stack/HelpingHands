@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { categoriesApi } from '@/lib/api';
+import { useLanguage } from '@/contexts/language-context';
 
 interface CategoryNode {
   id: number;
@@ -26,7 +27,7 @@ export function categoryLabel(node: { name: string; nameAr?: string | null; name
 export function CategoryPicker({
   value,
   onChange,
-  locale = 'en',
+  locale,
   className = 'input',
 }: {
   value: number | '';
@@ -34,6 +35,8 @@ export function CategoryPicker({
   locale?: string;
   className?: string;
 }) {
+  const { t, locale: activeLocale } = useLanguage();
+  const resolvedLocale = locale ?? activeLocale;
   const { data: tree } = useQuery({ queryKey: ['category-tree'], queryFn: () => categoriesApi.tree() });
   const roots: CategoryNode[] = tree ?? [];
 
@@ -44,21 +47,21 @@ export function CategoryPicker({
       onChange={(e) => onChange(Number(e.target.value))}
     >
       <option value="" disabled>
-        Select a category…
+        {t('categoryPicker.selectPlaceholder')}
       </option>
       {roots.map((root) =>
         root.children.length > 0 ? (
-          <optgroup key={root.key} label={categoryLabel(root, locale)}>
-            <option value={root.id}>{categoryLabel(root, locale)} (general)</option>
+          <optgroup key={root.key} label={categoryLabel(root, resolvedLocale)}>
+            <option value={root.id}>{categoryLabel(root, resolvedLocale)} {t('categoryPicker.generalSuffix')}</option>
             {root.children.map((child) => (
               <option key={child.key} value={child.id}>
-                {categoryLabel(child, locale)}
+                {categoryLabel(child, resolvedLocale)}
               </option>
             ))}
           </optgroup>
         ) : (
           <option key={root.key} value={root.id}>
-            {categoryLabel(root, locale)}
+            {categoryLabel(root, resolvedLocale)}
           </option>
         ),
       )}

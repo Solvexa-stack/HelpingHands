@@ -1151,5 +1151,55 @@
     "backToPlatform": "Retour à la plateforme",
     "platform": "Plateforme",
     "switchOrganization": "Changer d'organisation"
+  },
+  "projectForm": {
+    "newProjectTitle": "Nouveau projet",
+    "editProjectTitle": "Modifier le projet",
+    "coverImageLabel": "Image de couverture",
+    "nameLabel": "Nom *",
+    "namePlaceholder": "Nom du projet",
+    "slugPlaceholder": "slug-du-projet",
+    "briefPlaceholder": "Description courte",
+    "descriptionPlaceholder": "Description complète du projet...",
+    "detailsHeading": "Détails du projet",
+    "categoryLabel": "Catégorie *",
+    "targetAmountLabel": "Montant cible ($) *",
+    "targetAmountPlaceholder": "50000",
+    "locationLabel": "Lieu",
+    "locationPlaceholder": "Ville, pays",
+    "none": "Aucun",
+    "expectedStartDateLabel": "Date de début prévue",
+    "completionDateLabel": "Date d'achèvement",
+    "createProject": "Créer le projet",
+    "imageGalleryHeading": "Galerie d'images",
+    "imageGalleryHint": "La première image ou celle marquée comme couverture sera affichée comme vignette du projet. Survolez une image pour la définir comme couverture ou la supprimer.",
+    "categories": {
+      "agricultural": "Agricole",
+      "industrial": "Industriel",
+      "trading": "Commercial"
+    },
+    "toast": {
+      "created": "Projet créé",
+      "createFailed": "Échec de la création du projet",
+      "updated": "Projet mis à jour",
+      "updateFailed": "Échec de la mise à jour du projet"
+    }
+  },
+  "categoryPicker": {
+    "selectPlaceholder": "Sélectionnez une catégorie…",
+    "generalSuffix": "(général)"
+  },
+  "imageGallery": {
+    "cover": "Couverture",
+    "setAsCover": "Définir comme couverture",
+    "dropImagesHere": "Déposez des images ici ou",
+    "sizeHintMultiple": "PNG, JPG, WEBP jusqu'à 10 Mo · sélection multiple",
+    "toast": {
+      "imageRemoved": "Image supprimée",
+      "deleteFailed": "Échec de la suppression",
+      "coverUpdated": "Couverture mise à jour",
+      "setCoverFailed": "Échec de la définition de la couverture",
+      "uploaded": "{count} image(s) téléversée(s)"
+    }
   }
 }
