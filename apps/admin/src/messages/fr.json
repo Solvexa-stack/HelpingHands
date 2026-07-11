@@ -18,7 +18,9 @@
     "team": "Équipe",
     "settings": "Paramètres",
     "workflow": "Flux de travail",
-    "funds": "Fonds"
+    "funds": "Fonds",
+    "donors": "Donateurs",
+    "expenses": "Dépenses"
   },
   "execution": {
     "title": "Exécution du projet",
@@ -177,7 +179,8 @@
     "total": "Total",
     "failed": "Échec",
     "confirm": "Confirmer",
-    "notAvailable": "N/D"
+    "notAvailable": "N/D",
+    "retry": "Réessayer"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -697,21 +700,28 @@
     "createModal": {
       "namePlaceholder": "Nom",
       "purposePlaceholder": "Objet",
-      "launchCeilingNote": "Les nouveaux fonds démarrent avec le plafond de lancement : chaque allocation nécessite une décision du conseil."
+      "launchCeilingNote": "Les nouveaux fonds démarrent avec le plafond de lancement : chaque allocation nécessite une décision du conseil.",
+      "typeLabel": "Type de fonds",
+      "organizationPlaceholder": "Id de l'organisation gérante (optionnel)",
+      "donorPlaceholder": "Id du donateur (requis pour un fonds de type donateur)"
     },
     "drawer": {
       "tileBalance": "Solde",
       "tileIntake": "Recettes",
       "tileAllocated": "Alloué",
       "tileDisbursed": "Décaissé",
-      "officersHeading": "Responsables"
+      "officersHeading": "Responsables",
+      "tileDonations": "Dons",
+      "tileSpent": "Dépensé"
     },
     "officer": {
       "userIdPlaceholder": "ID utilisateur"
     },
     "propose": {
       "heading": "Proposer une allocation",
-      "projectIdPlaceholder": "ID du projet",
+      "projectSearchPlaceholder": "Rechercher un projet…",
+      "noProjectsFound": "Aucun projet trouvé",
+      "loadProjectsError": "Échec du chargement des projets",
       "amountPlaceholder": "Montant",
       "notePlaceholder": "Note",
       "submit": "Proposer"
@@ -747,7 +757,42 @@
       "decisionApproved": "Décision du conseil enregistrée, allocation approuvée",
       "trancheDisbursed": "Tranche décaissée",
       "reconciled": "Rapproché",
-      "closed": "Clôturé"
+      "closed": "Clôturé",
+      "donationRecorded": "Don enregistré (en attente de confirmation)",
+      "donationConfirmed": "Don confirmé — solde du fonds augmenté",
+      "donationRejected": "Don rejeté"
+    },
+    "types": {
+      "organization": "Organisation",
+      "council": "Conseil",
+      "donor": "Donateur"
+    },
+    "donations": {
+      "heading": "Dons au fonds",
+      "recordHeading": "Enregistrer un don",
+      "donorPlaceholder": "Id du donateur (optionnel)",
+      "participantPlaceholder": "Id du participant (optionnel)",
+      "amountPlaceholder": "Montant",
+      "referencePlaceholder": "Numéro de référence",
+      "datePlaceholder": "Date du don",
+      "notesPlaceholder": "Notes",
+      "submit": "Enregistrer le don",
+      "empty": "Aucun don enregistré pour le moment.",
+      "rowSummary": "#{id} · {amount} · {method}",
+      "confirm": "Confirmer",
+      "reject": "Rejeter"
+    },
+    "viewHierarchy": "Voir la hiérarchie",
+    "hierarchy": {
+      "title": "Hiérarchie des fonds",
+      "subtitle": "les fonds maîtres suivent la taxonomie des catégories de projets · les fonds d'organisation s'imbriquent en dessous",
+      "back": "Retour aux fonds",
+      "balance": "Solde",
+      "projectsHeading": "Projets",
+      "noProjects": "Aucun projet pour le moment",
+      "unattachedHeading": "Fonds à plat (antérieurs à la hiérarchie)",
+      "unattachedNote": "Créés avant l'existence de la hiérarchie — non rattachés à une catégorie ou un fonds parent.",
+      "empty": "Aucun fonds maître pour le moment. Ils sont créés automatiquement dès qu'un projet utilise une catégorie."
     }
   },
   "orgDashboard": {
@@ -1246,5 +1291,94 @@
     "activateAccount": "Activer le compte",
     "activationFailed": "Échec de l'activation — le lien a peut-être expiré.",
     "loading": "Chargement…"
+  },
+  "donors": {
+    "title": "Donateurs",
+    "subtitle": "donateurs institutionnels et individuels finançant les fonds de conseil, d'organisation et de donateur",
+    "newDonor": "Nouveau donateur",
+    "empty": "Aucun donateur pour le moment.",
+    "types": {
+      "person": "Personne",
+      "company": "Entreprise",
+      "organization": "Organisation"
+    },
+    "createModal": {
+      "namePlaceholder": "Nom",
+      "typeLabel": "Type",
+      "emailPlaceholder": "E-mail de contact",
+      "phonePlaceholder": "Téléphone de contact",
+      "addressPlaceholder": "Adresse de contact",
+      "taxIdPlaceholder": "Identifiant fiscal",
+      "notesPlaceholder": "Notes",
+      "submit": "Créer"
+    },
+    "detail": {
+      "fundsHeading": "Fonds",
+      "totalDonated": "Total donné",
+      "totalSpent": "Dépensé via les projets financés",
+      "donationsHeading": "Dons effectués",
+      "fundedProjectsHeading": "Projets financés",
+      "spendingHeading": "Détails des dépenses"
+    },
+    "toast": {
+      "created": "Donateur créé",
+      "updated": "Donateur mis à jour"
+    }
+  },
+  "expenses": {
+    "title": "Dépenses",
+    "subtitle": "qui a été payé, combien, pourquoi, pour quel projet, depuis quel fonds",
+    "newExpense": "Nouvelle dépense",
+    "empty": "Aucune dépense pour le moment.",
+    "filters": {
+      "project": "Projet",
+      "fund": "Fonds",
+      "status": "Statut",
+      "all": "Tous"
+    },
+    "statuses": {
+      "pending": "en attente",
+      "approved": "approuvée",
+      "rejected": "rejetée"
+    },
+    "categories": {
+      "materials": "Matériaux",
+      "labor": "Main-d'œuvre",
+      "services": "Services",
+      "equipment": "Équipement",
+      "transport": "Transport",
+      "administrative": "Administratif",
+      "other": "Autre"
+    },
+    "createModal": {
+      "fundLabel": "Fonds",
+      "amountPlaceholder": "Montant",
+      "categoryLabel": "Catégorie",
+      "descriptionPlaceholder": "Motif du paiement",
+      "recipientLabel": "Bénéficiaire",
+      "recipientNamePlaceholder": "Nom du bénéficiaire",
+      "recipientTypeLabel": "Type de bénéficiaire",
+      "notesPlaceholder": "Notes",
+      "submit": "Soumettre la dépense"
+    },
+    "invoice": {
+      "heading": "Facture",
+      "uploadLabel": "Téléverser la facture",
+      "numberPlaceholder": "Numéro de facture",
+      "datePlaceholder": "Date de la facture",
+      "noInvoice": "Aucune facture jointe",
+      "attach": "Joindre"
+    },
+    "actions": {
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "viewInvoice": "Voir la facture"
+    },
+    "toast": {
+      "created": "Dépense soumise",
+      "approved": "Dépense approuvée — solde du fonds diminué",
+      "rejected": "Dépense rejetée",
+      "invoiceUploaded": "Facture téléversée et jointe"
+    }
   }
 }

@@ -244,8 +244,21 @@ export class TreasuryService {
       const of = (t: string) => Number(grouped.find((g) => g.type === t)?._sum.amount ?? 0);
       const legacyNet = Math.round((of('income') + of('adjustment') - of('expense') - of('refund')) * 100) / 100;
       const account = await this.prisma.account.findFirst({ where: { ownerType: 'project', ownerId: id } });
-      // fund→project allocation tranches are ledger-native (no legacy
-      // counterpart) — excluded from the legacy↔ledger comparison
+      // A manually proposed/board-approved allocation is ledger-native money
+      // movement with no legacy counterpart — excluded from the comparison,
+      // same as always. A W9 auto-allocation (isAutoAllocated) is different:
+      // it exists specifically because a direct project donation was routed
+      // through the project's default fund, and THAT donation DOES have a
+      // legacy dual-write (on the leg that credited the fund) — so its
+      // tranche into the project account must stay IN the comparison, or
+      // legacyNet and ledgerBalance would permanently disagree for it.
+      const manualAllocationIds = (
+        await this.prisma.fundAllocation.findMany({
+          where: { projectId: id, isAutoAllocated: false },
+          select: { id: true },
+        })
+      ).map((a) => a.id);
+
       let ledgerBalance = 0;
       if (account) {
         const grouped2 = await this.prisma.ledgerEntry.groupBy({
@@ -253,10 +266,9 @@ export class TreasuryService {
           where: {
             accountId: account.id,
             transaction: {
-            status: 'posted',
-            // NULL-safe exclusion: manual postings carry no referenceType
-            OR: [{ referenceType: null }, { NOT: { referenceType: 'fund_allocation' } }],
-          },
+              status: 'posted',
+              NOT: { referenceType: 'fund_allocation', referenceId: { in: manualAllocationIds } },
+            },
           },
           _sum: { amount: true },
         });

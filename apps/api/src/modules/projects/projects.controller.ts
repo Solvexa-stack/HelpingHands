@@ -38,6 +38,13 @@ export class ProjectsController {
     return this.projectsService.findById(id, lang);
   }
 
+  @Public()
+  @Get(':id/funding')
+  @ApiOperation({ summary: 'Funding report: sources by fund, expenses, remaining budget — public, transparency module' })
+  fundingReport(@Param('id', ParseIntPipe) id: number) {
+    return this.projectsService.fundingReport(id);
+  }
+
   @Post()
   @Roles(AdminRole.administrator, AdminRole.employee)
   @ApiBearerAuth('JWT')

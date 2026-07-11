@@ -181,6 +181,74 @@ export const POLICY_REGISTRY: Record<string, PolicyEntry> = {
     anyGrants: [{ scopeType: 'platform', roles: ['board_chair'] }],
     sensitive: true,
   },
+
+  // ─── W8 fund financial extension ───────────────────────────────────────────
+  // Donor: staff-managed master data (name, tax id, contact) — Board or a
+  // fund's own record-keeping officers manage it; read is fund-officer/Board,
+  // same shape as fund.read (a donor is only interesting in the context of
+  // the fund(s) it backs).
+  'donor.manage': {
+    anyGrants: [
+      { scopeType: 'platform', roles: ['board_chair'] },
+      { scopeType: 'fund', roles: ['fund_director', 'fund_secretary'] },
+    ],
+    sensitive: true,
+  },
+  'donor.read': {
+    anyGrants: [
+      { scopeType: 'platform', roles: ['board_chair', 'board_member', 'board_secretary', 'platform_auditor'] },
+      { scopeType: 'fund', roles: ['fund_director', 'fund_deputy', 'fund_secretary', 'fund_accountant', 'fund_controller'] },
+    ],
+  },
+  // Fund donations: Donor → FundDonation → Fund → FundAllocation → Project.
+  // Recording is the fund's bookkeeping roles; confirming (approve/reject) —
+  // which posts the ledger credit — is narrower, mirroring allocation.disburse.
+  'fund_donation.record': {
+    anyGrants: [
+      { scopeType: 'fund', roles: ['fund_director', 'fund_deputy', 'fund_secretary', 'fund_accountant'] },
+      { scopeType: 'platform', roles: ['board_chair'] },
+    ],
+    sensitive: true,
+  },
+  'fund_donation.decide': {
+    anyGrants: [
+      { scopeType: 'fund', roles: ['fund_director', 'fund_deputy', 'fund_accountant'] },
+      { scopeType: 'platform', roles: ['board_chair', 'board_member'] },
+    ],
+    sensitive: true,
+  },
+  'fund_donation.read': {
+    anyGrants: [
+      { scopeType: 'fund', roles: ['fund_director', 'fund_deputy', 'fund_secretary', 'fund_accountant', 'fund_controller'] },
+      { scopeType: 'platform', roles: ['board_chair', 'board_member', 'board_secretary', 'platform_auditor'] },
+    ],
+  },
+  // Expenses (+ their recipients/invoices): submission is wide — a fund's own
+  // officers, or the executing org's project staff — approval (which posts
+  // the ledger debit) is narrow, mirroring expense.decide's org-scope shape
+  // plus the fund-scope accountant/director roles a fund-sourced expense adds.
+  'fund_expense.create': {
+    anyGrants: [
+      { scopeType: 'fund', roles: ['fund_director', 'fund_deputy', 'fund_secretary', 'fund_accountant'] },
+      { scopeType: 'organization', roles: ['org_admin', 'project_manager', 'staff', 'org_accountant'] },
+      { scopeType: 'platform', roles: ['board_chair'] },
+    ],
+  },
+  'fund_expense.decide': {
+    anyGrants: [
+      { scopeType: 'fund', roles: ['fund_director', 'fund_deputy', 'fund_accountant'] },
+      { scopeType: 'organization', roles: ['org_admin', 'org_accountant'] },
+      { scopeType: 'platform', roles: ['board_chair', 'board_member'] },
+    ],
+    sensitive: true,
+  },
+  'fund_expense.read': {
+    anyGrants: [
+      { scopeType: 'fund', roles: ['fund_director', 'fund_deputy', 'fund_secretary', 'fund_accountant', 'fund_controller'] },
+      { scopeType: 'organization', roles: ['org_admin', 'project_manager', 'staff', 'org_accountant', 'viewer'] },
+      { scopeType: 'platform', roles: ['board_chair', 'board_member', 'board_secretary', 'platform_auditor'] },
+    ],
+  },
 };
 
 /**
@@ -212,6 +280,7 @@ export const ROUTE_ACTION_MAP: Record<string, string> = {
   'POST /api/v1/funds/:id/officers': 'fund.manage',
   'DELETE /api/v1/funds/:id/officers/:userId/:role': 'fund.manage',
   'GET /api/v1/funds': 'fund.read',
+  'GET /api/v1/funds/hierarchy': 'fund.read',
   'GET /api/v1/funds/:id': 'fund.read',
   'GET /api/v1/funds/:id/dashboard': 'fund.read',
   'POST /api/v1/funds/:id/allocations': 'allocation.propose',
@@ -280,4 +349,27 @@ export const ROUTE_ACTION_MAP: Record<string, string> = {
   'GET /api/v1/dashboards/funds/:id/trends': 'fund.read',
   'GET /api/v1/transparency/exports/projects/:id/statement.csv': 'project.execute',
   'GET /api/v1/transparency/exports/organizations/:id/summary.csv': 'org.report.read',
+
+  // W8 fund financial extension
+  'POST /api/v1/donors': 'donor.manage',
+  'PUT /api/v1/donors/:id': 'donor.manage',
+  'GET /api/v1/donors': 'donor.read',
+  'GET /api/v1/donors/:id': 'donor.read',
+  'GET /api/v1/donors/:id/report': 'donor.read',
+  'POST /api/v1/funds/:id/donations': 'fund_donation.record',
+  'GET /api/v1/funds/:id/donations': 'fund_donation.read',
+  'POST /api/v1/funds/donations/:donationId/approve': 'fund_donation.decide',
+  'POST /api/v1/funds/donations/:donationId/reject': 'fund_donation.decide',
+  'POST /api/v1/expenses': 'fund_expense.create',
+  'GET /api/v1/expenses': 'fund_expense.read',
+  'GET /api/v1/expenses/:id': 'fund_expense.read',
+  'POST /api/v1/expenses/:id/approve': 'fund_expense.decide',
+  'POST /api/v1/expenses/:id/reject': 'fund_expense.decide',
+  'POST /api/v1/expenses/:id/invoice': 'fund_expense.create',
+  'POST /api/v1/recipients': 'fund_expense.create',
+  'GET /api/v1/recipients': 'fund_expense.read',
+  'GET /api/v1/recipients/:id': 'fund_expense.read',
+  'PUT /api/v1/recipients/:id': 'fund_expense.create',
+  'POST /api/v1/invoices': 'fund_expense.create',
+  'GET /api/v1/invoices/:id': 'fund_expense.read',
 };

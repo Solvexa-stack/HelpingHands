@@ -18,7 +18,9 @@
     "team": "الفريق",
     "settings": "الإعدادات",
     "workflow": "مسارات العمل",
-    "funds": "الصناديق"
+    "funds": "الصناديق",
+    "donors": "المانحون",
+    "expenses": "المصروفات"
   },
   "execution": {
     "title": "تنفيذ المشروع",
@@ -177,7 +179,8 @@
     "total": "الإجمالي",
     "failed": "فشل",
     "confirm": "تأكيد",
-    "notAvailable": "غير متاح"
+    "notAvailable": "غير متاح",
+    "retry": "إعادة المحاولة"
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -697,21 +700,28 @@
     "createModal": {
       "namePlaceholder": "الاسم",
       "purposePlaceholder": "الغرض",
-      "launchCeilingNote": "تبدأ الصناديق الجديدة بسقف الإطلاق: كل تخصيص يتطلب قرار مجلس."
+      "launchCeilingNote": "تبدأ الصناديق الجديدة بسقف الإطلاق: كل تخصيص يتطلب قرار مجلس.",
+      "typeLabel": "نوع الصندوق",
+      "organizationPlaceholder": "معرف المؤسسة المديرة (اختياري)",
+      "donorPlaceholder": "معرف المانح (مطلوب للصناديق من نوع مانح)"
     },
     "drawer": {
       "tileBalance": "الرصيد",
       "tileIntake": "الإيرادات",
       "tileAllocated": "المخصص",
       "tileDisbursed": "المصروف",
-      "officersHeading": "الموظفون"
+      "officersHeading": "الموظفون",
+      "tileDonations": "التبرعات",
+      "tileSpent": "المنفق"
     },
     "officer": {
       "userIdPlaceholder": "معرّف المستخدم"
     },
     "propose": {
       "heading": "اقتراح تخصيص",
-      "projectIdPlaceholder": "معرّف المشروع",
+      "projectSearchPlaceholder": "ابحث عن مشروع…",
+      "noProjectsFound": "لا توجد مشاريع مطابقة",
+      "loadProjectsError": "فشل تحميل المشاريع",
       "amountPlaceholder": "المبلغ",
       "notePlaceholder": "ملاحظة",
       "submit": "اقتراح"
@@ -747,7 +757,42 @@
       "decisionApproved": "تم تسجيل قرار المجلس، وتمت الموافقة على التخصيص",
       "trancheDisbursed": "تم صرف الدفعة",
       "reconciled": "تمت التسوية",
-      "closed": "تم الإغلاق"
+      "closed": "تم الإغلاق",
+      "donationRecorded": "تم تسجيل التبرع (بانتظار التأكيد)",
+      "donationConfirmed": "تم تأكيد التبرع — ارتفع رصيد الصندوق",
+      "donationRejected": "تم رفض التبرع"
+    },
+    "types": {
+      "organization": "مؤسسة",
+      "council": "مجلس",
+      "donor": "مانح"
+    },
+    "donations": {
+      "heading": "تبرعات الصندوق",
+      "recordHeading": "تسجيل تبرع",
+      "donorPlaceholder": "معرف المانح (اختياري)",
+      "participantPlaceholder": "معرف المشارك (اختياري)",
+      "amountPlaceholder": "المبلغ",
+      "referencePlaceholder": "الرقم المرجعي",
+      "datePlaceholder": "تاريخ التبرع",
+      "notesPlaceholder": "ملاحظات",
+      "submit": "تسجيل التبرع",
+      "empty": "لا توجد تبرعات مسجلة بعد.",
+      "rowSummary": "#{id} · {amount} · {method}",
+      "confirm": "تأكيد",
+      "reject": "رفض"
+    },
+    "viewHierarchy": "عرض التسلسل الهرمي",
+    "hierarchy": {
+      "title": "التسلسل الهرمي للصناديق",
+      "subtitle": "الصناديق الرئيسية تتبع تصنيف فئات المشاريع · صناديق المؤسسات تتفرع تحتها",
+      "back": "العودة إلى الصناديق",
+      "balance": "الرصيد",
+      "projectsHeading": "المشاريع",
+      "noProjects": "لا توجد مشاريع بعد",
+      "unattachedHeading": "صناديق مستقلة (سابقة للتسلسل الهرمي)",
+      "unattachedNote": "أُنشئت قبل وجود التسلسل الهرمي — غير مرتبطة بفئة أو صندوق أصل.",
+      "empty": "لا توجد صناديق رئيسية بعد. تُنشأ تلقائياً عند أول استخدام لفئة ما في مشروع."
     }
   },
   "orgDashboard": {
@@ -1246,5 +1291,94 @@
     "activateAccount": "تفعيل الحساب",
     "activationFailed": "فشل التفعيل — قد يكون الرابط منتهي الصلاحية.",
     "loading": "جار التحميل…"
+  },
+  "donors": {
+    "title": "المانحون",
+    "subtitle": "مانحون مؤسسيون وأفراد يدعمون صناديق المجالس والمؤسسات والمانحين",
+    "newDonor": "مانح جديد",
+    "empty": "لا يوجد مانحون بعد.",
+    "types": {
+      "person": "فرد",
+      "company": "شركة",
+      "organization": "مؤسسة"
+    },
+    "createModal": {
+      "namePlaceholder": "الاسم",
+      "typeLabel": "النوع",
+      "emailPlaceholder": "البريد الإلكتروني",
+      "phonePlaceholder": "رقم الهاتف",
+      "addressPlaceholder": "العنوان",
+      "taxIdPlaceholder": "الرقم الضريبي",
+      "notesPlaceholder": "ملاحظات",
+      "submit": "إنشاء"
+    },
+    "detail": {
+      "fundsHeading": "الصناديق",
+      "totalDonated": "إجمالي التبرعات",
+      "totalSpent": "المنفق عبر المشاريع الممولة",
+      "donationsHeading": "التبرعات المقدمة",
+      "fundedProjectsHeading": "المشاريع الممولة",
+      "spendingHeading": "تفاصيل الإنفاق"
+    },
+    "toast": {
+      "created": "تم إنشاء المانح",
+      "updated": "تم تحديث المانح"
+    }
+  },
+  "expenses": {
+    "title": "المصروفات",
+    "subtitle": "من تلقى المبلغ، وكم، ولماذا، ولأي مشروع، ومن أي صندوق",
+    "newExpense": "مصروف جديد",
+    "empty": "لا توجد مصروفات بعد.",
+    "filters": {
+      "project": "المشروع",
+      "fund": "الصندوق",
+      "status": "الحالة",
+      "all": "الكل"
+    },
+    "statuses": {
+      "pending": "قيد المراجعة",
+      "approved": "معتمد",
+      "rejected": "مرفوض"
+    },
+    "categories": {
+      "materials": "مواد",
+      "labor": "عمالة",
+      "services": "خدمات",
+      "equipment": "معدات",
+      "transport": "نقل",
+      "administrative": "إداري",
+      "other": "أخرى"
+    },
+    "createModal": {
+      "fundLabel": "الصندوق",
+      "amountPlaceholder": "المبلغ",
+      "categoryLabel": "الفئة",
+      "descriptionPlaceholder": "سبب الدفع",
+      "recipientLabel": "المستلم",
+      "recipientNamePlaceholder": "اسم المستلم",
+      "recipientTypeLabel": "نوع المستلم",
+      "notesPlaceholder": "ملاحظات",
+      "submit": "إرسال المصروف"
+    },
+    "invoice": {
+      "heading": "الفاتورة",
+      "uploadLabel": "رفع الفاتورة",
+      "numberPlaceholder": "رقم الفاتورة",
+      "datePlaceholder": "تاريخ الفاتورة",
+      "noInvoice": "لا توجد فاتورة مرفقة",
+      "attach": "إرفاق"
+    },
+    "actions": {
+      "approve": "موافقة",
+      "reject": "رفض",
+      "viewInvoice": "عرض الفاتورة"
+    },
+    "toast": {
+      "created": "تم إرسال المصروف",
+      "approved": "تمت الموافقة على المصروف — انخفض رصيد الصندوق",
+      "rejected": "تم رفض المصروف",
+      "invoiceUploaded": "تم رفع الفاتورة وإرفاقها"
+    }
   }
 }

@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Banknote, CheckCircle2, Landmark, PauseCircle, Plus, Send, UserPlus, X } from 'lucide-react';
-import { fundsApi, governanceApi, transparencyApi } from '@/lib/api';
+import { Banknote, CheckCircle2, FolderTree, Gift, Landmark, PauseCircle, Plus, Send, UserPlus, X } from 'lucide-react';
+import { fundsApi, governanceApi, transparencyApi, type FundType } from '@/lib/api';
 import { useToast } from '@/components/ui/toaster';
+import { ProjectPicker } from '@/components/ui/project-picker';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/language-context';
 
@@ -52,6 +54,17 @@ const ALLOC_BADGE: Record<string, string> = {
   closed: 'bg-green-100 text-green-800',
   rejected: 'bg-red-100 text-red-700',
 };
+const TYPE_BADGE: Record<string, string> = {
+  organization: 'bg-slate-100 text-slate-700',
+  council: 'bg-indigo-100 text-indigo-700',
+  donor: 'bg-pink-100 text-pink-700',
+};
+const DONATION_BADGE: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-800',
+  approved: 'bg-green-100 text-green-800',
+  rejected: 'bg-red-100 text-red-700',
+};
+const PAYMENT_METHODS = ['cash', 'bank_transfer', 'check', 'card', 'online'];
 
 /**
  * W5-E7 — fund dashboards & operations: balance/intake/allocations/spend,
@@ -64,10 +77,15 @@ export default function FundsPage() {
   const qc = useQueryClient();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', purpose: '' });
+  const [form, setForm] = useState<{ name: string; purpose: string; type: FundType; managingOrganizationId: string; donorId: string }>({
+    name: '', purpose: '', type: 'organization', managingOrganizationId: '', donorId: '',
+  });
   const [officer, setOfficer] = useState({ userId: '', role: 'fund_director' });
-  const [proposal, setProposal] = useState({ projectId: '', amount: '', note: '' });
+  const [proposal, setProposal] = useState<{ projectId: number | ''; amount: string; note: string }>({ projectId: '', amount: '', note: '' });
   const [tranche, setTranche] = useState<Record<number, string>>({});
+  const [donationForm, setDonationForm] = useState({
+    donorId: '', participantId: '', amount: '', paymentMethod: 'cash', referenceNumber: '', donatedAt: '', notes: '',
+  });
 
   const { data: funds } = useQuery({ queryKey: ['funds'], queryFn: () => fundsApi.list() });
   const { data: dashboard } = useQuery({
@@ -80,11 +98,17 @@ export default function FundsPage() {
     queryFn: () => fundsApi.detail(selectedId!),
     enabled: selectedId != null,
   });
+  const { data: donations } = useQuery({
+    queryKey: ['fund-donations', selectedId],
+    queryFn: () => fundsApi.listDonations(selectedId!),
+    enabled: selectedId != null,
+  });
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ['funds'] });
     qc.invalidateQueries({ queryKey: ['fund-dashboard'] });
     qc.invalidateQueries({ queryKey: ['fund-detail'] });
+    qc.invalidateQueries({ queryKey: ['fund-donations'] });
   };
   const onError = (err: any) => {
     const data = err?.response?.data;
@@ -95,8 +119,39 @@ export default function FundsPage() {
     fn().then(() => { success(message); refresh(); }).catch(onError);
 
   const createMutation = useMutation({
-    mutationFn: () => fundsApi.create(form),
-    onSuccess: () => { success(t('funds.toast.created')); setCreateOpen(false); setForm({ name: '', purpose: '' }); refresh(); },
+    mutationFn: () =>
+      fundsApi.create({
+        name: form.name,
+        purpose: form.purpose || undefined,
+        type: form.type,
+        managingOrganizationId: isPositiveInt(form.managingOrganizationId) ? Number(form.managingOrganizationId) : undefined,
+        donorId: isPositiveInt(form.donorId) ? Number(form.donorId) : undefined,
+      }),
+    onSuccess: () => {
+      success(t('funds.toast.created'));
+      setCreateOpen(false);
+      setForm({ name: '', purpose: '', type: 'organization', managingOrganizationId: '', donorId: '' });
+      refresh();
+    },
+    onError,
+  });
+
+  const recordDonationMutation = useMutation({
+    mutationFn: () =>
+      fundsApi.recordDonation(selectedId!, {
+        donorId: isPositiveInt(donationForm.donorId) ? Number(donationForm.donorId) : undefined,
+        participantId: isPositiveInt(donationForm.participantId) ? Number(donationForm.participantId) : undefined,
+        amount: Number(donationForm.amount),
+        paymentMethod: donationForm.paymentMethod as any,
+        referenceNumber: donationForm.referenceNumber || undefined,
+        donatedAt: donationForm.donatedAt || new Date().toISOString(),
+        notes: donationForm.notes || undefined,
+      }),
+    onSuccess: () => {
+      success(t('funds.toast.donationRecorded'));
+      setDonationForm({ donorId: '', participantId: '', amount: '', paymentMethod: 'cash', referenceNumber: '', donatedAt: '', notes: '' });
+      refresh();
+    },
     onError,
   });
 
@@ -108,9 +163,14 @@ export default function FundsPage() {
           <h1 className="text-lg font-semibold">{t('funds.title')}</h1>
           <span className="text-sm text-gray-400">{t('funds.subtitle')}</span>
         </div>
-        <button onClick={() => setCreateOpen(true)} className="btn-primary btn-md gap-2">
-          <Plus className="w-4 h-4" /> {t('funds.newFund')}
-        </button>
+        <div className="flex items-center gap-2">
+          <Link href="/funds/hierarchy" className="btn-secondary btn-md gap-2">
+            <FolderTree className="w-4 h-4" /> {t('funds.viewHierarchy')}
+          </Link>
+          <button onClick={() => setCreateOpen(true)} className="btn-primary btn-md gap-2">
+            <Plus className="w-4 h-4" /> {t('funds.newFund')}
+          </button>
+        </div>
       </div>
 
       <div className="grid sm:grid-cols-3 gap-4">
@@ -120,6 +180,7 @@ export default function FundsPage() {
               <p className="font-semibold">{fund.name}</p>
               <span className={cn('badge', STATUS_BADGE[fund.status])}>{t(`funds.statuses.${fund.status}`) || fund.status}</span>
             </div>
+            <span className={cn('badge mt-1 inline-block', TYPE_BADGE[fund.type])}>{t(`funds.types.${fund.type}`) || fund.type}</span>
             <p className="text-2xl font-bold mt-2">{Number(fund.balance).toLocaleString(locale)}</p>
             <p className="text-xs text-gray-400 mt-1">
               {t('funds.card.officersAllocations', { officers: fund._count.memberships, allocations: fund._count.allocations })}
@@ -136,6 +197,33 @@ export default function FundsPage() {
             <h2 className="font-semibold">{t('funds.newFund')}</h2>
             <input className="input w-full" placeholder={t('funds.createModal.namePlaceholder')} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <input className="input w-full" placeholder={t('funds.createModal.purposePlaceholder')} value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} />
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500">{t('funds.createModal.typeLabel')}</label>
+              <select
+                className="input w-full"
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value as FundType })}
+              >
+                {(['organization', 'council', 'donor'] as FundType[]).map((ft) => (
+                  <option key={ft} value={ft}>{t(`funds.types.${ft}`)}</option>
+                ))}
+              </select>
+            </div>
+            {form.type !== 'donor' ? (
+              <input
+                className="input w-full"
+                placeholder={t('funds.createModal.organizationPlaceholder')}
+                value={form.managingOrganizationId}
+                onChange={(e) => setForm({ ...form, managingOrganizationId: e.target.value })}
+              />
+            ) : (
+              <input
+                className="input w-full"
+                placeholder={t('funds.createModal.donorPlaceholder')}
+                value={form.donorId}
+                onChange={(e) => setForm({ ...form, donorId: e.target.value })}
+              />
+            )}
             <p className="text-xs text-gray-400">{t('funds.createModal.launchCeilingNote')}</p>
             <button className="btn-primary btn-md w-full" disabled={!form.name} onClick={() => createMutation.mutate()}>{t('common.create')}</button>
           </div>
@@ -150,17 +238,20 @@ export default function FundsPage() {
               <h2 className="font-semibold flex items-center gap-2">
                 <Banknote className="w-4 h-4" /> {dashboard.fund.name}
                 <span className={cn('badge', STATUS_BADGE[dashboard.fund.status])}>{t(`funds.statuses.${dashboard.fund.status}`) || dashboard.fund.status}</span>
+                <span className={cn('badge', TYPE_BADGE[dashboard.fund.type])}>{t(`funds.types.${dashboard.fund.type}`) || dashboard.fund.type}</span>
               </h2>
               <button onClick={() => setSelectedId(null)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"><X className="w-4 h-4" /></button>
             </div>
 
             {/* Dashboard tiles */}
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {[
                 [t('funds.drawer.tileBalance'), dashboard.balance],
-                [t('funds.drawer.tileIntake'), dashboard.intake],
+                [t('funds.drawer.tileDonations'), dashboard.totalDonations],
                 [t('funds.drawer.tileAllocated'), dashboard.allocated],
                 [t('funds.drawer.tileDisbursed'), dashboard.disbursed],
+                [t('funds.drawer.tileSpent'), dashboard.totalSpent],
+                [t('funds.drawer.tileIntake'), dashboard.intake],
               ].map(([label, value]) => (
                 <div key={label as string} className="card p-3">
                   <p className="text-xs text-gray-500">{label}</p>
@@ -192,6 +283,55 @@ export default function FundsPage() {
 
             {/* W7: monthly trends from the ledger */}
             <FundTrends fundId={selectedId} />
+
+            {/* Fund donations: Donor → FundDonation → Fund → FundAllocation → Project */}
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1">
+                <Gift className="w-3 h-3" /> {t('funds.donations.heading')}
+              </div>
+              {(donations ?? []).map((d: any) => (
+                <div key={d.id} className="flex items-center justify-between text-sm border border-gray-100 dark:border-gray-800 rounded-lg px-3 py-2">
+                  <span>
+                    {t('funds.donations.rowSummary', { id: d.id, amount: Number(d.amount).toLocaleString(locale), method: d.paymentMethod })}
+                    {d.donor ? ` · ${d.donor.name}` : d.participant ? ` · ${d.participant.firstName} ${d.participant.lastName}` : ''}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className={cn('badge', DONATION_BADGE[d.status])}>{d.status}</span>
+                    {d.status === 'pending' && (
+                      <>
+                        <button className="btn-secondary btn-sm" onClick={() => mutate(() => fundsApi.confirmDonation(d.id), t('funds.toast.donationConfirmed'))}>
+                          {t('funds.donations.confirm')}
+                        </button>
+                        <button className="btn-secondary btn-sm" onClick={() => mutate(() => fundsApi.rejectDonation(d.id), t('funds.toast.donationRejected'))}>
+                          {t('funds.donations.reject')}
+                        </button>
+                      </>
+                    )}
+                  </span>
+                </div>
+              ))}
+              {(donations ?? []).length === 0 && <p className="text-xs text-gray-400">{t('funds.donations.empty')}</p>}
+
+              <div className="text-xs font-semibold text-gray-500 uppercase pt-1">{t('funds.donations.recordHeading')}</div>
+              <div className="grid grid-cols-3 gap-2">
+                <input className="input" placeholder={t('funds.donations.donorPlaceholder')} value={donationForm.donorId} onChange={(e) => setDonationForm({ ...donationForm, donorId: e.target.value })} />
+                <input className="input" placeholder={t('funds.donations.participantPlaceholder')} value={donationForm.participantId} onChange={(e) => setDonationForm({ ...donationForm, participantId: e.target.value })} />
+                <input className="input" placeholder={t('funds.donations.amountPlaceholder')} value={donationForm.amount} onChange={(e) => setDonationForm({ ...donationForm, amount: e.target.value })} />
+                <select className="input" value={donationForm.paymentMethod} onChange={(e) => setDonationForm({ ...donationForm, paymentMethod: e.target.value })}>
+                  {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+                <input className="input" placeholder={t('funds.donations.referencePlaceholder')} value={donationForm.referenceNumber} onChange={(e) => setDonationForm({ ...donationForm, referenceNumber: e.target.value })} />
+                <input type="date" className="input" placeholder={t('funds.donations.datePlaceholder')} value={donationForm.donatedAt} onChange={(e) => setDonationForm({ ...donationForm, donatedAt: e.target.value })} />
+                <input className="input col-span-2" placeholder={t('funds.donations.notesPlaceholder')} value={donationForm.notes} onChange={(e) => setDonationForm({ ...donationForm, notes: e.target.value })} />
+                <button
+                  className="btn-primary btn-sm gap-1"
+                  disabled={!isPositiveNumber(donationForm.amount)}
+                  onClick={() => recordDonationMutation.mutate()}
+                >
+                  <Gift className="w-3 h-3" /> {t('funds.donations.submit')}
+                </button>
+              </div>
+            </div>
 
             {/* Officers */}
             <div className="space-y-2">
@@ -228,12 +368,16 @@ export default function FundsPage() {
             <div className="space-y-2">
               <div className="text-xs font-semibold text-gray-500 uppercase">{t('funds.propose.heading')}</div>
               <div className="grid grid-cols-4 gap-2">
-                <input className="input" placeholder={t('funds.propose.projectIdPlaceholder')} value={proposal.projectId} onChange={(e) => setProposal({ ...proposal, projectId: e.target.value })} />
+                <ProjectPicker
+                  organizationId={detail.managingOrganizationId ?? undefined}
+                  value={proposal.projectId}
+                  onChange={(project) => setProposal({ ...proposal, projectId: project.id })}
+                />
                 <input className="input" placeholder={t('funds.propose.amountPlaceholder')} value={proposal.amount} onChange={(e) => setProposal({ ...proposal, amount: e.target.value })} />
                 <input className="input" placeholder={t('funds.propose.notePlaceholder')} value={proposal.note} onChange={(e) => setProposal({ ...proposal, note: e.target.value })} />
                 <button
                   className="btn-primary btn-sm gap-1"
-                  disabled={!isPositiveInt(proposal.projectId) || !isPositiveNumber(proposal.amount)}
+                  disabled={!proposal.projectId || !isPositiveNumber(proposal.amount)}
                   onClick={() =>
                     mutate(
                       () => fundsApi.propose(selectedId, { projectId: Number(proposal.projectId), amount: Number(proposal.amount), note: proposal.note || undefined }),

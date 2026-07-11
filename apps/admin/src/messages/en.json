@@ -18,7 +18,9 @@
     "team": "Team",
     "settings": "Settings",
     "workflow": "Workflows",
-    "funds": "Funds"
+    "funds": "Funds",
+    "donors": "Donors",
+    "expenses": "Expenses"
   },
   "execution": {
     "title": "Project Execution",
@@ -177,7 +179,8 @@
     "total": "Total",
     "failed": "Failed",
     "confirm": "Confirm",
-    "notAvailable": "N/A"
+    "notAvailable": "N/A",
+    "retry": "Retry"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -697,21 +700,28 @@
     "createModal": {
       "namePlaceholder": "Name",
       "purposePlaceholder": "Purpose",
-      "launchCeilingNote": "New funds start with the launch ceiling: every allocation needs a Board decision."
+      "launchCeilingNote": "New funds start with the launch ceiling: every allocation needs a Board decision.",
+      "typeLabel": "Fund type",
+      "organizationPlaceholder": "Managing organization id (optional)",
+      "donorPlaceholder": "Donor id (required for donor funds)"
     },
     "drawer": {
       "tileBalance": "Balance",
       "tileIntake": "Intake",
       "tileAllocated": "Allocated",
       "tileDisbursed": "Disbursed",
-      "officersHeading": "Officers"
+      "officersHeading": "Officers",
+      "tileDonations": "Donations",
+      "tileSpent": "Spent"
     },
     "officer": {
       "userIdPlaceholder": "User id"
     },
     "propose": {
       "heading": "Propose allocation",
-      "projectIdPlaceholder": "Project id",
+      "projectSearchPlaceholder": "Search project…",
+      "noProjectsFound": "No projects found",
+      "loadProjectsError": "Failed to load projects",
       "amountPlaceholder": "Amount",
       "notePlaceholder": "Note",
       "submit": "Propose"
@@ -747,7 +757,42 @@
       "decisionApproved": "Board decision recorded, allocation approved",
       "trancheDisbursed": "Tranche disbursed",
       "reconciled": "Reconciled",
-      "closed": "Closed"
+      "closed": "Closed",
+      "donationRecorded": "Donation recorded (pending confirmation)",
+      "donationConfirmed": "Donation confirmed — fund balance increased",
+      "donationRejected": "Donation rejected"
+    },
+    "types": {
+      "organization": "Organization",
+      "council": "Council",
+      "donor": "Donor"
+    },
+    "donations": {
+      "heading": "Fund donations",
+      "recordHeading": "Record a donation",
+      "donorPlaceholder": "Donor id (optional)",
+      "participantPlaceholder": "Participant id (optional)",
+      "amountPlaceholder": "Amount",
+      "referencePlaceholder": "Reference number",
+      "datePlaceholder": "Donation date",
+      "notesPlaceholder": "Notes",
+      "submit": "Record donation",
+      "empty": "No donations recorded yet.",
+      "rowSummary": "#{id} · {amount} · {method}",
+      "confirm": "Confirm",
+      "reject": "Reject"
+    },
+    "viewHierarchy": "View hierarchy",
+    "hierarchy": {
+      "title": "Fund Hierarchy",
+      "subtitle": "master funds follow the project category taxonomy · organization funds nest underneath",
+      "back": "Back to funds",
+      "balance": "Balance",
+      "projectsHeading": "Projects",
+      "noProjects": "No projects yet",
+      "unattachedHeading": "Flat funds (pre-hierarchy)",
+      "unattachedNote": "Created before the hierarchy existed — not tied to a category or parent fund.",
+      "empty": "No master funds yet. They are created automatically the first time a project uses a category."
     }
   },
   "orgDashboard": {
@@ -1246,5 +1291,94 @@
     "activateAccount": "Activate account",
     "activationFailed": "Activation failed — the link may have expired.",
     "loading": "Loading…"
+  },
+  "donors": {
+    "title": "Donors",
+    "subtitle": "institutional and individual donors backing council, organization, and donor funds",
+    "newDonor": "New donor",
+    "empty": "No donors yet.",
+    "types": {
+      "person": "Person",
+      "company": "Company",
+      "organization": "Organization"
+    },
+    "createModal": {
+      "namePlaceholder": "Name",
+      "typeLabel": "Type",
+      "emailPlaceholder": "Contact email",
+      "phonePlaceholder": "Contact phone",
+      "addressPlaceholder": "Contact address",
+      "taxIdPlaceholder": "Tax id",
+      "notesPlaceholder": "Notes",
+      "submit": "Create"
+    },
+    "detail": {
+      "fundsHeading": "Funds",
+      "totalDonated": "Total donated",
+      "totalSpent": "Spent via funded projects",
+      "donationsHeading": "Donations made",
+      "fundedProjectsHeading": "Projects funded",
+      "spendingHeading": "Spending details"
+    },
+    "toast": {
+      "created": "Donor created",
+      "updated": "Donor updated"
+    }
+  },
+  "expenses": {
+    "title": "Expenses",
+    "subtitle": "who was paid, how much, why, for which project, from which fund",
+    "newExpense": "New expense",
+    "empty": "No expenses yet.",
+    "filters": {
+      "project": "Project",
+      "fund": "Fund",
+      "status": "Status",
+      "all": "All"
+    },
+    "statuses": {
+      "pending": "pending",
+      "approved": "approved",
+      "rejected": "rejected"
+    },
+    "categories": {
+      "materials": "Materials",
+      "labor": "Labor",
+      "services": "Services",
+      "equipment": "Equipment",
+      "transport": "Transport",
+      "administrative": "Administrative",
+      "other": "Other"
+    },
+    "createModal": {
+      "fundLabel": "Fund",
+      "amountPlaceholder": "Amount",
+      "categoryLabel": "Category",
+      "descriptionPlaceholder": "Reason for payment",
+      "recipientLabel": "Recipient",
+      "recipientNamePlaceholder": "Recipient name",
+      "recipientTypeLabel": "Recipient type",
+      "notesPlaceholder": "Notes",
+      "submit": "Submit expense"
+    },
+    "invoice": {
+      "heading": "Invoice",
+      "uploadLabel": "Upload invoice",
+      "numberPlaceholder": "Invoice number",
+      "datePlaceholder": "Invoice date",
+      "noInvoice": "No invoice attached",
+      "attach": "Attach"
+    },
+    "actions": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "viewInvoice": "View invoice"
+    },
+    "toast": {
+      "created": "Expense submitted",
+      "approved": "Expense approved — fund balance decreased",
+      "rejected": "Expense rejected",
+      "invoiceUploaded": "Invoice uploaded and attached"
+    }
   }
 }

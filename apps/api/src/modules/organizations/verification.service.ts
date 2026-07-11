@@ -24,6 +24,10 @@ export const CAPABILITIES_BY_TYPE: Record<OrganizationType, Record<string, boole
   youth_team: { canExecuteProjects: true, canReceivePublicFunds: false, canOpenDonations: true, isGovernmentEntity: false, requiresBoardOversight: false },
   initiative: { canExecuteProjects: true, canReceivePublicFunds: false, canOpenDonations: false, isGovernmentEntity: false, requiresBoardOversight: false },
   board: { canExecuteProjects: false, canReceivePublicFunds: false, canOpenDonations: false, isGovernmentEntity: false, requiresBoardOversight: false },
+  // W8 — councils manage council-type Funds (see FundType); same civic
+  // profile as a municipality, but Board-created rather than self-registered
+  // (not in SELF_REGISTRABLE below).
+  council: { canExecuteProjects: true, canReceivePublicFunds: true, canOpenDonations: false, isGovernmentEntity: true, requiresBoardOversight: true },
 };
 
 /** Org types that may enter through self-service registration. */

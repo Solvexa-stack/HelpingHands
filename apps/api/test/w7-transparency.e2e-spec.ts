@@ -154,14 +154,33 @@ describe('Transparency (W7)', () => {
   it('the project page: funding by channel, allocations, and the money trail', async () => {
     const res = await http().get(`/api/v1/transparency/projects/${projectId}`).expect(200);
     const project = res.body.data.data;
+    // Donation-table-sourced (not ledger-sourced) — unaffected by W9's fund
+    // routing, still the accurate headline attribution regardless of which
+    // ledger account the money passed through on its way to the project.
     expect(project.funding.byChannel.qr_cash_donations.amount).toBe(500);
-    expect(project.funding.allocations[0].fund.id).toBe(fundId);
-    expect(project.funding.allocations[0].disbursed).toBe(1000);
 
-    // intake → account credit → spend category (the headline chain)
+    // W9: this project also has its own auto-created default fund, and the
+    // $500 QR donation auto-allocated through it — so `allocations` now has
+    // TWO entries (the manual W7 fixture grant, and the auto-allocation).
+    // Order isn't guaranteed, so look each up rather than assuming [0].
+    expect(project.funding.allocations).toHaveLength(2);
+    const manual = project.funding.allocations.find((a: { fund: { id: number } }) => a.fund.id === fundId);
+    expect(manual.disbursed).toBe(1000);
+    const auto = project.funding.allocations.find((a: { fund: { id: number } }) => a.fund.id !== fundId);
+    expect(Number(auto.amount)).toBe(500);
+    expect(auto.disbursed).toBe(500);
+
+    // intake → account credit → spend category (the headline chain, at the
+    // PROJECT's own ledger account). W9: the auto-allocated donation now
+    // reaches the project account via a fund_allocation credit (same as the
+    // manual grant's tranche) rather than a direct 'donation'-referenced
+    // credit — the project's own ledger account genuinely cannot distinguish
+    // "a fund passed this through immediately" from "a fund granted this" by
+    // design (both really are fund→project transfers); the headline
+    // funding.byChannel above is what stays donation-vs-grant accurate.
     const intakeSources = Object.fromEntries(project.moneyTrail.intake.map((i: { source: string; amount: number }) => [i.source, i.amount]));
-    expect(intakeSources.qr_cash_donations).toBe(500);
-    expect(intakeSources.fund_allocations).toBe(1000);
+    expect(intakeSources.fund_allocations).toBe(1500); // 1000 manual + 500 auto-allocated
+    expect(intakeSources.qr_cash_donations).toBeUndefined();
     expect(project.moneyTrail.spend).toEqual([{ category: 'project_expenses', amount: 300 }]);
     const projectAccount = await treasury.projectAccount(projectId);
     expect(project.moneyTrail.balance).toBe(await treasury.balance(projectAccount.id)); // 1200

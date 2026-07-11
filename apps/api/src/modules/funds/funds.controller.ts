@@ -1,10 +1,12 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AdminRole, FundStatus } from '@prisma/client';
+import { AdminRole } from '@prisma/client';
 import { CurrentActor } from '../../common/decorators/current-actor.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ActorContext } from '../../events/actor-context';
+import { CreateFundDonationDto, CreateFundDto, ProposeAllocationDto, UpdateFundDto } from './dto/fund.dto';
 import { FundsService } from './funds.service';
+import { FundHierarchyService } from '../fund-hierarchy/fund-hierarchy.service';
 
 /**
  * W5-E3/E6 — funds & allocations. Legacy fallback administrator-only;
@@ -17,11 +19,14 @@ import { FundsService } from './funds.service';
 @Roles(AdminRole.administrator)
 @Controller({ path: 'funds', version: '1' })
 export class FundsController {
-  constructor(private fundsService: FundsService) {}
+  constructor(
+    private fundsService: FundsService,
+    private fundHierarchy: FundHierarchyService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a fund (Board)' })
-  create(@Body() dto: { name: string; purpose?: string; managingOrganizationId?: number; policy?: Record<string, unknown> }, @CurrentActor() actor: ActorContext) {
+  create(@Body() dto: CreateFundDto, @CurrentActor() actor: ActorContext) {
     return this.fundsService.create(actor, dto);
   }
 
@@ -29,6 +34,15 @@ export class FundsController {
   @ApiOperation({ summary: 'List funds with balances' })
   list() {
     return this.fundsService.list();
+  }
+
+  // W9 — declared ahead of `:id` on purpose: a literal segment route must
+  // register before a `:id` route in the same controller, or Express treats
+  // "hierarchy" as an :id value (same pitfall as funds/agreements/:id).
+  @Get('hierarchy')
+  @ApiOperation({ summary: 'Fund hierarchy: master funds (mirroring the category taxonomy) → organization funds → projects' })
+  hierarchy() {
+    return this.fundHierarchy.tree();
   }
 
   @Get(':id')
@@ -44,10 +58,10 @@ export class FundsController {
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Update fund (status/policy changes are Board-audited)' })
+  @ApiOperation({ summary: 'Update fund (status/type/policy changes are Board-audited)' })
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: { name?: string; purpose?: string; status?: FundStatus; policy?: Record<string, unknown> },
+    @Body() dto: UpdateFundDto,
     @CurrentActor() actor: ActorContext,
   ) {
     return this.fundsService.update(actor, id, dto);
@@ -79,7 +93,7 @@ export class FundsController {
   @ApiOperation({ summary: 'Propose a fund→project allocation (starts the workflow)' })
   propose(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: { projectId: number; amount: number; note?: string; fundingAgreementId?: number },
+    @Body() dto: ProposeAllocationDto,
     @CurrentActor() actor: ActorContext,
   ) {
     return this.fundsService.proposeAllocation(actor, id, dto);
@@ -117,5 +131,35 @@ export class FundsController {
   @ApiOperation({ summary: 'Close a reconciled allocation' })
   close(@Param('allocationId', ParseIntPipe) allocationId: number, @CurrentActor() actor: ActorContext) {
     return this.fundsService.closeAllocation(actor, allocationId);
+  }
+
+  // ─── Fund donations (Donor → FundDonation → Fund → FundAllocation → Project) ─
+
+  @Post(':id/donations')
+  @ApiOperation({ summary: 'Record a fund-directed donation (pending until confirmed)' })
+  recordDonation(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateFundDonationDto,
+    @CurrentActor() actor: ActorContext,
+  ) {
+    return this.fundsService.recordDonation(actor, id, dto);
+  }
+
+  @Get(':id/donations')
+  @ApiOperation({ summary: 'List donations recorded against this fund' })
+  listDonations(@Param('id', ParseIntPipe) id: number) {
+    return this.fundsService.listDonations(id);
+  }
+
+  @Post('donations/:donationId/approve')
+  @ApiOperation({ summary: 'Confirm a donation — posts the ledger credit and increases the fund balance' })
+  confirmDonation(@Param('donationId', ParseIntPipe) donationId: number, @CurrentActor() actor: ActorContext) {
+    return this.fundsService.confirmDonation(actor, donationId);
+  }
+
+  @Post('donations/:donationId/reject')
+  @ApiOperation({ summary: 'Reject a pending donation (no ledger entry posted)' })
+  rejectDonation(@Param('donationId', ParseIntPipe) donationId: number, @CurrentActor() actor: ActorContext) {
+    return this.fundsService.rejectDonation(actor, donationId);
   }
 }

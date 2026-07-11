@@ -17,6 +17,7 @@ import { WorkflowService } from '../workflow/workflow.service';
 import { workflowEnforced } from '../workflow/workflow.types';
 import { CategoriesService } from '../categories/categories.service';
 import { PolicyService } from '../policy/policy.service';
+import { FundHierarchyService } from '../fund-hierarchy/fund-hierarchy.service';
 
 /**
  * W6 addendum — cutover flag for the fund-of-record requirement. OFF by
@@ -38,10 +39,11 @@ export class ProjectsService {
     private workflow: WorkflowService,
     private categories: CategoriesService,
     private policy: PolicyService,
+    private fundHierarchy: FundHierarchyService,
   ) {}
 
   async findAll(query: ProjectQueryDto, userRole?: string, financialOfficerId?: number) {
-    const { page = 1, limit = 15, category, categoryKey, location, search, isCompleted, lang, sortBy = 'createdAt', sortOrder = 'desc' } = query;
+    const { page = 1, limit = 15, category, categoryKey, location, organizationId, search, isCompleted, lang, sortBy = 'createdAt', sortOrder = 'desc' } = query;
     const { skip, take } = paginate(page, limit);
 
     const where: any = {};
@@ -55,6 +57,7 @@ export class ProjectsService {
       where.categoryId = { in: await this.categories.selfAndDescendantIds(node) };
     }
     if (location) where.location = { contains: location, mode: 'insensitive' };
+    if (organizationId) where.ownerOrganizationId = organizationId;
     if (typeof isCompleted === 'boolean') where.isCompleted = isCompleted;
 
     // Financial officers only see their assigned projects
@@ -190,6 +193,14 @@ export class ProjectsService {
     // must exist and be active. Distinct from FundAllocation (financing,
     // proposed later, many funds allowed); this is the single administrative
     // fund a citizen-facing page attributes the project to.
+    //
+    // W9 — this is also the project's "Default Organization Fund": when no
+    // fund is explicitly chosen, auto-resolve (creating on first use) the
+    // owning organization's fund for this project's category, parented under
+    // that category's master fund. Explicit dto.fundId still wins — the
+    // default is a default, not a requirement — and PROJECT_FUND_REQUIRED
+    // keeps its original, narrower meaning (forces an explicit citizen-facing
+    // choice) rather than gating auto-assignment.
     let primaryFundId: number | undefined;
     if (dto.fundId != null) {
       const fund = await this.prisma.fund.findUnique({ where: { id: dto.fundId } });
@@ -200,6 +211,9 @@ export class ProjectsService {
       primaryFundId = dto.fundId;
     } else if (projectFundRequired()) {
       throw new BadRequestException('A fund must be selected for new projects');
+    } else {
+      const defaultFund = await this.fundHierarchy.ensureOrganizationFund(actor, ownerOrganizationId, categoryId);
+      primaryFundId = defaultFund.id;
     }
 
     const project = await this.prisma.project.create({
@@ -415,6 +429,66 @@ export class ProjectsService {
           .catch(() => null); // bridge keeps isCompleted authoritative; parity job watches drift
       }
     }
+  }
+
+  /**
+   * W8 — public transparency report: every fund financing this project
+   * (via FundAllocation), every approved expense spent against it, and the
+   * remaining budget. Deliberately public (matches findAll/findById above)
+   * and deliberately excludes pending/rejected expenses — only money that
+   * has actually moved is shown to the public.
+   */
+  async fundingReport(projectId: number) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, value: true },
+    });
+    if (!project) throw new NotFoundException(`Project #${projectId} not found`);
+
+    const [allocations, expenses] = await Promise.all([
+      this.prisma.fundAllocation.findMany({
+        where: { projectId, status: { notIn: ['rejected', 'proposed'] } },
+        include: { fund: { select: { id: true, name: true, type: true } } },
+        orderBy: { id: 'asc' },
+      }),
+      this.prisma.expense.findMany({
+        where: { projectId, status: 'approved' },
+        include: {
+          fund: { select: { id: true, name: true, type: true } },
+          recipient: { select: { id: true, name: true, type: true } },
+        },
+        orderBy: { approvedAt: 'desc' },
+      }),
+    ]);
+
+    const fundingSources = allocations.map((a) => ({
+      fundId: a.fundId,
+      fundName: a.fund.name,
+      fundType: a.fund.type,
+      amount: Number(a.amount),
+      status: a.status,
+    }));
+    const totalFunded = fundingSources.reduce((sum, f) => sum + f.amount, 0);
+    const totalSpent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+
+    return {
+      projectId,
+      value: Number(project.value),
+      totalFunded,
+      totalSpent,
+      remainingBudget: Math.round((totalFunded - totalSpent) * 100) / 100,
+      fundingSources,
+      expenses: expenses.map((e) => ({
+        id: e.id,
+        fundId: e.fundId,
+        fundName: e.fund.name,
+        amount: Number(e.amount),
+        category: e.category,
+        description: e.description,
+        recipient: e.recipient,
+        approvedAt: e.approvedAt,
+      })),
+    };
   }
 
   // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched

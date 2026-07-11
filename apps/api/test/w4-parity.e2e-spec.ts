@@ -126,6 +126,9 @@ describe('Workflow parity harness (W4-E2-S2)', () => {
 
   it('the legacy event sequence is IDENTICAL to the legacy-path run (W0 spec list)', () => {
     expect(legacyNames()).toEqual([
+      // W9: default fund + its category's master fund auto-created on first use
+      'fund.created',
+      'fund.created',
       'project.created',
       'study.created',
       'study_section.assigned',
@@ -144,7 +147,10 @@ describe('Workflow parity harness (W4-E2-S2)', () => {
       'project.updated',
       'donation.pledged',
       'donation.approved',
-      'ledger.posted', // W5: Treasury posts the money fact
+      // W9: fund-routed donation — two ledger postings + the auto-allocation's disbursed event
+      'ledger.posted',
+      'ledger.posted',
+      'allocation.disbursed',
       'project.closed',
     ]);
   });

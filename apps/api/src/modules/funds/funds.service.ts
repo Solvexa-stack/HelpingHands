@@ -1,16 +1,18 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { FundStatus, Prisma } from '@prisma/client';
+import { DonationStatus, FundStatus, FundType, Prisma } from '@prisma/client';
 import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TreasuryService } from '../treasury/treasury.service';
 import { WorkflowService } from '../workflow/workflow.service';
 import { ReportingObligationsService } from '../org-reporting/reporting-obligations.service';
+import { CreateFundDonationDto, CreateFundDto, ProposeAllocationDto, UpdateFundDto } from './dto/fund.dto';
 
 export const FUND_ROLES = ['fund_director', 'fund_deputy', 'fund_secretary', 'fund_accountant', 'fund_controller'];
 
@@ -35,12 +37,15 @@ export class FundsService {
 
   // ─── Fund CRUD (Board) ───────────────────────────────────────────────────────
 
-  async create(actor: ActorContext, dto: { name: string; purpose?: string; managingOrganizationId?: number; policy?: Record<string, unknown> }) {
+  async create(actor: ActorContext, dto: CreateFundDto) {
+    await this.assertOwnerConsistent(dto.type, dto.managingOrganizationId, dto.donorId);
     const fund = await this.prisma.fund.create({
       data: {
         name: dto.name,
         purpose: dto.purpose,
+        type: dto.type ?? FundType.organization,
         managingOrganizationId: dto.managingOrganizationId,
+        donorId: dto.donorId,
         // launch ceiling: Board decision on every allocation until relaxed
         policy: ({ dualApprovalThreshold: 0, ...(dto.policy ?? {}) }) as Prisma.InputJsonValue,
       },
@@ -50,7 +55,7 @@ export class FundsService {
       event: 'fund.created',
       actor,
       subject: { type: 'fund', id: fund.id },
-      data: { name: fund.name },
+      data: { name: fund.name, type: fund.type },
     });
     return fund;
   }
@@ -59,7 +64,7 @@ export class FundsService {
     const funds = await this.prisma.fund.findMany({
       where: { deletedAt: null },
       orderBy: { id: 'asc' },
-      include: { _count: { select: { memberships: true, allocations: true } } },
+      include: { _count: { select: { memberships: true, allocations: true, fundDonations: true, expenses: true } } },
     });
     return Promise.all(
       funds.map(async (fund) => ({
@@ -73,6 +78,8 @@ export class FundsService {
     const fund = await this.prisma.fund.findFirst({
       where: { id: fundId, deletedAt: null },
       include: {
+        managingOrganization: { select: { id: true, name: true, type: true } },
+        donor: { select: { id: true, name: true, type: true } },
         memberships: { include: { user: { select: { id: true, email: true } } } },
         allocations: { orderBy: { id: 'desc' }, include: { project: { select: { id: true, blockId: true } } } },
       },
@@ -100,26 +107,58 @@ export class FundsService {
     };
   }
 
-  async update(actor: ActorContext, fundId: number, dto: { name?: string; purpose?: string; status?: FundStatus; policy?: Record<string, unknown> }) {
+  async update(actor: ActorContext, fundId: number, dto: UpdateFundDto) {
     const fund = await this.prisma.fund.findUnique({ where: { id: fundId } });
     if (!fund) throw new NotFoundException(`Fund #${fundId} not found`);
+    const nextType = dto.type ?? fund.type;
+    const nextOrgId = dto.managingOrganizationId !== undefined ? dto.managingOrganizationId : fund.managingOrganizationId;
+    const nextDonorId = dto.donorId !== undefined ? dto.donorId : fund.donorId;
+    await this.assertOwnerConsistent(nextType, nextOrgId ?? undefined, nextDonorId ?? undefined);
+
     const updated = await this.prisma.fund.update({
       where: { id: fundId },
       data: {
         name: dto.name,
         purpose: dto.purpose,
         status: dto.status,
+        type: dto.type,
+        managingOrganizationId: dto.managingOrganizationId,
+        donorId: dto.donorId,
         ...(dto.policy ? { policy: dto.policy as Prisma.InputJsonValue } : {}),
       },
     });
-    // policy/status changes are Board-audited (threshold relaxation path)
+    // policy/status/type changes are Board-audited (threshold relaxation path)
     this.eventBus.publish({
       event: 'fund.updated',
       actor,
       subject: { type: 'fund', id: fundId },
-      data: { changedFields: Object.keys(dto), before: { status: fund.status, policy: fund.policy }, after: { status: updated.status, policy: updated.policy } },
+      data: {
+        changedFields: Object.keys(dto),
+        before: { status: fund.status, type: fund.type, policy: fund.policy },
+        after: { status: updated.status, type: updated.type, policy: updated.policy },
+      },
     });
     return updated;
+  }
+
+  /**
+   * W8 — light, non-blocking guidance rather than a hard DB constraint: the
+   * requirement is explicit that "a fund may optionally belong to an
+   * organization," so type/owner pairing is a nudge (donorId only makes
+   * sense alongside type=donor, and vice versa), not an enforced invariant.
+   */
+  private async assertOwnerConsistent(type: FundType | undefined, managingOrganizationId?: number, donorId?: number) {
+    if (donorId != null) {
+      const donor = await this.prisma.donor.findFirst({ where: { id: donorId, deletedAt: null } });
+      if (!donor) throw new NotFoundException(`Donor #${donorId} not found`);
+    }
+    if (managingOrganizationId != null) {
+      const org = await this.prisma.organization.findUnique({ where: { id: managingOrganizationId } });
+      if (!org) throw new NotFoundException(`Organization #${managingOrganizationId} not found`);
+    }
+    if (type === FundType.donor && donorId == null) {
+      throw new BadRequestException('A donor-type fund should reference a donorId');
+    }
   }
 
   // ─── Officers (fund-scope grants) ────────────────────────────────────────────
@@ -171,11 +210,7 @@ export class FundsService {
 
   // ─── Allocations (fund → project, on the workflow engine) ────────────────────
 
-  async proposeAllocation(
-    actor: ActorContext,
-    fundId: number,
-    dto: { projectId: number; amount: number; note?: string; fundingAgreementId?: number },
-  ) {
+  async proposeAllocation(actor: ActorContext, fundId: number, dto: ProposeAllocationDto) {
     const fund = await this.prisma.fund.findUnique({ where: { id: fundId } });
     if (!fund) throw new NotFoundException(`Fund #${fundId} not found`);
     if (fund.status !== 'active') {
@@ -187,6 +222,15 @@ export class FundsService {
     const project = await this.prisma.project.findUnique({ where: { id: dto.projectId } });
     if (!project) throw new NotFoundException(`Project #${dto.projectId} not found`);
     if (!Number.isFinite(dto.amount) || dto.amount <= 0) throw new BadRequestException('Allocation amount must be positive');
+
+    // The project must belong to (own or execute) the fund's own managing
+    // organization — funds with no managing org place no such restriction.
+    if (fund.managingOrganizationId != null) {
+      const fundOwnsOrExecutes = await this.orgOwnsOrExecutesProject(fund.managingOrganizationId, dto.projectId, project);
+      if (!fundOwnsOrExecutes) {
+        throw new BadRequestException("Project does not belong to this fund's managing organization");
+      }
+    }
 
     // W6-E1-S2: allocations under an agreement must match its fund, be active,
     // and finance a project the agreement org owns or executes.
@@ -201,17 +245,7 @@ export class FundsService {
       if (agreement.status !== 'active') {
         throw new BadRequestException(`Agreement is ${agreement.status} — no new allocations under it`);
       }
-      const orgExecutes =
-        project.ownerOrganizationId === agreement.organizationId ||
-        (await this.prisma.projectParticipation.findFirst({
-          where: {
-            projectId: dto.projectId,
-            organizationId: agreement.organizationId,
-            role: 'executing_agency',
-            status: 'active',
-            deletedAt: null,
-          },
-        })) !== null;
+      const orgExecutes = await this.orgOwnsOrExecutesProject(agreement.organizationId, dto.projectId, project);
       if (!orgExecutes) {
         throw new BadRequestException(
           'The agreement organization neither owns nor executes this project',
@@ -388,10 +422,150 @@ export class FundsService {
       .filter((a) => a.disbursed > 0)
       .map((a) => ({ projectId: a.projectId, disbursed: a.disbursed, allocated: Number(a.amount), status: a.status }));
 
-    return { fund: { id: fund.id, name: fund.name, status: fund.status, policy: fund.policy }, balance: fund.balance, intake, allocated, disbursed, spendByProject, statement: statement.entries.slice(-20) };
+    // W8 — fund report additions: total donations received directly by this
+    // fund (manual + online, approved/completed only), and total spent via
+    // Expense (approved only). `intake` above already reflects both in the
+    // ledger balance; these are named breakdowns for the report UI.
+    const [fundDonationsSum, onlineDonationsSum, expensesSum] = await Promise.all([
+      this.prisma.fundDonation.aggregate({ where: { fundId, status: 'approved' }, _sum: { amount: true } }),
+      this.prisma.onlineDonation.aggregate({ where: { fundId, status: 'completed' }, _sum: { amount: true } }),
+      this.prisma.expense.aggregate({ where: { fundId, status: 'approved' }, _sum: { amount: true } }),
+    ]);
+    const totalDonations =
+      Number(fundDonationsSum._sum.amount ?? 0) + Number(onlineDonationsSum._sum.amount ?? 0);
+    const totalSpent = Number(expensesSum._sum.amount ?? 0);
+
+    // W9 — projects this fund is the default fund for (Step 7: "Organization
+    // Fund → active projects"). Separate from `spendByProject` above, which
+    // is allocation-derived and includes projects funded by co-financing
+    // from OTHER funds too.
+    const defaultFundProjects = await this.prisma.project.findMany({
+      where: { primaryFundId: fundId, deletedAt: null },
+      select: { id: true, value: true, isCompleted: true, block: { include: { translations: { take: 1 } } } },
+    });
+
+    return {
+      fund: { id: fund.id, name: fund.name, type: fund.type, status: fund.status, policy: fund.policy },
+      balance: fund.balance,
+      intake,
+      totalDonations,
+      allocated,
+      disbursed,
+      totalSpent,
+      remainingBalance: fund.balance,
+      activeProjects: defaultFundProjects
+        .filter((p) => !p.isCompleted)
+        .map((p) => ({ id: p.id, name: p.block.translations[0]?.name ?? `Project #${p.id}`, value: Number(p.value) })),
+      spendByProject,
+      statement: statement.entries.slice(-20),
+    };
+  }
+
+  // ─── Fund donations (Donor → FundDonation → Fund → FundAllocation → Project) ─
+
+  async recordDonation(actor: ActorContext, fundId: number, dto: CreateFundDonationDto) {
+    const fund = await this.prisma.fund.findUnique({ where: { id: fundId } });
+    if (!fund) throw new NotFoundException(`Fund #${fundId} not found`);
+    if (fund.status !== 'active') {
+      throw new BadRequestException(`Fund is ${fund.status} — no new donations`);
+    }
+    if (dto.donorId != null) {
+      const donor = await this.prisma.donor.findFirst({ where: { id: dto.donorId, deletedAt: null } });
+      if (!donor) throw new NotFoundException(`Donor #${dto.donorId} not found`);
+    }
+    if (dto.participantId != null) {
+      const participant = await this.prisma.participant.findUnique({ where: { id: dto.participantId } });
+      if (!participant) throw new NotFoundException(`Participant #${dto.participantId} not found`);
+    }
+
+    const donation = await this.prisma.fundDonation.create({
+      data: {
+        fundId,
+        donorId: dto.donorId,
+        participantId: dto.participantId,
+        amount: new Prisma.Decimal(dto.amount),
+        currency: dto.currency ?? 'USD',
+        paymentMethod: dto.paymentMethod,
+        referenceNumber: dto.referenceNumber,
+        donatedAt: new Date(dto.donatedAt),
+        notes: dto.notes,
+        createdByUserId: actor.userId!,
+      },
+    });
+    this.eventBus.publish({
+      event: 'fund_donation.recorded',
+      actor,
+      subject: { type: 'fund_donation', id: donation.id },
+      data: { fundId, amount: dto.amount, paymentMethod: dto.paymentMethod },
+    });
+    return donation;
+  }
+
+  async listDonations(fundId: number) {
+    return this.prisma.fundDonation.findMany({
+      where: { fundId },
+      orderBy: { id: 'desc' },
+      include: {
+        donor: { select: { id: true, name: true, type: true } },
+        participant: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
+  }
+
+  /** Confirming a donation is the trigger: Treasury posts the ledger credit and the fund's available balance increases. */
+  async confirmDonation(actor: ActorContext, donationId: number) {
+    return this.decideDonation(actor, donationId, DonationStatus.approved);
+  }
+
+  async rejectDonation(actor: ActorContext, donationId: number) {
+    return this.decideDonation(actor, donationId, DonationStatus.rejected);
+  }
+
+  private async decideDonation(actor: ActorContext, donationId: number, status: DonationStatus) {
+    const donation = await this.prisma.fundDonation.findUnique({ where: { id: donationId } });
+    if (!donation) throw new NotFoundException(`Fund donation #${donationId} not found`);
+    if (donation.status !== 'pending') {
+      throw new BadRequestException(`Donation is ${donation.status} — only pending donations can be decided`);
+    }
+    const updated = await this.prisma.fundDonation.update({
+      where: { id: donationId },
+      data: {
+        status,
+        approvedByUserId: status === DonationStatus.approved ? actor.userId : undefined,
+        approvedAt: status === DonationStatus.approved ? new Date() : undefined,
+      },
+    });
+    // W5-style: awaited so Treasury posts the ledger credit (donation.approved
+    // path) before this request returns — never bypass the ledger.
+    await this.eventBus.publishAndWait({
+      event: status === DonationStatus.approved ? 'fund_donation.approved' : 'fund_donation.rejected',
+      actor,
+      subject: { type: 'fund_donation', id: donationId },
+      data: { fundId: donation.fundId, amount: Number(donation.amount) },
+    });
+    return updated;
   }
 
   // ─── Internals ───────────────────────────────────────────────────────────────
+
+  /** True if `organizationId` owns the project directly or executes it via an active `executing_agency` participation. */
+  private async orgOwnsOrExecutesProject(
+    organizationId: number,
+    projectId: number,
+    project: { ownerOrganizationId: number },
+  ): Promise<boolean> {
+    if (project.ownerOrganizationId === organizationId) return true;
+    const participation = await this.prisma.projectParticipation.findFirst({
+      where: {
+        projectId,
+        organizationId,
+        role: 'executing_agency',
+        status: 'active',
+        deletedAt: null,
+      },
+    });
+    return participation !== null;
+  }
 
   private async allocationOr404(id: number) {
     const allocation = await this.prisma.fundAllocation.findUnique({ where: { id } });

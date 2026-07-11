@@ -191,6 +191,11 @@ describe('Domain event emission: projects, study, voting (W0-E2-S3)', () => {
 
   it('the full lifecycle produced exactly the expected event sequence', () => {
     expect(names()).toEqual([
+      // W9: this project's category is used for the first time in this run,
+      // so its default fund (and that category's master fund) are
+      // auto-created before project.created itself is published.
+      'fund.created',
+      'fund.created',
       'project.created',
       'workflow_instance.started', // W4: every project lives on the engine from birth
       'study.created',
@@ -210,7 +215,13 @@ describe('Domain event emission: projects, study, voting (W0-E2-S3)', () => {
       'project.updated',
       'donation.pledged', // funding step — donation events joined the stream in S4
       'donation.approved',
-      'ledger.posted', // W5: Treasury posts the money fact
+      // W9: this project has an auto-assigned default fund, so the donation
+      // routes Donation → Fund → auto FundAllocation → Project — two ledger
+      // postings (fund credit, then the allocation's fund→project tranche)
+      // plus the same allocation.disbursed event a manual disbursement fires.
+      'ledger.posted',
+      'ledger.posted',
+      'allocation.disbursed',
       'project.closed',
     ]);
 

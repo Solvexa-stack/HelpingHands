@@ -35,6 +35,9 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { OrgReportingModule } from './modules/org-reporting/org-reporting.module';
 import { TransparencyModule } from './modules/transparency/transparency.module';
+import { DonorsModule } from './modules/donors/donors.module';
+import { ExpensesModule } from './modules/expenses/expenses.module';
+import { FundHierarchyModule } from './modules/fund-hierarchy/fund-hierarchy.module';
 
 @Module({
   imports: [
@@ -91,6 +94,9 @@ import { TransparencyModule } from './modules/transparency/transparency.module';
     CategoriesModule,
     OrgReportingModule,
     TransparencyModule,
+    DonorsModule,
+    ExpensesModule,
+    FundHierarchyModule,
   ],
 })
 export class AppModule {}

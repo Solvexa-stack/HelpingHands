@@ -15,6 +15,7 @@ import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../../common/decorators/roles.decorator';
 import { systemActor } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { ROUTE_ACTION_MAP } from './policy-registry';
 import { PolicyService } from './policy.service';
 import { PolicyResource } from './policy.types';
@@ -65,6 +66,7 @@ export class PolicyGuard implements CanActivate {
     private policyService: PolicyService,
     private recorder: PolicyDivergenceRecorder,
     private eventBus: EventBusService,
+    private prisma: PrismaService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -96,7 +98,7 @@ export class PolicyGuard implements CanActivate {
       const decision = await this.policyService.can(
         request.actorContext ?? { userId: user.sub, referenceType: user.referenceType, requestId: 'n/a', ip: null },
         action,
-        this.resourceFrom(request),
+        await this.resourceFrom(request),
         requiredRoles ?? [],
       );
       if (this.policyService.isSensitive(action)) {
@@ -123,7 +125,7 @@ export class PolicyGuard implements CanActivate {
       const decision = await this.policyService.can(
         request.actorContext ?? { userId: user.sub, referenceType: user.referenceType, requestId: 'n/a', ip: null },
         action,
-        this.resourceFrom(request),
+        await this.resourceFrom(request),
         requiredRoles ?? [],
       );
 
@@ -156,7 +158,7 @@ export class PolicyGuard implements CanActivate {
     return true;
   }
 
-  private resourceFrom(request: any): PolicyResource {
+  private async resourceFrom(request: any): Promise<PolicyResource> {
     const params = request.params ?? {};
     const path: string = request.route?.path ?? '';
     const resource: PolicyResource = {};
@@ -171,6 +173,44 @@ export class PolicyGuard implements CanActivate {
     if (path.startsWith('/api/v1/funds/') && params.id) {
       (resource as { id?: number }).id = Number(params.id);
     }
+
+    // W8 fix: fund sub-resources addressed by their OWN id — allocationId
+    // (`/funds/allocations/:allocationId/approve`), donationId
+    // (`/funds/donations/:donationId/approve`), or the expense id on the
+    // top-level `/expenses/:id` resource — previously left `resource.id`
+    // unresolved for the first two, so `matchGrant`'s fund-scope branch
+    // (`grant.scopeId == null || resource.id == null || ...`) treated a
+    // fund-scope grant on ANY fund as a match: a fund_director of fund A
+    // could approve/disburse/reconcile allocations that belong to fund B.
+    // Resolve each back to its owning fund so the grant must actually match.
+    if (params.allocationId) {
+      const allocation = await this.prisma.fundAllocation.findUnique({
+        where: { id: Number(params.allocationId) },
+        select: { fundId: true, projectId: true },
+      });
+      if (allocation) {
+        (resource as { id?: number }).id = allocation.fundId;
+        resource.projectId = allocation.projectId;
+      }
+    }
+    if (params.donationId) {
+      const donation = await this.prisma.fundDonation.findUnique({
+        where: { id: Number(params.donationId) },
+        select: { fundId: true },
+      });
+      if (donation) (resource as { id?: number }).id = donation.fundId;
+    }
+    if (path.startsWith('/api/v1/expenses/') && params.id) {
+      const expense = await this.prisma.expense.findUnique({
+        where: { id: Number(params.id) },
+        select: { fundId: true, projectId: true },
+      });
+      if (expense) {
+        (resource as { id?: number }).id = expense.fundId;
+        resource.projectId = expense.projectId;
+      }
+    }
+
     return resource;
   }
 }

@@ -72,6 +72,8 @@ export const projectsApi = {
   delete: (id: number) => api.delete(`/projects/${id}`),
   assignOfficer: (id: number, officerId: number) =>
     api.patch(`/projects/${id}/assign-officer`, { officerId }).then((r) => r.data.data),
+  // W8 — funding sources by fund, expenses, remaining budget (public endpoint)
+  fundingReport: (id: number) => api.get(`/projects/${id}/funding`).then((r) => r.data.data),
 };
 
 // ─── Donations ────────────────────────────────────────────────────────────────
@@ -266,13 +268,26 @@ export const auditApi = {
   get: (id: number) => api.get(`/audit/${id}`).then((r) => r.data.data),
 };
 
-// ─── Funds & treasury (W5-E7) ─────────────────────────────────────────────────
+// ─── Funds & treasury (W5-E7, W8 fund types/donations) ────────────────────────
+export type FundType = 'organization' | 'council' | 'donor';
+
+export interface FundInput {
+  name: string;
+  purpose?: string;
+  type?: FundType;
+  managingOrganizationId?: number;
+  donorId?: number;
+  policy?: Record<string, unknown>;
+}
+
 export const fundsApi = {
   list: () => api.get('/funds').then((r) => r.data.data),
+  // W9 — master funds (mirroring the category taxonomy) → organization funds → projects
+  hierarchy: () => api.get('/funds/hierarchy').then((r) => r.data.data),
   detail: (id: number) => api.get(`/funds/${id}`).then((r) => r.data.data),
   dashboard: (id: number) => api.get(`/funds/${id}/dashboard`).then((r) => r.data.data),
-  create: (data: { name: string; purpose?: string }) => api.post('/funds', data).then((r) => r.data.data),
-  update: (id: number, data: { name?: string; purpose?: string; status?: string }) =>
+  create: (data: FundInput) => api.post('/funds', data).then((r) => r.data.data),
+  update: (id: number, data: Partial<FundInput> & { status?: string }) =>
     api.put(`/funds/${id}`, data).then((r) => r.data.data),
   addOfficer: (id: number, userId: number, role: string) =>
     api.post(`/funds/${id}/officers`, { userId, role }).then((r) => r.data.data),
@@ -285,6 +300,103 @@ export const fundsApi = {
     api.post(`/funds/allocations/${allocationId}/disburse`, { amount }).then((r) => r.data.data),
   reconcile: (allocationId: number) => api.post(`/funds/allocations/${allocationId}/reconcile`).then((r) => r.data.data),
   close: (allocationId: number) => api.post(`/funds/allocations/${allocationId}/close`).then((r) => r.data.data),
+
+  // Donor → FundDonation → Fund → FundAllocation → Project
+  recordDonation: (
+    id: number,
+    data: {
+      donorId?: number;
+      participantId?: number;
+      amount: number;
+      currency?: string;
+      paymentMethod: 'cash' | 'bank_transfer' | 'check' | 'card' | 'online';
+      referenceNumber?: string;
+      donatedAt: string;
+      notes?: string;
+    },
+  ) => api.post(`/funds/${id}/donations`, data).then((r) => r.data.data),
+  listDonations: (id: number) => api.get(`/funds/${id}/donations`).then((r) => r.data.data),
+  confirmDonation: (donationId: number) =>
+    api.post(`/funds/donations/${donationId}/approve`).then((r) => r.data.data),
+  rejectDonation: (donationId: number) =>
+    api.post(`/funds/donations/${donationId}/reject`).then((r) => r.data.data),
+};
+
+// ─── Donors (W8) ───────────────────────────────────────────────────────────────
+export interface DonorInput {
+  name: string;
+  type?: 'person' | 'company' | 'organization';
+  contactEmail?: string;
+  contactPhone?: string;
+  contactAddress?: string;
+  taxId?: string;
+  notes?: string;
+}
+
+export const donorsApi = {
+  list: () => api.get('/donors').then((r) => r.data.data),
+  detail: (id: number) => api.get(`/donors/${id}`).then((r) => r.data.data),
+  create: (data: DonorInput) => api.post('/donors', data).then((r) => r.data.data),
+  update: (id: number, data: Partial<DonorInput>) => api.put(`/donors/${id}`, data).then((r) => r.data.data),
+  report: (id: number) => api.get(`/donors/${id}/report`).then((r) => r.data.data),
+};
+
+// ─── Recipients (W8 — expense payees) ─────────────────────────────────────────
+export interface RecipientInput {
+  name: string;
+  type?: 'person' | 'company' | 'organization';
+  contactEmail?: string;
+  contactPhone?: string;
+  contactAddress?: string;
+  organizationId?: number;
+  taxId?: string;
+  notes?: string;
+}
+
+export const recipientsApi = {
+  list: () => api.get('/recipients').then((r) => r.data.data),
+  detail: (id: number) => api.get(`/recipients/${id}`).then((r) => r.data.data),
+  create: (data: RecipientInput) => api.post('/recipients', data).then((r) => r.data.data),
+  update: (id: number, data: Partial<RecipientInput>) => api.put(`/recipients/${id}`, data).then((r) => r.data.data),
+};
+
+// ─── Invoices (W8 — expense supporting documents) ─────────────────────────────
+export const invoicesApi = {
+  upload: (formData: FormData) =>
+    api.post('/invoices', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data.data),
+  detail: (id: number) => api.get(`/invoices/${id}`).then((r) => r.data.data),
+};
+
+// ─── Expenses (W8 — successor to the legacy project expense flow) ────────────
+export type ExpenseCategory =
+  | 'materials'
+  | 'labor'
+  | 'services'
+  | 'equipment'
+  | 'transport'
+  | 'administrative'
+  | 'other';
+
+export interface ExpenseInput {
+  fundId: number;
+  projectId: number;
+  amount: number;
+  category: ExpenseCategory;
+  description: string;
+  recipientId: number;
+  invoiceId?: number;
+  notes?: string;
+}
+
+export const expensesApi = {
+  list: (params?: { projectId?: number; fundId?: number; status?: string }) =>
+    api.get('/expenses', { params }).then((r) => r.data.data),
+  detail: (id: number) => api.get(`/expenses/${id}`).then((r) => r.data.data),
+  create: (data: ExpenseInput) => api.post('/expenses', data).then((r) => r.data.data),
+  attachInvoice: (id: number, invoiceId: number) =>
+    api.post(`/expenses/${id}/invoice`, { invoiceId }).then((r) => r.data.data),
+  approve: (id: number) => api.post(`/expenses/${id}/approve`).then((r) => r.data.data),
+  reject: (id: number) => api.post(`/expenses/${id}/reject`).then((r) => r.data.data),
 };
 
 // ─── Workflow engine (W4-E5) ──────────────────────────────────────────────────

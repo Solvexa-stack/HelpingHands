@@ -39,15 +39,25 @@ describe('Fund of record (W6 addendum)', () => {
     await app.close();
   });
 
-  it('creates a project with no fund selected — optional by default', async () => {
+  // W9: fundId is still optional on the request — "optional by default" now
+  // means "the caller doesn't have to choose one," not "the project ends up
+  // with none." FundHierarchyService auto-resolves the owning org's fund
+  // for this project's category (creating it, and that category's master
+  // fund, on first use) and sets it as the project's default fund of record.
+  it('creates a project with no fund selected — an org fund for its category is auto-assigned', async () => {
     const blockId = await createBlockViaApi(app, admin, 'w6-fund-none');
     const created = await http()
       .post('/api/v1/projects')
       .set('Authorization', admin)
       .send({ blockId, value: 10000, category: 'agricultural' })
       .expect(201);
-    expect(created.body.data.primaryFundId).toBeNull();
-    expect(created.body.data.primaryFund).toBeNull();
+    expect(created.body.data.primaryFundId).not.toBeNull();
+    expect(created.body.data.primaryFund).not.toBeNull();
+
+    const fund = await prisma.fund.findUniqueOrThrow({ where: { id: created.body.data.primaryFundId } });
+    expect(fund.type).toBe('organization');
+    expect(fund.categoryId).not.toBeNull();
+    expect(fund.managingOrganizationId).not.toBeNull();
   });
 
   it('creates a project with a fund and returns it in both the create and detail responses', async () => {

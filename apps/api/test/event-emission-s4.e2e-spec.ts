@@ -356,11 +356,21 @@ describe('Domain event emission: donations, payments, execution, financial, mile
 
   it('the run produced exactly the expected ordered sequence with envelope invariants', () => {
     expect(names()).toEqual([
+      // W9: this project's category is used for the first time in this run,
+      // so its default fund (and that category's master fund) are
+      // auto-created before project.created itself is published.
+      'fund.created',
+      'fund.created',
       'project.created',
       'workflow_instance.started', // W4: every project lives on the engine from birth
       'donation.pledged',
       'donation.approved',
-      'ledger.posted', // W5: Treasury posts the money fact
+      // W9: donation routes Donation → default Fund → auto FundAllocation →
+      // Project — two ledger postings plus the allocation.disbursed event a
+      // manual disbursement would also fire.
+      'ledger.posted',
+      'ledger.posted',
+      'allocation.disbursed',
       'donation.pledged',
       'donation.rejected',
       'donation.pledged', // cancelled pledge — cancel itself is silent
@@ -371,7 +381,7 @@ describe('Domain event emission: donations, payments, execution, financial, mile
       'task.updated',
       'task.completed',
       'expense.submitted',
-      'expense.approved',
+      'expense.approved', // legacy ProjectExpense — unaffected by W9, still project account direct
       'ledger.posted', // W5: Treasury posts the money fact
       'expense.submitted',
       'expense.rejected',
@@ -380,10 +390,14 @@ describe('Domain event emission: donations, payments, execution, financial, mile
       'milestone.created',
       'milestone.missed',
       'payment.completed',
-      'ledger.posted', // W5: Treasury posts the money fact
+      'ledger.posted', // W9 fund-routed (see above)
+      'ledger.posted',
+      'allocation.disbursed',
       'payment.failed',
       'payment.completed',
-      'ledger.posted', // W5: Treasury posts the money fact
+      'ledger.posted', // W9 fund-routed (see above)
+      'ledger.posted',
+      'allocation.disbursed',
       'project.closed',
     ]);
 

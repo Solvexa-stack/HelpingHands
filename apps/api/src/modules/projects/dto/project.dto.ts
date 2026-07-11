@@ -94,6 +94,13 @@ export class ProjectQueryDto {
   @IsString()
   location?: string;
 
+  @ApiPropertyOptional({ description: 'Filter by owning organization id' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  organizationId?: number;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
