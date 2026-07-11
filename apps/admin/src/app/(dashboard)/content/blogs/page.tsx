@@ -13,7 +13,7 @@ import { useLanguage } from '@/contexts/language-context';
 const LIMIT = 15;
 
 export default function BlogsPage() {
-  const { locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
@@ -30,14 +30,14 @@ export default function BlogsPage() {
 
   const toggleMutation = useMutation({
     mutationFn: (id: number) => blocksApi.toggleActive(id),
-    onSuccess: () => { success('Updated'); qc.invalidateQueries({ queryKey: ['blocks-blog'] }); },
-    onError: (err: any) => toastError(err?.response?.data?.message || 'Failed'),
+    onSuccess: () => { success(t('content.toast.updated')); qc.invalidateQueries({ queryKey: ['blocks-blog'] }); },
+    onError: (err: any) => toastError(err?.response?.data?.message || t('common.failed')),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => blocksApi.delete(id),
-    onSuccess: () => { success('Deleted'); qc.invalidateQueries({ queryKey: ['blocks-blog'] }); setDeleteId(null); },
-    onError: (err: any) => toastError(err?.response?.data?.message || 'Failed'),
+    onSuccess: () => { success(t('content.toast.deleted')); qc.invalidateQueries({ queryKey: ['blocks-blog'] }); setDeleteId(null); },
+    onError: (err: any) => toastError(err?.response?.data?.message || t('common.failed')),
   });
 
   return (
@@ -45,10 +45,10 @@ export default function BlogsPage() {
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="input ps-9" placeholder="Search blogs..." />
+          <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="input ps-9" placeholder={t('content.searchBlogs')} />
         </div>
         <Link href="/content/blogs/new" className="btn-primary btn-md gap-2">
-          <Plus className="w-4 h-4" /> New Post
+          <Plus className="w-4 h-4" /> {t('content.newPost')}
         </Link>
       </div>
 
@@ -56,29 +56,29 @@ export default function BlogsPage() {
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="table-header">Title</th>
-              <th className="table-header">Slug</th>
-              <th className="table-header">Created</th>
-              <th className="table-header">Status</th>
-              <th className="table-header">Actions</th>
+              <th className="table-header">{t('content.title')}</th>
+              <th className="table-header">{t('content.slug')}</th>
+              <th className="table-header">{t('content.colCreated')}</th>
+              <th className="table-header">{t('common.status')}</th>
+              <th className="table-header">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {isLoading ? (
-              <tr><td colSpan={5} className="table-cell text-center py-12 text-gray-400">Loading...</td></tr>
+              <tr><td colSpan={5} className="table-cell text-center py-12 text-gray-400">{t('common.loading')}</td></tr>
             ) : blocks.length === 0 ? (
-              <tr><td colSpan={5} className="table-cell text-center py-12 text-gray-400">No posts yet</td></tr>
+              <tr><td colSpan={5} className="table-cell text-center py-12 text-gray-400">{t('content.noPostsYet')}</td></tr>
             ) : (
               blocks.map((b: any) => {
-                const t = getTranslation(b.translations || []);
+                const tr = getTranslation(b.translations || []);
                 return (
                   <tr key={b.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="table-cell font-medium max-w-56 truncate">{t?.name || 'Untitled'}</td>
-                    <td className="table-cell text-gray-400 font-mono text-xs max-w-40 truncate">{t?.slug}</td>
+                    <td className="table-cell font-medium max-w-56 truncate">{tr?.name || t('content.untitled')}</td>
+                    <td className="table-cell text-gray-400 font-mono text-xs max-w-40 truncate">{tr?.slug}</td>
                     <td className="table-cell text-gray-400">{formatDate(b.createdAt, locale)}</td>
                     <td className="table-cell">
                       <span className={cn('badge', b.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')}>
-                        {b.isActive ? 'Published' : 'Draft'}
+                        {b.isActive ? t('content.published') : t('content.draft')}
                       </span>
                     </td>
                     <td className="table-cell">
@@ -103,7 +103,7 @@ export default function BlogsPage() {
 
         {meta?.totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-            <p className="text-sm text-gray-500">{meta.total} total</p>
+            <p className="text-sm text-gray-500">{t('content.totalCount', { count: meta.total })}</p>
             <div className="flex gap-1">
               {Array.from({ length: meta.totalPages }, (_, i) => i + 1).map((pg) => (
                 <button key={pg} onClick={() => setPage(pg)}
@@ -118,8 +118,8 @@ export default function BlogsPage() {
 
       {deleteId && (
         <ConfirmDialog
-          title="Delete Blog Post"
-          message="Delete this blog post? This cannot be undone."
+          title={t('content.deleteBlogTitle')}
+          message={t('content.deleteBlogMessage')}
           onConfirm={() => deleteMutation.mutate(deleteId)}
           onCancel={() => setDeleteId(null)}
           loading={deleteMutation.isPending}

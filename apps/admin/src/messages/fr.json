@@ -327,7 +327,30 @@
     "newEvent": "Nouvel événement",
     "searchBlogs": "Rechercher des articles...",
     "searchNews": "Rechercher des actualités...",
-    "searchEvents": "Rechercher des événements..."
+    "searchEvents": "Rechercher des événements...",
+    "draft": "Brouillon",
+    "active": "Actif",
+    "colCreated": "Créé le",
+    "colDate": "Date",
+    "totalCount": "{count} au total",
+    "noPostsYet": "Aucun article pour le moment",
+    "noNewsYet": "Aucune actualité pour le moment",
+    "noEventsYet": "Aucun événement pour le moment",
+    "untitled": "Sans titre",
+    "toast": {
+      "updated": "Mis à jour",
+      "deleted": "Supprimé"
+    },
+    "deleteBlogTitle": "Supprimer l'article",
+    "deleteBlogMessage": "Supprimer cet article ? Cette action est irréversible.",
+    "deleteNewsTitle": "Supprimer l'actualité",
+    "deleteNewsMessage": "Supprimer cette actualité ?",
+    "deleteEventTitle": "Supprimer l'événement",
+    "deleteEventMessage": "Supprimer cet événement ?",
+    "addSection": "Ajouter une section",
+    "noAboutYet": "Aucune section « À propos » pour le moment",
+    "hide": "Masquer",
+    "show": "Afficher"
   },
   "studies": {
     "title": "Études",

@@ -13,7 +13,7 @@ import { useLanguage } from '@/contexts/language-context';
 const LIMIT = 15;
 
 export default function EventsPage() {
-  const { locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
@@ -29,14 +29,14 @@ export default function EventsPage() {
 
   const toggleMutation = useMutation({
     mutationFn: (id: number) => blocksApi.toggleActive(id),
-    onSuccess: () => { success('Updated'); qc.invalidateQueries({ queryKey: ['blocks-event'] }); },
-    onError: () => toastError('Failed'),
+    onSuccess: () => { success(t('content.toast.updated')); qc.invalidateQueries({ queryKey: ['blocks-event'] }); },
+    onError: () => toastError(t('common.failed')),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => blocksApi.delete(id),
-    onSuccess: () => { success('Deleted'); qc.invalidateQueries({ queryKey: ['blocks-event'] }); setDeleteId(null); },
-    onError: () => toastError('Failed'),
+    onSuccess: () => { success(t('content.toast.deleted')); qc.invalidateQueries({ queryKey: ['blocks-event'] }); setDeleteId(null); },
+    onError: () => toastError(t('common.failed')),
   });
 
   return (
@@ -48,11 +48,11 @@ export default function EventsPage() {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="input ps-9"
-            placeholder="Search events..."
+            placeholder={t('content.searchEvents')}
           />
         </div>
         <Link href="/content/events/new" className="btn-primary btn-md gap-2">
-          <Plus className="w-4 h-4" /> New Event
+          <Plus className="w-4 h-4" /> {t('content.newEvent')}
         </Link>
       </div>
 
@@ -60,24 +60,24 @@ export default function EventsPage() {
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="table-header">Title</th>
-              <th className="table-header">Start Date</th>
-              <th className="table-header">End Date</th>
-              <th className="table-header">Status</th>
-              <th className="table-header">Actions</th>
+              <th className="table-header">{t('content.title')}</th>
+              <th className="table-header">{t('content.startDate')}</th>
+              <th className="table-header">{t('content.endDate')}</th>
+              <th className="table-header">{t('common.status')}</th>
+              <th className="table-header">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {isLoading ? <tr><td colSpan={5} className="table-cell text-center py-12 text-gray-400">Loading...</td></tr>
-              : blocks.length === 0 ? <tr><td colSpan={5} className="table-cell text-center py-12 text-gray-400">No events yet</td></tr>
+            {isLoading ? <tr><td colSpan={5} className="table-cell text-center py-12 text-gray-400">{t('common.loading')}</td></tr>
+              : blocks.length === 0 ? <tr><td colSpan={5} className="table-cell text-center py-12 text-gray-400">{t('content.noEventsYet')}</td></tr>
               : blocks.map((b: any) => {
-                const t = getTranslation(b.translations || []);
+                const tr = getTranslation(b.translations || []);
                 return (
                   <tr key={b.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="table-cell font-medium max-w-48 truncate">{t?.name || 'Untitled'}</td>
+                    <td className="table-cell font-medium max-w-48 truncate">{tr?.name || t('content.untitled')}</td>
                     <td className="table-cell text-gray-400">{b.startDate ? formatDate(b.startDate, locale) : '—'}</td>
                     <td className="table-cell text-gray-400">{b.endDate ? formatDate(b.endDate, locale) : '—'}</td>
-                    <td className="table-cell"><span className={cn('badge', b.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')}>{b.isActive ? 'Active' : 'Hidden'}</span></td>
+                    <td className="table-cell"><span className={cn('badge', b.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')}>{b.isActive ? t('content.active') : t('content.hidden')}</span></td>
                     <td className="table-cell">
                       <div className="flex gap-1.5">
                         <Link href={`/content/events/${b.id}/edit`} className="btn-ghost btn-sm p-1.5 rounded-lg text-gray-500"><Pencil className="w-3.5 h-3.5" /></Link>
@@ -95,7 +95,7 @@ export default function EventsPage() {
 
         {meta?.totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-            <p className="text-sm text-gray-500">{meta.total} total</p>
+            <p className="text-sm text-gray-500">{t('content.totalCount', { count: meta.total })}</p>
             <div className="flex gap-1">
               {Array.from({ length: meta.totalPages }, (_, i) => i + 1).map((pg) => (
                 <button key={pg} onClick={() => setPage(pg)}
@@ -108,7 +108,7 @@ export default function EventsPage() {
         )}
       </div>
 
-      {deleteId && <ConfirmDialog title="Delete Event" message="Delete this event?" onConfirm={() => deleteMutation.mutate(deleteId)} onCancel={() => setDeleteId(null)} loading={deleteMutation.isPending} danger />}
+      {deleteId && <ConfirmDialog title={t('content.deleteEventTitle')} message={t('content.deleteEventMessage')} onConfirm={() => deleteMutation.mutate(deleteId)} onCancel={() => setDeleteId(null)} loading={deleteMutation.isPending} danger />}
     </div>
   );
 }

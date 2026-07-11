@@ -327,7 +327,30 @@
     "newEvent": "فعالية جديدة",
     "searchBlogs": "البحث في المدونة...",
     "searchNews": "البحث في الأخبار...",
-    "searchEvents": "البحث في الفعاليات..."
+    "searchEvents": "البحث في الفعاليات...",
+    "draft": "مسودة",
+    "active": "نشط",
+    "colCreated": "تاريخ الإنشاء",
+    "colDate": "التاريخ",
+    "totalCount": "{count} إجمالاً",
+    "noPostsYet": "لا توجد منشورات بعد",
+    "noNewsYet": "لا توجد أخبار بعد",
+    "noEventsYet": "لا توجد فعاليات بعد",
+    "untitled": "بدون عنوان",
+    "toast": {
+      "updated": "تم التحديث",
+      "deleted": "تم الحذف"
+    },
+    "deleteBlogTitle": "حذف المنشور",
+    "deleteBlogMessage": "حذف هذا المنشور؟ لا يمكن التراجع عن هذا الإجراء.",
+    "deleteNewsTitle": "حذف المقال",
+    "deleteNewsMessage": "حذف هذا الخبر؟",
+    "deleteEventTitle": "حذف الفعالية",
+    "deleteEventMessage": "حذف هذه الفعالية؟",
+    "addSection": "إضافة قسم",
+    "noAboutYet": "لا توجد أقسام \"من نحن\" بعد",
+    "hide": "إخفاء",
+    "show": "إظهار"
   },
   "studies": {
     "title": "الدراسات",

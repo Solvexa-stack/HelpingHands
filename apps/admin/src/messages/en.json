@@ -327,7 +327,30 @@
     "newEvent": "New Event",
     "searchBlogs": "Search blogs...",
     "searchNews": "Search news...",
-    "searchEvents": "Search events..."
+    "searchEvents": "Search events...",
+    "draft": "Draft",
+    "active": "Active",
+    "colCreated": "Created",
+    "colDate": "Date",
+    "totalCount": "{count} total",
+    "noPostsYet": "No posts yet",
+    "noNewsYet": "No news articles yet",
+    "noEventsYet": "No events yet",
+    "untitled": "Untitled",
+    "toast": {
+      "updated": "Updated",
+      "deleted": "Deleted"
+    },
+    "deleteBlogTitle": "Delete Blog Post",
+    "deleteBlogMessage": "Delete this blog post? This cannot be undone.",
+    "deleteNewsTitle": "Delete Article",
+    "deleteNewsMessage": "Delete this news article?",
+    "deleteEventTitle": "Delete Event",
+    "deleteEventMessage": "Delete this event?",
+    "addSection": "Add Section",
+    "noAboutYet": "No about us sections yet",
+    "hide": "Hide",
+    "show": "Show"
   },
   "studies": {
     "title": "Studies",
