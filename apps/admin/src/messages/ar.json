@@ -1064,5 +1064,27 @@
       "pastePlaceholderNoUpload": "الصق رابط صورة (رفع الملفات متاح بعد الحفظ)",
       "saveFirstHint": "احفظ السجل أولاً لتفعيل السحب والإفلات لرفع الملفات."
     }
+  },
+  "languagesPage": {
+    "configuredCount": "{count} لغة مُهيأة",
+    "addLanguage": "إضافة لغة",
+    "off": "معطّل",
+    "nameLabel": "الاسم",
+    "namePlaceholder": "العربية",
+    "codeLabel": "الرمز",
+    "codePlaceholder": "ar",
+    "flagCodeLabel": "رمز العلم",
+    "flagCodePlaceholder": "sa",
+    "directionLabel": "الاتجاه",
+    "directionLtr": "من اليسار إلى اليمين (LTR)",
+    "directionRtl": "من اليمين إلى اليسار (RTL)",
+    "add": "إضافة",
+    "deleteTitle": "حذف اللغة",
+    "deleteMessage": "حذف لغة \"{code}\"؟ ستُفقد جميع الترجمات بهذه اللغة.",
+    "toast": {
+      "updated": "تم التحديث",
+      "deleted": "تم الحذف",
+      "added": "تمت إضافة اللغة"
+    }
   }
 }

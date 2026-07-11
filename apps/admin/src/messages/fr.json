@@ -1064,5 +1064,27 @@
       "pastePlaceholderNoUpload": "Collez une URL d'image (le téléversement de fichier sera disponible après l'enregistrement)",
       "saveFirstHint": "Enregistrez d'abord la fiche pour activer le glisser-déposer de fichiers."
     }
+  },
+  "languagesPage": {
+    "configuredCount": "{count} langues configurées",
+    "addLanguage": "Ajouter une langue",
+    "off": "Désactivée",
+    "nameLabel": "Nom",
+    "namePlaceholder": "Arabe",
+    "codeLabel": "Code",
+    "codePlaceholder": "ar",
+    "flagCodeLabel": "Code du drapeau",
+    "flagCodePlaceholder": "sa",
+    "directionLabel": "Direction",
+    "directionLtr": "LTR (gauche à droite)",
+    "directionRtl": "RTL (droite à gauche)",
+    "add": "Ajouter",
+    "deleteTitle": "Supprimer la langue",
+    "deleteMessage": "Supprimer la langue « {code} » ? Toutes les traductions dans cette langue seront perdues.",
+    "toast": {
+      "updated": "Mis à jour",
+      "deleted": "Supprimé",
+      "added": "Langue ajoutée"
+    }
   }
 }

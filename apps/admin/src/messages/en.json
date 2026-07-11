@@ -1064,5 +1064,27 @@
       "pastePlaceholderNoUpload": "Paste an image URL (file upload available after saving)",
       "saveFirstHint": "Save the record first to enable drag & drop file upload."
     }
+  },
+  "languagesPage": {
+    "configuredCount": "{count} languages configured",
+    "addLanguage": "Add Language",
+    "off": "Off",
+    "nameLabel": "Name",
+    "namePlaceholder": "Arabic",
+    "codeLabel": "Code",
+    "codePlaceholder": "ar",
+    "flagCodeLabel": "Flag Code",
+    "flagCodePlaceholder": "sa",
+    "directionLabel": "Direction",
+    "directionLtr": "LTR (Left-to-Right)",
+    "directionRtl": "RTL (Right-to-Left)",
+    "add": "Add",
+    "deleteTitle": "Delete Language",
+    "deleteMessage": "Delete \"{code}\" language? All translations in this language will be lost.",
+    "toast": {
+      "updated": "Updated",
+      "deleted": "Deleted",
+      "added": "Language added"
+    }
   }
 }
