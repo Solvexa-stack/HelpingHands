@@ -7,22 +7,26 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Heart, Eye, EyeOff, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
+import { useLanguage } from '@/contexts/language-context';
 
-const schema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(1, 'Password required'),
-});
+function createSchema(invalidEmail: string, passwordRequired: string) {
+  return z.object({
+    email: z.string().email(invalidEmail),
+    password: z.string().min(1, passwordRequired),
+  });
+}
 
-type FormData = z.infer<typeof schema>;
+type FormData = { email: string; password: string };
 
 export default function LoginPage() {
+  const { t } = useLanguage();
   const { login } = useAuth();
   const router = useRouter();
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(createSchema(t('loginPage.invalidEmail'), t('loginPage.passwordRequired'))),
   });
 
   const onSubmit = async (data: FormData) => {
@@ -31,7 +35,7 @@ export default function LoginPage() {
       await login(data.email, data.password);
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err?.response?.data?.message || err?.message || 'Login failed');
+      setError(err?.response?.data?.message || err?.message || t('loginPage.loginFailed'));
     }
   };
 
@@ -44,8 +48,8 @@ export default function LoginPage() {
             <div className="inline-flex items-center justify-center w-14 h-14 bg-primary-600 rounded-2xl mb-4">
               <Shield className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Admin Portal</h1>
-            <p className="text-gray-500 text-sm mt-1">HelpingHands Management System</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('loginPage.title')}</h1>
+            <p className="text-gray-500 text-sm mt-1">{t('loginPage.subtitle')}</p>
           </div>
 
           {error && (
@@ -56,13 +60,13 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
-              <label className="label">Email Address</label>
+              <label className="label">{t('loginPage.emailLabel')}</label>
               <input {...register('email')} type="email" className="input" placeholder="admin@helpinghands.org" />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
-              <label className="label">Password</label>
+              <label className="label">{t('loginPage.passwordLabel')}</label>
               <div className="relative">
                 <input
                   {...register('password')}
@@ -82,7 +86,7 @@ export default function LoginPage() {
               className="btn-primary btn-lg w-full mt-2">
               {isSubmitting ? (
                 <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-              ) : 'Sign In'}
+              ) : t('loginPage.signIn')}
             </button>
           </form>
         </div>

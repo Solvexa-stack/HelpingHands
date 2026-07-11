@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Building2, KeyRound, Loader2 } from 'lucide-react';
 import { authApi } from '@/lib/api';
+import { useLanguage } from '@/contexts/language-context';
 
 /**
  * Invitation activation (org onboarding). Public page: the invitee follows
@@ -12,6 +13,7 @@ import { authApi } from '@/lib/api';
  * JWTs and lands in their Organization Workspace.
  */
 function ActivateForm() {
+  const { t } = useLanguage();
   const params = useSearchParams();
   const token = params.get('token') ?? '';
 
@@ -40,7 +42,7 @@ function ActivateForm() {
       // route the fresh org member into /org/dashboard.
       window.location.assign('/org/dashboard');
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Activation failed — the link may have expired.');
+      setError(err?.response?.data?.message || t('activatePage.activationFailed'));
       setSubmitting(false);
     }
   };
@@ -48,7 +50,7 @@ function ActivateForm() {
   if (!token) {
     return (
       <p className="text-sm text-red-600 text-center">
-        This activation link is missing its token. Please use the link from your invitation.
+        {t('activatePage.missingToken')}
       </p>
     );
   }
@@ -58,14 +60,14 @@ function ActivateForm() {
       <div className="grid grid-cols-2 gap-3">
         <input
           className="input"
-          placeholder="First name"
+          placeholder={t('activatePage.firstNamePlaceholder')}
           value={form.firstName}
           onChange={(e) => setForm({ ...form, firstName: e.target.value })}
           autoFocus
         />
         <input
           className="input"
-          placeholder="Last name"
+          placeholder={t('activatePage.lastNamePlaceholder')}
           value={form.lastName}
           onChange={(e) => setForm({ ...form, lastName: e.target.value })}
         />
@@ -73,28 +75,29 @@ function ActivateForm() {
       <input
         className="input w-full"
         type="password"
-        placeholder="Password (min 8: upper, lower, number, special)"
+        placeholder={t('activatePage.passwordPlaceholder')}
         value={form.password}
         onChange={(e) => setForm({ ...form, password: e.target.value })}
       />
       <input
         className="input w-full"
         type="password"
-        placeholder="Confirm password"
+        placeholder={t('activatePage.confirmPasswordPlaceholder')}
         value={form.confirm}
         onChange={(e) => setForm({ ...form, confirm: e.target.value })}
       />
-      {mismatch && <p className="text-xs text-red-600">Passwords do not match.</p>}
+      {mismatch && <p className="text-xs text-red-600">{t('activatePage.passwordMismatch')}</p>}
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button type="submit" className="btn-primary btn-md w-full gap-2" disabled={!canSubmit || submitting}>
         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
-        Activate account
+        {t('activatePage.activateAccount')}
       </button>
     </form>
   );
 }
 
 export default function ActivatePage() {
+  const { t } = useLanguage();
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
       <div className="card w-full max-w-md p-8 space-y-5">
@@ -102,12 +105,12 @@ export default function ActivatePage() {
           <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center mx-auto">
             <Building2 className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-lg font-semibold">Join your organization</h1>
+          <h1 className="text-lg font-semibold">{t('activatePage.heading')}</h1>
           <p className="text-sm text-gray-500">
-            You have been invited to manage an organization on HelpingHands. Set up your account to enter your workspace.
+            {t('activatePage.subtitle')}
           </p>
         </div>
-        <Suspense fallback={<p className="text-center text-sm text-gray-400">Loading…</p>}>
+        <Suspense fallback={<p className="text-center text-sm text-gray-400">{t('activatePage.loading')}</p>}>
           <ActivateForm />
         </Suspense>
       </div>

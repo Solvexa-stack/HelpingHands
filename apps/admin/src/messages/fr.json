@@ -1201,5 +1201,50 @@
       "setCoverFailed": "Échec de la définition de la couverture",
       "uploaded": "{count} image(s) téléversée(s)"
     }
+  },
+  "loginPage": {
+    "title": "Portail d'administration",
+    "subtitle": "Système de gestion HelpingHands",
+    "emailLabel": "Adresse e-mail",
+    "passwordLabel": "Mot de passe",
+    "signIn": "Se connecter",
+    "loginFailed": "Échec de la connexion",
+    "invalidEmail": "E-mail invalide",
+    "passwordRequired": "Mot de passe requis"
+  },
+  "registerPage": {
+    "title": "Enregistrez votre organisation",
+    "subtitle": "Municipalités et équipes jeunesse — intégration vérifiée avec examen du conseil",
+    "nextStepsHint": "Ensuite : connectez-vous avec votre nouveau compte et téléversez vos documents d'enregistrement officiels — le conseil les examine avant l'activation.",
+    "signIn": "Se connecter",
+    "orgTypeLabel": "Type d'organisation",
+    "typeMunicipality": "Municipalité",
+    "typeYouthTeam": "Équipe jeunesse",
+    "officialNameLabel": "Nom officiel *",
+    "officialNamePlaceholder": "Municipalité de …",
+    "regNumberLabel": "Numéro d'enregistrement officiel *",
+    "regNumberPlaceholder": "GOV-…",
+    "adminAccountHeading": "Compte administrateur",
+    "firstNamePlaceholder": "Prénom *",
+    "lastNamePlaceholder": "Nom *",
+    "officialEmailPlaceholder": "E-mail officiel *",
+    "passwordPlaceholder": "Mot de passe (8+ caractères, mixte) *",
+    "submitting": "Envoi en cours…",
+    "register": "S'enregistrer",
+    "alreadyRegistered": "Déjà enregistré ?",
+    "registrationFailed": "Échec de l'enregistrement"
+  },
+  "activatePage": {
+    "heading": "Rejoignez votre organisation",
+    "subtitle": "Vous avez été invité à gérer une organisation sur HelpingHands. Configurez votre compte pour accéder à votre espace de travail.",
+    "missingToken": "Ce lien d'activation ne contient pas de jeton. Veuillez utiliser le lien de votre invitation.",
+    "firstNamePlaceholder": "Prénom",
+    "lastNamePlaceholder": "Nom",
+    "passwordPlaceholder": "Mot de passe (8 min : majuscule, minuscule, chiffre, spécial)",
+    "confirmPasswordPlaceholder": "Confirmer le mot de passe",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "activateAccount": "Activer le compte",
+    "activationFailed": "Échec de l'activation — le lien a peut-être expiré.",
+    "loading": "Chargement…"
   }
 }

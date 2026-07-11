@@ -1201,5 +1201,50 @@
       "setCoverFailed": "Failed to set cover",
       "uploaded": "{count} image(s) uploaded"
     }
+  },
+  "loginPage": {
+    "title": "Admin Portal",
+    "subtitle": "HelpingHands Management System",
+    "emailLabel": "Email Address",
+    "passwordLabel": "Password",
+    "signIn": "Sign In",
+    "loginFailed": "Login failed",
+    "invalidEmail": "Invalid email",
+    "passwordRequired": "Password required"
+  },
+  "registerPage": {
+    "title": "Register your organization",
+    "subtitle": "Municipalities and youth teams — verified onboarding with Board review",
+    "nextStepsHint": "Next: sign in with your new account and upload your official registration documents — the Board reviews them before activation.",
+    "signIn": "Sign in",
+    "orgTypeLabel": "Organization type",
+    "typeMunicipality": "Municipality",
+    "typeYouthTeam": "Youth team",
+    "officialNameLabel": "Official name *",
+    "officialNamePlaceholder": "Municipality of …",
+    "regNumberLabel": "Official registration number *",
+    "regNumberPlaceholder": "GOV-…",
+    "adminAccountHeading": "Administrator account",
+    "firstNamePlaceholder": "First name *",
+    "lastNamePlaceholder": "Last name *",
+    "officialEmailPlaceholder": "Official email *",
+    "passwordPlaceholder": "Password (8+ chars, mixed) *",
+    "submitting": "Submitting…",
+    "register": "Register",
+    "alreadyRegistered": "Already registered?",
+    "registrationFailed": "Registration failed"
+  },
+  "activatePage": {
+    "heading": "Join your organization",
+    "subtitle": "You have been invited to manage an organization on HelpingHands. Set up your account to enter your workspace.",
+    "missingToken": "This activation link is missing its token. Please use the link from your invitation.",
+    "firstNamePlaceholder": "First name",
+    "lastNamePlaceholder": "Last name",
+    "passwordPlaceholder": "Password (min 8: upper, lower, number, special)",
+    "confirmPasswordPlaceholder": "Confirm password",
+    "passwordMismatch": "Passwords do not match.",
+    "activateAccount": "Activate account",
+    "activationFailed": "Activation failed — the link may have expired.",
+    "loading": "Loading…"
   }
 }

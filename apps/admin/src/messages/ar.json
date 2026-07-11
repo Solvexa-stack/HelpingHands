@@ -1201,5 +1201,50 @@
       "setCoverFailed": "فشل تعيين الغلاف",
       "uploaded": "تم رفع {count} صورة"
     }
+  },
+  "loginPage": {
+    "title": "بوابة الإدارة",
+    "subtitle": "نظام إدارة HelpingHands",
+    "emailLabel": "البريد الإلكتروني",
+    "passwordLabel": "كلمة المرور",
+    "signIn": "تسجيل الدخول",
+    "loginFailed": "فشل تسجيل الدخول",
+    "invalidEmail": "بريد إلكتروني غير صالح",
+    "passwordRequired": "كلمة المرور مطلوبة"
+  },
+  "registerPage": {
+    "title": "سجّل منظمتك",
+    "subtitle": "البلديات والفرق الشبابية — انضمام موثّق بمراجعة من المجلس",
+    "nextStepsHint": "الخطوة التالية: سجّل الدخول بحسابك الجديد وارفع مستندات التسجيل الرسمية — يراجعها المجلس قبل التفعيل.",
+    "signIn": "تسجيل الدخول",
+    "orgTypeLabel": "نوع المنظمة",
+    "typeMunicipality": "بلدية",
+    "typeYouthTeam": "فريق شبابي",
+    "officialNameLabel": "الاسم الرسمي *",
+    "officialNamePlaceholder": "بلدية …",
+    "regNumberLabel": "رقم التسجيل الرسمي *",
+    "regNumberPlaceholder": "GOV-…",
+    "adminAccountHeading": "حساب المسؤول",
+    "firstNamePlaceholder": "الاسم الأول *",
+    "lastNamePlaceholder": "اسم العائلة *",
+    "officialEmailPlaceholder": "البريد الإلكتروني الرسمي *",
+    "passwordPlaceholder": "كلمة المرور (8 أحرف على الأقل، متنوعة) *",
+    "submitting": "جار الإرسال…",
+    "register": "تسجيل",
+    "alreadyRegistered": "مسجّل بالفعل؟",
+    "registrationFailed": "فشل التسجيل"
+  },
+  "activatePage": {
+    "heading": "انضم إلى منظمتك",
+    "subtitle": "تمت دعوتك لإدارة منظمة على HelpingHands. أعدّ حسابك للدخول إلى مساحة عملك.",
+    "missingToken": "رابط التفعيل هذا يفتقد إلى الرمز. يرجى استخدام الرابط من دعوتك.",
+    "firstNamePlaceholder": "الاسم الأول",
+    "lastNamePlaceholder": "اسم العائلة",
+    "passwordPlaceholder": "كلمة المرور (8 أحرف على الأقل: كبير، صغير، رقم، رمز خاص)",
+    "confirmPasswordPlaceholder": "تأكيد كلمة المرور",
+    "passwordMismatch": "كلمتا المرور غير متطابقتين.",
+    "activateAccount": "تفعيل الحساب",
+    "activationFailed": "فشل التفعيل — قد يكون الرابط منتهي الصلاحية.",
+    "loading": "جار التحميل…"
   }
 }
