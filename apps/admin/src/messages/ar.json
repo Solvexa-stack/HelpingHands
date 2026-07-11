@@ -1086,5 +1086,49 @@
       "deleted": "تم الحذف",
       "added": "تمت إضافة اللغة"
     }
+  },
+  "orgReports": {
+    "heading": "التقارير",
+    "subtitle": "التقارير المرحلية والمالية المقدمة إلى المجلس",
+    "newReport": "تقرير جديد",
+    "selectOrgWorkspace": "اختر مساحة عمل منظمة.",
+    "obligationsHeading": "التزامات إعداد التقارير",
+    "overdue": "متأخر",
+    "due": "مستحق",
+    "obligationLine": "تقرير {type} للفترة {start} ← {end}",
+    "obligationDueNote": "({agreementTitle}، مستحق في {dueAt})",
+    "overdueWarning": "قد تؤدي التقارير المتأخرة إلى تعطيل عمليات الصرف اللاحقة بموجب اتفاقياتكم.",
+    "colReport": "التقرير",
+    "colType": "النوع",
+    "colAgreement": "الاتفاقية",
+    "colSubmitted": "تاريخ التقديم",
+    "colReviewNote": "ملاحظة المراجعة",
+    "noReportsYet": "لا توجد تقارير بعد — قدّم أول تقرير مرحلي.",
+    "correctResubmit": "تصحيح وإعادة التقديم",
+    "composerTitle": "تقديم تقرير",
+    "titlePlaceholder": "العنوان *",
+    "noAgreementAdHoc": "بدون اتفاقية (غير مرتبط)",
+    "periodStart": "بداية الفترة",
+    "periodEnd": "نهاية الفترة",
+    "noSpecificProject": "بدون مشروع محدد",
+    "narrativePlaceholder": "السرد — التقدم، المعالم، الإنفاق…",
+    "submitToBoard": "تقديم إلى المجلس",
+    "resubmitTitle": "تصحيح وإعادة التقديم — {title}",
+    "boardComments": "ملاحظات المجلس: {note}",
+    "resubmit": "إعادة التقديم",
+    "statuses": {
+      "submitted": "مُقدَّم",
+      "under_review": "قيد المراجعة",
+      "accepted": "مقبول",
+      "returned": "مُعاد"
+    },
+    "reportTypes": {
+      "progress": "مرحلي",
+      "financial": "مالي"
+    },
+    "toast": {
+      "submitted": "تم تقديم التقرير إلى المجلس",
+      "resubmitted": "تمت إعادة تقديم التقرير"
+    }
   }
 }

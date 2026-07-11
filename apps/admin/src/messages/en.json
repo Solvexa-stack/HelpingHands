@@ -1086,5 +1086,49 @@
       "deleted": "Deleted",
       "added": "Language added"
     }
+  },
+  "orgReports": {
+    "heading": "Reports",
+    "subtitle": "progress & financial reporting to the Board",
+    "newReport": "New report",
+    "selectOrgWorkspace": "Select an organization workspace.",
+    "obligationsHeading": "Reporting obligations",
+    "overdue": "overdue",
+    "due": "due",
+    "obligationLine": "{type} report for {start} → {end}",
+    "obligationDueNote": "({agreementTitle}, due {dueAt})",
+    "overdueWarning": "Overdue reports can block further disbursements under your agreements.",
+    "colReport": "Report",
+    "colType": "Type",
+    "colAgreement": "Agreement",
+    "colSubmitted": "Submitted",
+    "colReviewNote": "Review note",
+    "noReportsYet": "No reports yet — submit your first progress report.",
+    "correctResubmit": "Correct & resubmit",
+    "composerTitle": "Submit a report",
+    "titlePlaceholder": "Title *",
+    "noAgreementAdHoc": "No agreement (ad hoc)",
+    "periodStart": "Period start",
+    "periodEnd": "Period end",
+    "noSpecificProject": "No specific project",
+    "narrativePlaceholder": "Narrative — progress, milestones, spend…",
+    "submitToBoard": "Submit to the Board",
+    "resubmitTitle": "Correct & resubmit — {title}",
+    "boardComments": "Board comments: {note}",
+    "resubmit": "Resubmit",
+    "statuses": {
+      "submitted": "Submitted",
+      "under_review": "Under review",
+      "accepted": "Accepted",
+      "returned": "Returned"
+    },
+    "reportTypes": {
+      "progress": "Progress",
+      "financial": "Financial"
+    },
+    "toast": {
+      "submitted": "Report submitted to the Board",
+      "resubmitted": "Report resubmitted"
+    }
   }
 }

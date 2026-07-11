@@ -1086,5 +1086,49 @@
       "deleted": "Supprimé",
       "added": "Langue ajoutée"
     }
+  },
+  "orgReports": {
+    "heading": "Rapports",
+    "subtitle": "rapports d'avancement et financiers destinés au conseil",
+    "newReport": "Nouveau rapport",
+    "selectOrgWorkspace": "Sélectionnez un espace de travail d'organisation.",
+    "obligationsHeading": "Obligations de rapport",
+    "overdue": "en retard",
+    "due": "à échéance",
+    "obligationLine": "Rapport {type} pour la période {start} → {end}",
+    "obligationDueNote": "({agreementTitle}, échéance {dueAt})",
+    "overdueWarning": "Les rapports en retard peuvent bloquer les décaissements ultérieurs au titre de vos accords.",
+    "colReport": "Rapport",
+    "colType": "Type",
+    "colAgreement": "Accord",
+    "colSubmitted": "Soumis le",
+    "colReviewNote": "Note de révision",
+    "noReportsYet": "Aucun rapport pour le moment — soumettez votre premier rapport d'avancement.",
+    "correctResubmit": "Corriger et resoumettre",
+    "composerTitle": "Soumettre un rapport",
+    "titlePlaceholder": "Titre *",
+    "noAgreementAdHoc": "Aucun accord (ponctuel)",
+    "periodStart": "Début de la période",
+    "periodEnd": "Fin de la période",
+    "noSpecificProject": "Aucun projet spécifique",
+    "narrativePlaceholder": "Récit — avancement, jalons, dépenses…",
+    "submitToBoard": "Soumettre au conseil",
+    "resubmitTitle": "Corriger et resoumettre — {title}",
+    "boardComments": "Commentaires du conseil : {note}",
+    "resubmit": "Resoumettre",
+    "statuses": {
+      "submitted": "Soumis",
+      "under_review": "En cours d'examen",
+      "accepted": "Accepté",
+      "returned": "Retourné"
+    },
+    "reportTypes": {
+      "progress": "Avancement",
+      "financial": "Financier"
+    },
+    "toast": {
+      "submitted": "Rapport soumis au conseil",
+      "resubmitted": "Rapport resoumis"
+    }
   }
 }

@@ -23,7 +23,7 @@ const STATUS_BADGE: Record<string, string> = {
  * obligations from active funding agreements.
  */
 export default function OrgReportsPage() {
-  const { locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const { activeOrg } = useAuth();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
@@ -75,7 +75,7 @@ export default function OrgReportsPage() {
     qc.invalidateQueries({ queryKey: ['org-reports', orgId] });
     qc.invalidateQueries({ queryKey: ['org-agreement-obligations', orgId] });
   };
-  const onError = (err: any) => toastError(err?.response?.data?.message || 'Failed');
+  const onError = (err: any) => toastError(err?.response?.data?.message || t('common.failed'));
 
   const submit = useMutation({
     mutationFn: () =>
@@ -88,7 +88,7 @@ export default function OrgReportsPage() {
         periodEnd: form.periodEnd ? new Date(form.periodEnd).toISOString() : undefined,
         payload: form.narrative ? { narrative: form.narrative } : {},
       }),
-    onSuccess: () => { success('Report submitted to the Board'); setComposing(false); refresh(); },
+    onSuccess: () => { success(t('orgReports.toast.submitted')); setComposing(false); refresh(); },
     onError,
   });
 
@@ -97,11 +97,11 @@ export default function OrgReportsPage() {
       orgReportsApi.resubmit(resubmitting.id, {
         payload: { ...(resubmitting.payload ?? {}), narrative: form.narrative },
       }),
-    onSuccess: () => { success('Report resubmitted'); setResubmitting(null); refresh(); },
+    onSuccess: () => { success(t('orgReports.toast.resubmitted')); setResubmitting(null); refresh(); },
     onError,
   });
 
-  if (!orgId) return <div className="card p-8 text-center text-gray-500">Select an organization workspace.</div>;
+  if (!orgId) return <div className="card p-8 text-center text-gray-500">{t('orgReports.selectOrgWorkspace')}</div>;
 
   const rows = reports ?? [];
   const openObligations = obligations ?? [];
@@ -111,11 +111,11 @@ export default function OrgReportsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileText className="w-5 h-5 text-primary-600" />
-          <h1 className="text-lg font-semibold">Reports</h1>
-          <span className="text-sm text-gray-400">progress & financial reporting to the Board</span>
+          <h1 className="text-lg font-semibold">{t('orgReports.heading')}</h1>
+          <span className="text-sm text-gray-400">{t('orgReports.subtitle')}</span>
         </div>
         <button className="btn-primary btn-md gap-2" onClick={() => { setForm({ ...form, title: '', narrative: '' }); setComposing(true); }}>
-          <FilePlus2 className="w-4 h-4" /> New report
+          <FilePlus2 className="w-4 h-4" /> {t('orgReports.newReport')}
         </button>
       </div>
 
@@ -123,18 +123,18 @@ export default function OrgReportsPage() {
       {openObligations.length > 0 && (
         <div className="card p-4 space-y-2 border-l-4 border-amber-500">
           <div className="flex items-center gap-2 font-medium text-amber-700">
-            <AlarmClock className="w-4 h-4" /> Reporting obligations
+            <AlarmClock className="w-4 h-4" /> {t('orgReports.obligationsHeading')}
           </div>
           {openObligations.map((o: any, i: number) => (
             <div key={i} className="text-sm text-gray-600 flex items-center gap-2">
               <span className={cn('badge text-xs', o.overdue ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800')}>
-                {o.overdue ? 'overdue' : 'due'}
+                {o.overdue ? t('orgReports.overdue') : t('orgReports.due')}
               </span>
-              {o.type} report for {formatDatetime(o.periodStart, locale)} → {formatDatetime(o.periodEnd, locale)}
-              <span className="text-xs text-gray-400">({o.agreementTitle}, due {formatDatetime(o.dueAt, locale)})</span>
+              {t('orgReports.obligationLine', { type: t(`orgReports.reportTypes.${o.type}`) || o.type, start: formatDatetime(o.periodStart, locale), end: formatDatetime(o.periodEnd, locale) })}
+              <span className="text-xs text-gray-400">{t('orgReports.obligationDueNote', { agreementTitle: o.agreementTitle, dueAt: formatDatetime(o.dueAt, locale) })}</span>
             </div>
           ))}
-          <p className="text-xs text-amber-600">Overdue reports can block further disbursements under your agreements.</p>
+          <p className="text-xs text-amber-600">{t('orgReports.overdueWarning')}</p>
         </div>
       )}
 
@@ -142,27 +142,27 @@ export default function OrgReportsPage() {
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="table-header">Report</th>
-              <th className="table-header">Type</th>
-              <th className="table-header">Agreement</th>
-              <th className="table-header">Submitted</th>
-              <th className="table-header">Status</th>
-              <th className="table-header">Review note</th>
-              <th className="table-header">Actions</th>
+              <th className="table-header">{t('orgReports.colReport')}</th>
+              <th className="table-header">{t('orgReports.colType')}</th>
+              <th className="table-header">{t('orgReports.colAgreement')}</th>
+              <th className="table-header">{t('orgReports.colSubmitted')}</th>
+              <th className="table-header">{t('common.status')}</th>
+              <th className="table-header">{t('orgReports.colReviewNote')}</th>
+              <th className="table-header">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {rows.length === 0 && (
-              <tr><td colSpan={7} className="p-8 text-center text-gray-400">No reports yet — submit your first progress report.</td></tr>
+              <tr><td colSpan={7} className="p-8 text-center text-gray-400">{t('orgReports.noReportsYet')}</td></tr>
             )}
             {rows.map((r: any) => (
               <tr key={r.id}>
                 <td className="table-cell font-medium">{r.title}</td>
-                <td className="table-cell"><span className="badge bg-gray-100 text-gray-600">{r.type}</span></td>
+                <td className="table-cell"><span className="badge bg-gray-100 text-gray-600">{t(`orgReports.reportTypes.${r.type}`) || r.type}</span></td>
                 <td className="table-cell text-sm text-gray-500">{r.fundingAgreement?.title ?? '—'}</td>
                 <td className="table-cell text-sm text-gray-500">{formatDatetime(r.submittedAt, locale)}</td>
                 <td className="table-cell">
-                  <span className={cn('badge', STATUS_BADGE[r.status] ?? 'bg-gray-100 text-gray-500')}>{r.status}</span>
+                  <span className={cn('badge', STATUS_BADGE[r.status] ?? 'bg-gray-100 text-gray-500')}>{t(`orgReports.statuses.${r.status}`) || r.status}</span>
                 </td>
                 <td className="table-cell text-sm text-gray-600 max-w-xs truncate" title={r.reviewNote ?? ''}>
                   {r.reviewNote ?? '—'}
@@ -173,7 +173,7 @@ export default function OrgReportsPage() {
                       className="btn-secondary btn-sm gap-1"
                       onClick={() => { setForm({ ...form, narrative: r.payload?.narrative ?? '' }); setResubmitting(r); }}
                     >
-                      <Send className="w-3 h-3" /> Correct & resubmit
+                      <Send className="w-3 h-3" /> {t('orgReports.correctResubmit')}
                     </button>
                   )}
                 </td>
@@ -188,41 +188,41 @@ export default function OrgReportsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setComposing(false)}>
           <div className="card p-6 w-full max-w-xl space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold">Submit a report</h2>
+              <h2 className="font-semibold">{t('orgReports.composerTitle')}</h2>
               <button onClick={() => setComposing(false)} className="p-1 rounded hover:bg-gray-100"><X className="w-4 h-4" /></button>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <select className="input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as any })}>
-                <option value="progress">Progress report</option>
-                <option value="financial">Financial report</option>
+                <option value="progress">{t('orgReports.reportTypes.progress')}</option>
+                <option value="financial">{t('orgReports.reportTypes.financial')}</option>
               </select>
               <select className="input" value={form.fundingAgreementId} onChange={(e) => setForm({ ...form, fundingAgreementId: e.target.value })}>
-                <option value="">No agreement (ad hoc)</option>
+                <option value="">{t('orgReports.noAgreementAdHoc')}</option>
                 {(agreements ?? []).map((a: any) => (
                   <option key={a.id} value={a.id}>{a.title}</option>
                 ))}
               </select>
             </div>
-            <input className="input w-full" placeholder="Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            <input className="input w-full" placeholder={t('orgReports.titlePlaceholder')} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="label">Period start</label>
+                <label className="label">{t('orgReports.periodStart')}</label>
                 <input type="date" className="input" value={form.periodStart} onChange={(e) => setForm({ ...form, periodStart: e.target.value })} />
               </div>
               <div>
-                <label className="label">Period end</label>
+                <label className="label">{t('orgReports.periodEnd')}</label>
                 <input type="date" className="input" value={form.periodEnd} onChange={(e) => setForm({ ...form, periodEnd: e.target.value })} />
               </div>
             </div>
             <select className="input w-full" value={form.projectId} onChange={(e) => setForm({ ...form, projectId: e.target.value })}>
-              <option value="">No specific project</option>
+              <option value="">{t('orgReports.noSpecificProject')}</option>
               {(projects?.data ?? []).map((p: any) => (
                 <option key={p.id} value={p.id}>{p.block?.translations?.[0]?.name ?? `#${p.id}`}</option>
               ))}
             </select>
             <textarea
               className="input min-h-28 w-full"
-              placeholder="Narrative — progress, milestones, spend…"
+              placeholder={t('orgReports.narrativePlaceholder')}
               value={form.narrative}
               onChange={(e) => setForm({ ...form, narrative: e.target.value })}
             />
@@ -231,7 +231,7 @@ export default function OrgReportsPage() {
               disabled={!form.title.trim() || submit.isPending}
               onClick={() => submit.mutate()}
             >
-              Submit to the Board
+              {t('orgReports.submitToBoard')}
             </button>
           </div>
         </div>
@@ -242,11 +242,11 @@ export default function OrgReportsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setResubmitting(null)}>
           <div className="card p-6 w-full max-w-xl space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold">Correct & resubmit — {resubmitting.title}</h2>
+              <h2 className="font-semibold">{t('orgReports.resubmitTitle', { title: resubmitting.title })}</h2>
               <button onClick={() => setResubmitting(null)} className="p-1 rounded hover:bg-gray-100"><X className="w-4 h-4" /></button>
             </div>
             <div className="text-sm p-3 rounded bg-red-50 text-red-700">
-              Board comments: {resubmitting.reviewNote}
+              {t('orgReports.boardComments', { note: resubmitting.reviewNote })}
             </div>
             <textarea
               className="input min-h-28 w-full"
@@ -254,7 +254,7 @@ export default function OrgReportsPage() {
               onChange={(e) => setForm({ ...form, narrative: e.target.value })}
             />
             <button className="btn-primary btn-md w-full" disabled={resubmit.isPending} onClick={() => resubmit.mutate()}>
-              Resubmit
+              {t('orgReports.resubmit')}
             </button>
           </div>
         </div>
