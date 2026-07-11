@@ -126,6 +126,7 @@ export class FundsService {
 
   async addOfficer(actor: ActorContext, fundId: number, userId: number, role: string) {
     if (!FUND_ROLES.includes(role)) throw new BadRequestException(`Unknown fund role "${role}"`);
+    if (!Number.isInteger(userId) || userId <= 0) throw new BadRequestException('userId must be a positive integer');
     const [fund, user] = await Promise.all([
       this.prisma.fund.findUnique({ where: { id: fundId } }),
       this.prisma.user.findUnique({ where: { id: userId } }),
@@ -180,9 +181,12 @@ export class FundsService {
     if (fund.status !== 'active') {
       throw new BadRequestException(`Fund is ${fund.status} — no new allocations`);
     }
+    if (!Number.isInteger(dto.projectId) || dto.projectId <= 0) {
+      throw new BadRequestException('projectId must be a positive integer');
+    }
     const project = await this.prisma.project.findUnique({ where: { id: dto.projectId } });
     if (!project) throw new NotFoundException(`Project #${dto.projectId} not found`);
-    if (dto.amount <= 0) throw new BadRequestException('Allocation amount must be positive');
+    if (!Number.isFinite(dto.amount) || dto.amount <= 0) throw new BadRequestException('Allocation amount must be positive');
 
     // W6-E1-S2: allocations under an agreement must match its fund, be active,
     // and finance a project the agreement org owns or executes.
@@ -275,7 +279,7 @@ export class FundsService {
     if (fund!.status !== 'active') {
       throw new BadRequestException(`Fund is ${fund!.status} — disbursements blocked`);
     }
-    if (amount <= 0) throw new BadRequestException('Tranche amount must be positive');
+    if (!Number.isFinite(amount) || amount <= 0) throw new BadRequestException('Tranche amount must be positive');
 
     // W6-E1-S2: agreement terms can hold money back while reports are overdue
     if (allocation.fundingAgreementId != null) {

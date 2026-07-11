@@ -37,6 +37,8 @@ function FundTrends({ fundId }: { fundId: number }) {
 }
 
 const FUND_ROLES = ['fund_director', 'fund_deputy', 'fund_secretary', 'fund_accountant', 'fund_controller'];
+const isPositiveInt = (s: string) => /^\d+$/.test(s.trim());
+const isPositiveNumber = (s: string) => s.trim() !== '' && Number.isFinite(Number(s)) && Number(s) > 0;
 const STATUS_BADGE: Record<string, string> = {
   active: 'bg-green-100 text-green-800',
   frozen: 'bg-blue-100 text-blue-700',
@@ -214,7 +216,7 @@ export default function FundsPage() {
                 </select>
                 <button
                   className="btn-secondary btn-sm gap-1"
-                  disabled={!officer.userId}
+                  disabled={!isPositiveInt(officer.userId)}
                   onClick={() => mutate(() => fundsApi.addOfficer(selectedId, Number(officer.userId), officer.role), t('funds.toast.officerAdded'))}
                 >
                   <UserPlus className="w-3 h-3" /> {t('funds.actions.add')}
@@ -231,7 +233,7 @@ export default function FundsPage() {
                 <input className="input" placeholder={t('funds.propose.notePlaceholder')} value={proposal.note} onChange={(e) => setProposal({ ...proposal, note: e.target.value })} />
                 <button
                   className="btn-primary btn-sm gap-1"
-                  disabled={!proposal.projectId || !proposal.amount}
+                  disabled={!isPositiveInt(proposal.projectId) || !isPositiveNumber(proposal.amount)}
                   onClick={() =>
                     mutate(
                       () => fundsApi.propose(selectedId, { projectId: Number(proposal.projectId), amount: Number(proposal.amount), note: proposal.note || undefined }),
@@ -293,7 +295,7 @@ export default function FundsPage() {
                         />
                         <button
                           className="btn-secondary btn-sm"
-                          disabled={!tranche[a.id]}
+                          disabled={!isPositiveNumber(tranche[a.id] ?? '')}
                           onClick={() => mutate(() => fundsApi.disburse(a.id, Number(tranche[a.id])), t('funds.toast.trancheDisbursed'))}
                         >
                           {t('funds.actions.disburse')}
