@@ -1,6 +1,8 @@
 'use client';
 import { BlockForm } from '@/components/content/block-form';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function NewNewsPage() {
-  return <BlockForm category="news" backHref="/content/news" backLabel="Back to News" title="New News Article" />;
+  const { t } = useLanguage();
+  return <BlockForm category="news" backHref="/content/news" backLabel={t('blockForm.backLabels.news')} title={t('blockForm.titles.newNews')} />;
 }

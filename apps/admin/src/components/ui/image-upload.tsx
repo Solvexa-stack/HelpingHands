@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { Upload, X, ImageIcon } from 'lucide-react';
 import { filesApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 interface Props {
   value?: string;
@@ -16,6 +17,7 @@ interface Props {
 // When referenceId is missing, we show URL-only mode.
 
 export function ImageUpload({ value, onChange, referenceId, referenceType }: Props) {
+  const { t } = useLanguage();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -23,7 +25,7 @@ export function ImageUpload({ value, onChange, referenceId, referenceType }: Pro
   const canUpload = !!referenceId && referenceId > 0;
 
   const upload = async (file: File) => {
-    if (!file.type.startsWith('image/')) { setError('Only image files are allowed'); return; }
+    if (!file.type.startsWith('image/')) { setError(t('blockForm.imageUpload.onlyImages')); return; }
     setUploading(true);
     setError('');
     try {
@@ -36,7 +38,7 @@ export function ImageUpload({ value, onChange, referenceId, referenceType }: Pro
       const result = await filesApi.upload(form);
       onChange(`http://localhost:4000${result.url}`);
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Upload failed');
+      setError(e?.response?.data?.message || t('blockForm.imageUpload.uploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -82,15 +84,15 @@ export function ImageUpload({ value, onChange, referenceId, referenceType }: Pro
           {uploading ? (
             <div className="flex flex-col items-center gap-2">
               <span className="animate-spin w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full inline-block" />
-              <p className="text-sm text-gray-500">Uploading...</p>
+              <p className="text-sm text-gray-500">{t('blockForm.imageUpload.uploading')}</p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
               <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
                 {dragging ? <Upload className="w-6 h-6 text-primary-500" /> : <ImageIcon className="w-6 h-6 text-gray-400" />}
               </div>
-              <p className="text-sm font-medium text-gray-700">Drop image here or <span className="text-primary-600">browse</span></p>
-              <p className="text-xs text-gray-400">PNG, JPG, WEBP up to 10MB</p>
+              <p className="text-sm font-medium text-gray-700">{t('blockForm.imageUpload.dropHere')} <span className="text-primary-600">{t('blockForm.imageUpload.browse')}</span></p>
+              <p className="text-xs text-gray-400">{t('blockForm.imageUpload.sizeHint')}</p>
             </div>
           )}
         </div>
@@ -99,10 +101,10 @@ export function ImageUpload({ value, onChange, referenceId, referenceType }: Pro
       {/* URL input — always shown */}
       <input type="text" className="input text-sm" value={value || ''}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={canUpload ? 'Or paste an image URL...' : 'Paste an image URL (file upload available after saving)'} />
+        placeholder={canUpload ? t('blockForm.imageUpload.pastePlaceholder') : t('blockForm.imageUpload.pastePlaceholderNoUpload')} />
 
       {!canUpload && (
-        <p className="text-xs text-gray-400">Save the record first to enable drag & drop file upload.</p>
+        <p className="text-xs text-gray-400">{t('blockForm.imageUpload.saveFirstHint')}</p>
       )}
 
       {error && <p className="text-xs text-red-500">{error}</p>}

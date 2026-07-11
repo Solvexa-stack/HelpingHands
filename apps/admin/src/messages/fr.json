@@ -1011,5 +1011,58 @@
     "colAction": "Action",
     "colGuards": "Conditions",
     "colEffects": "Effets"
+  },
+  "blockForm": {
+    "contentTranslations": "Contenu et traductions",
+    "langEnglish": "Anglais",
+    "langArabic": "Arabe",
+    "langFrench": "Français",
+    "titleLabel": "Titre *",
+    "titlePlaceholder": "Titre",
+    "slugLabel": "Slug *",
+    "slugPlaceholder": "titre-slug",
+    "briefLabel": "Résumé *",
+    "briefPlaceholder": "Résumé court...",
+    "descriptionLabel": "Description *",
+    "descriptionPlaceholder": "Contenu complet...",
+    "settingsHeading": "Paramètres",
+    "imageLabel": "Image",
+    "classificationLabel": "Classification",
+    "classificationPlaceholder": "ex. mission, vision",
+    "orderLabel": "Ordre d'affichage",
+    "publishedCheckboxLabel": "Publié (visible sur le site)",
+    "publish": "Publier",
+    "toast": {
+      "updated": "Mis à jour avec succès",
+      "created": "Créé avec succès",
+      "briefDescRequired": "Le résumé et la description sont requis. Manquants pour : {langs}"
+    },
+    "backLabels": {
+      "blogs": "Retour aux articles",
+      "news": "Retour aux actualités",
+      "events": "Retour aux événements",
+      "about": "Retour à À propos"
+    },
+    "titles": {
+      "newBlog": "Nouvel article de blog",
+      "editBlog": "Modifier l'article de blog",
+      "newNews": "Nouvelle actualité",
+      "editNews": "Modifier l'actualité",
+      "newEvent": "Nouvel événement",
+      "editEvent": "Modifier l'événement",
+      "newAbout": "Nouvelle section « À propos »",
+      "editAbout": "Modifier la section « À propos »"
+    },
+    "imageUpload": {
+      "onlyImages": "Seuls les fichiers image sont autorisés",
+      "uploadFailed": "Échec du téléversement",
+      "uploading": "Téléversement...",
+      "dropHere": "Déposez une image ici ou",
+      "browse": "parcourir",
+      "sizeHint": "PNG, JPG, WEBP jusqu'à 10 Mo",
+      "pastePlaceholder": "Ou collez une URL d'image...",
+      "pastePlaceholderNoUpload": "Collez une URL d'image (le téléversement de fichier sera disponible après l'enregistrement)",
+      "saveFirstHint": "Enregistrez d'abord la fiche pour activer le glisser-déposer de fichiers."
+    }
   }
 }

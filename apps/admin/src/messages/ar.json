@@ -1011,5 +1011,58 @@
     "colAction": "الإجراء",
     "colGuards": "الشروط",
     "colEffects": "التأثيرات"
+  },
+  "blockForm": {
+    "contentTranslations": "المحتوى والترجمات",
+    "langEnglish": "الإنجليزية",
+    "langArabic": "العربية",
+    "langFrench": "الفرنسية",
+    "titleLabel": "العنوان *",
+    "titlePlaceholder": "العنوان",
+    "slugLabel": "الرابط المختصر *",
+    "slugPlaceholder": "الرابط-المختصر",
+    "briefLabel": "ملخص *",
+    "briefPlaceholder": "ملخص قصير...",
+    "descriptionLabel": "الوصف *",
+    "descriptionPlaceholder": "المحتوى الكامل...",
+    "settingsHeading": "الإعدادات",
+    "imageLabel": "الصورة",
+    "classificationLabel": "التصنيف",
+    "classificationPlaceholder": "مثال: رسالتنا، رؤيتنا",
+    "orderLabel": "ترتيب العرض",
+    "publishedCheckboxLabel": "منشور (مرئي على الموقع)",
+    "publish": "نشر",
+    "toast": {
+      "updated": "تم التحديث بنجاح",
+      "created": "تم الإنشاء بنجاح",
+      "briefDescRequired": "الملخص والوصف مطلوبان. مفقودان لـ: {langs}"
+    },
+    "backLabels": {
+      "blogs": "العودة إلى المدونة",
+      "news": "العودة إلى الأخبار",
+      "events": "العودة إلى الفعاليات",
+      "about": "العودة إلى من نحن"
+    },
+    "titles": {
+      "newBlog": "منشور مدونة جديد",
+      "editBlog": "تعديل منشور المدونة",
+      "newNews": "مقال إخباري جديد",
+      "editNews": "تعديل المقال الإخباري",
+      "newEvent": "فعالية جديدة",
+      "editEvent": "تعديل الفعالية",
+      "newAbout": "قسم جديد لـ \"من نحن\"",
+      "editAbout": "تعديل قسم \"من نحن\""
+    },
+    "imageUpload": {
+      "onlyImages": "ملفات الصور فقط مسموح بها",
+      "uploadFailed": "فشل الرفع",
+      "uploading": "جار الرفع...",
+      "dropHere": "أفلت الصورة هنا أو",
+      "browse": "تصفّح",
+      "sizeHint": "PNG أو JPG أو WEBP بحد أقصى 10 ميجابايت",
+      "pastePlaceholder": "أو الصق رابط صورة...",
+      "pastePlaceholderNoUpload": "الصق رابط صورة (رفع الملفات متاح بعد الحفظ)",
+      "saveFirstHint": "احفظ السجل أولاً لتفعيل السحب والإفلات لرفع الملفات."
+    }
   }
 }

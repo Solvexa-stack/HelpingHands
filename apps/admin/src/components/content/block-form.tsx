@@ -9,12 +9,7 @@ import { blocksApi } from '@/lib/api';
 import { useToast } from '@/components/ui/toaster';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-
-const LANGS = [
-  { code: 'en', label: 'English' },
-  { code: 'ar', label: 'Arabic' },
-  { code: 'fr', label: 'French' },
-];
+import { useLanguage } from '@/contexts/language-context';
 
 function slugify(text: string) {
   return text.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
@@ -33,8 +28,15 @@ interface BlockFormProps {
 
 export function BlockForm({ category, backHref, backLabel, title, editId, showDates, showClassification, showOrder }: BlockFormProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   const { success, error: toastError } = useToast();
   const [activeLang, setActiveLang] = useState('en');
+
+  const LANGS = [
+    { code: 'en', label: t('blockForm.langEnglish') },
+    { code: 'ar', label: t('blockForm.langArabic') },
+    { code: 'fr', label: t('blockForm.langFrench') },
+  ];
   const [ready, setReady] = useState(!editId);
 
   const [translations, setTranslations] = useState<Record<string, any>>({
@@ -94,20 +96,20 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
       };
       return editId ? blocksApi.update(editId, payload) : blocksApi.create(payload);
     },
-    onSuccess: () => { success(editId ? 'Updated successfully' : 'Created successfully'); router.push(backHref); },
+    onSuccess: () => { success(editId ? t('blockForm.toast.updated') : t('blockForm.toast.created')); router.push(backHref); },
     onError: (err: any) => {
       const res = err?.response?.data;
-      toastError(res?.errors?.join('. ') || res?.message || 'Failed');
+      toastError(res?.errors?.join('. ') || res?.message || t('common.failed'));
     },
   });
 
   const handleSubmit = () => {
     const incomplete = LANGS.filter((l) => {
-      const t = translations[l.code];
-      return t.name && t.slug && (!t.brief || !t.description);
+      const tv = translations[l.code];
+      return tv.name && tv.slug && (!tv.brief || !tv.description);
     });
     if (incomplete.length) {
-      toastError(`Brief and Description are required. Missing for: ${incomplete.map((l) => l.label).join(', ')}`);
+      toastError(t('blockForm.toast.briefDescRequired', { langs: incomplete.map((l) => l.label).join(', ') }));
       return;
     }
     mutation.mutate();
@@ -124,7 +126,7 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
     });
   };
 
-  if (!ready) return <div className="flex items-center justify-center py-20 text-gray-400">Loading...</div>;
+  if (!ready) return <div className="flex items-center justify-center py-20 text-gray-400">{t('common.loading')}</div>;
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -135,7 +137,7 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
 
       {/* Translations */}
       <div className="card p-6 space-y-6">
-        <h2 className="font-semibold text-gray-900">Content & Translations</h2>
+        <h2 className="font-semibold text-gray-900">{t('blockForm.contentTranslations')}</h2>
         <div className="flex gap-1 border-b border-gray-200">
           {LANGS.map((l) => (
             <button key={l.code} onClick={() => setActiveLang(l.code)}
@@ -148,27 +150,27 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
           <div key={l.code} className={l.code === activeLang ? 'space-y-4' : 'hidden'}>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">Title *</label>
+                <label className="label">{t('blockForm.titleLabel')}</label>
                 <input className="input" value={translations[l.code].name}
-                  onChange={(e) => setTrans(l.code, 'name', e.target.value)} placeholder="Title" />
+                  onChange={(e) => setTrans(l.code, 'name', e.target.value)} placeholder={t('blockForm.titlePlaceholder')} />
               </div>
               <div>
-                <label className="label">Slug *</label>
+                <label className="label">{t('blockForm.slugLabel')}</label>
                 <input className="input font-mono text-sm" value={translations[l.code].slug}
-                  onChange={(e) => setTrans(l.code, 'slug', e.target.value)} placeholder="title-slug" />
+                  onChange={(e) => setTrans(l.code, 'slug', e.target.value)} placeholder={t('blockForm.slugPlaceholder')} />
               </div>
             </div>
             <div>
-              <label className="label">Brief *</label>
+              <label className="label">{t('blockForm.briefLabel')}</label>
               <input className="input" value={translations[l.code].brief}
-                onChange={(e) => setTrans(l.code, 'brief', e.target.value)} placeholder="Short summary..." />
+                onChange={(e) => setTrans(l.code, 'brief', e.target.value)} placeholder={t('blockForm.briefPlaceholder')} />
             </div>
             <div>
-              <label className="label">Description *</label>
+              <label className="label">{t('blockForm.descriptionLabel')}</label>
               <RichTextEditor
                 value={translations[l.code].description}
                 onChange={(val) => setTrans(l.code, 'description', val)}
-                placeholder="Full content..."
+                placeholder={t('blockForm.descriptionPlaceholder')}
               />
             </div>
           </div>
@@ -177,10 +179,10 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
 
       {/* Meta */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-semibold text-gray-900">Settings</h2>
+        <h2 className="font-semibold text-gray-900">{t('blockForm.settingsHeading')}</h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className="label">Image</label>
+            <label className="label">{t('blockForm.imageLabel')}</label>
             <ImageUpload
               value={meta.imageUrl}
               onChange={(url) => setMeta({ ...meta, imageUrl: url })}
@@ -191,12 +193,12 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
           {showDates && (
             <>
               <div>
-                <label className="label">Start Date</label>
+                <label className="label">{t('content.startDate')}</label>
                 <input type="date" className="input" value={meta.startDate}
                   onChange={(e) => setMeta({ ...meta, startDate: e.target.value })} />
               </div>
               <div>
-                <label className="label">End Date</label>
+                <label className="label">{t('content.endDate')}</label>
                 <input type="date" className="input" value={meta.endDate}
                   onChange={(e) => setMeta({ ...meta, endDate: e.target.value })} />
               </div>
@@ -204,14 +206,14 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
           )}
           {showClassification && (
             <div>
-              <label className="label">Classification</label>
+              <label className="label">{t('blockForm.classificationLabel')}</label>
               <input className="input" value={meta.classification}
-                onChange={(e) => setMeta({ ...meta, classification: e.target.value })} placeholder="e.g. mission, vision" />
+                onChange={(e) => setMeta({ ...meta, classification: e.target.value })} placeholder={t('blockForm.classificationPlaceholder')} />
             </div>
           )}
           {showOrder && (
             <div>
-              <label className="label">Display Order</label>
+              <label className="label">{t('blockForm.orderLabel')}</label>
               <input type="number" className="input" value={meta.orderId} min="0"
                 onChange={(e) => setMeta({ ...meta, orderId: e.target.value })} />
             </div>
@@ -220,7 +222,7 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
             <input type="checkbox" id="isActive" checked={meta.isActive}
               onChange={(e) => setMeta({ ...meta, isActive: e.target.checked })}
               className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-            <label htmlFor="isActive" className="text-sm font-medium text-gray-700">Published (visible on website)</label>
+            <label htmlFor="isActive" className="text-sm font-medium text-gray-700">{t('blockForm.publishedCheckboxLabel')}</label>
           </div>
         </div>
       </div>
@@ -230,7 +232,7 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
         <button onClick={handleSubmit} disabled={mutation.isPending || !translations.en.name}
           className="btn-primary btn-md gap-2">
           {mutation.isPending ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Save className="w-4 h-4" />}
-          {editId ? 'Save Changes' : 'Publish'}
+          {editId ? t('common.save') : t('blockForm.publish')}
         </button>
       </div>
     </div>

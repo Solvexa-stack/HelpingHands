@@ -1,6 +1,8 @@
 'use client';
 import { BlockForm } from '@/components/content/block-form';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function EditNewsPage({ params }: { params: { id: string } }) {
-  return <BlockForm category="news" backHref="/content/news" backLabel="Back to News" title="Edit News Article" editId={Number(params.id)} />;
+  const { t } = useLanguage();
+  return <BlockForm category="news" backHref="/content/news" backLabel={t('blockForm.backLabels.news')} title={t('blockForm.titles.editNews')} editId={Number(params.id)} />;
 }

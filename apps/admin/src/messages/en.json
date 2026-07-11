@@ -1011,5 +1011,58 @@
     "colAction": "Action",
     "colGuards": "Guards",
     "colEffects": "Effects"
+  },
+  "blockForm": {
+    "contentTranslations": "Content & Translations",
+    "langEnglish": "English",
+    "langArabic": "Arabic",
+    "langFrench": "French",
+    "titleLabel": "Title *",
+    "titlePlaceholder": "Title",
+    "slugLabel": "Slug *",
+    "slugPlaceholder": "title-slug",
+    "briefLabel": "Brief *",
+    "briefPlaceholder": "Short summary...",
+    "descriptionLabel": "Description *",
+    "descriptionPlaceholder": "Full content...",
+    "settingsHeading": "Settings",
+    "imageLabel": "Image",
+    "classificationLabel": "Classification",
+    "classificationPlaceholder": "e.g. mission, vision",
+    "orderLabel": "Display Order",
+    "publishedCheckboxLabel": "Published (visible on website)",
+    "publish": "Publish",
+    "toast": {
+      "updated": "Updated successfully",
+      "created": "Created successfully",
+      "briefDescRequired": "Brief and Description are required. Missing for: {langs}"
+    },
+    "backLabels": {
+      "blogs": "Back to Blogs",
+      "news": "Back to News",
+      "events": "Back to Events",
+      "about": "Back to About"
+    },
+    "titles": {
+      "newBlog": "New Blog Post",
+      "editBlog": "Edit Blog Post",
+      "newNews": "New News Article",
+      "editNews": "Edit News Article",
+      "newEvent": "New Event",
+      "editEvent": "Edit Event",
+      "newAbout": "New About Section",
+      "editAbout": "Edit About Section"
+    },
+    "imageUpload": {
+      "onlyImages": "Only image files are allowed",
+      "uploadFailed": "Upload failed",
+      "uploading": "Uploading...",
+      "dropHere": "Drop image here or",
+      "browse": "browse",
+      "sizeHint": "PNG, JPG, WEBP up to 10MB",
+      "pastePlaceholder": "Or paste an image URL...",
+      "pastePlaceholderNoUpload": "Paste an image URL (file upload available after saving)",
+      "saveFirstHint": "Save the record first to enable drag & drop file upload."
+    }
   }
 }
