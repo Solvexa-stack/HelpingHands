@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, GitBranch, X } from 'lucide-react';
 import { workflowApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/language-context';
 
 /**
  * W4-E5-S2 — read-only definition viewer: definitions/versions with their
@@ -31,6 +32,7 @@ function guardSummary(guards: any[]): string {
 }
 
 export default function WorkflowDefinitionsPage() {
+  const { t } = useLanguage();
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const { data: definitions } = useQuery({ queryKey: ['workflow-definitions'], queryFn: () => workflowApi.definitions() });
@@ -44,20 +46,20 @@ export default function WorkflowDefinitionsPage() {
     <div className="space-y-5">
       <div className="flex items-center gap-2">
         <GitBranch className="w-5 h-5 text-primary-600" />
-        <h1 className="text-lg font-semibold">Workflow definitions</h1>
-        <span className="text-sm text-gray-400">versioned lifecycle machines — read-only (W4)</span>
+        <h1 className="text-lg font-semibold">{t('workflowDefinitions.title')}</h1>
+        <span className="text-sm text-gray-400">{t('workflowDefinitions.subtitle')}</span>
       </div>
 
       <div className="card overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="table-header">Key</th>
-              <th className="table-header">Version</th>
-              <th className="table-header">Subject</th>
-              <th className="table-header">Status</th>
-              <th className="table-header">Instances</th>
-              <th className="table-header">Description</th>
+              <th className="table-header">{t('workflowDefinitions.colKey')}</th>
+              <th className="table-header">{t('workflowDefinitions.colVersion')}</th>
+              <th className="table-header">{t('workflowDefinitions.colSubject')}</th>
+              <th className="table-header">{t('workflowDefinitions.colStatus')}</th>
+              <th className="table-header">{t('workflowDefinitions.colInstances')}</th>
+              <th className="table-header">{t('workflowDefinitions.colDescription')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -68,7 +70,7 @@ export default function WorkflowDefinitionsPage() {
                 <td className="table-cell">{d.subjectType}</td>
                 <td className="table-cell">
                   <span className={cn('badge', d.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500')}>
-                    {d.isActive ? 'active' : 'inactive'}
+                    {d.isActive ? t('workflowDefinitions.active') : t('workflowDefinitions.inactive')}
                   </span>
                 </td>
                 <td className="table-cell">{d._count?.instances ?? 0}</td>
@@ -87,7 +89,7 @@ export default function WorkflowDefinitionsPage() {
               <h2 className="font-semibold flex items-center gap-2">
                 <GitBranch className="w-4 h-4" /> {detail.key} v{detail.version}
                 <span className={cn('badge', detail.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500')}>
-                  {detail.isActive ? 'active' : 'inactive'}
+                  {detail.isActive ? t('workflowDefinitions.active') : t('workflowDefinitions.inactive')}
                 </span>
               </h2>
               <button onClick={() => setSelectedId(null)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"><X className="w-4 h-4" /></button>
@@ -95,7 +97,7 @@ export default function WorkflowDefinitionsPage() {
             <p className="text-sm text-gray-500">{detail.description}</p>
 
             <div>
-              <div className="text-xs font-semibold text-gray-500 uppercase mb-2">States</div>
+              <div className="text-xs font-semibold text-gray-500 uppercase mb-2">{t('workflowDefinitions.statesLabel')}</div>
               <div className="flex flex-wrap gap-2">
                 {detail.states.map((s: any) => (
                   <span key={s.id} className={cn('badge', KIND_BADGE[s.kind] ?? 'bg-gray-100 text-gray-600')} title={s.kind}>
@@ -106,27 +108,27 @@ export default function WorkflowDefinitionsPage() {
             </div>
 
             <div>
-              <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Transitions</div>
+              <div className="text-xs font-semibold text-gray-500 uppercase mb-2">{t('workflowDefinitions.transitionsLabel')}</div>
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="table-header">From</th>
+                    <th className="table-header">{t('workflowDefinitions.colFrom')}</th>
                     <th className="table-header"></th>
-                    <th className="table-header">To</th>
-                    <th className="table-header">Action</th>
-                    <th className="table-header">Guards</th>
-                    <th className="table-header">Effects</th>
+                    <th className="table-header">{t('workflowDefinitions.colTo')}</th>
+                    <th className="table-header">{t('workflowDefinitions.colAction')}</th>
+                    <th className="table-header">{t('workflowDefinitions.colGuards')}</th>
+                    <th className="table-header">{t('workflowDefinitions.colEffects')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {detail.transitions.map((t: any) => (
-                    <tr key={t.id}>
-                      <td className="table-cell">{t.fromStateKey}</td>
+                  {detail.transitions.map((tr: any) => (
+                    <tr key={tr.id}>
+                      <td className="table-cell">{tr.fromStateKey}</td>
                       <td className="table-cell"><ArrowRight className="w-3 h-3 text-gray-400" /></td>
-                      <td className="table-cell">{t.toStateKey}</td>
-                      <td className="table-cell font-medium">{t.actionKey}</td>
-                      <td className="table-cell text-xs text-gray-500">{guardSummary(t.guards)}</td>
-                      <td className="table-cell text-xs text-gray-500">{(t.effects ?? []).join(', ') || '—'}</td>
+                      <td className="table-cell">{tr.toStateKey}</td>
+                      <td className="table-cell font-medium">{tr.actionKey}</td>
+                      <td className="table-cell text-xs text-gray-500">{guardSummary(tr.guards)}</td>
+                      <td className="table-cell text-xs text-gray-500">{(tr.effects ?? []).join(', ') || '—'}</td>
                     </tr>
                   ))}
                 </tbody>

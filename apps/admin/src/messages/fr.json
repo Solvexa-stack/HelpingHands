@@ -969,5 +969,24 @@
     "requestId": "ID de requête",
     "before": "Avant",
     "after": "Après"
+  },
+  "workflowDefinitions": {
+    "title": "Définitions de workflow",
+    "subtitle": "machines de cycle de vie versionnées — lecture seule",
+    "colKey": "Clé",
+    "colVersion": "Version",
+    "colSubject": "Sujet",
+    "colStatus": "Statut",
+    "colInstances": "Instances",
+    "colDescription": "Description",
+    "active": "actif",
+    "inactive": "inactif",
+    "statesLabel": "États",
+    "transitionsLabel": "Transitions",
+    "colFrom": "De",
+    "colTo": "À",
+    "colAction": "Action",
+    "colGuards": "Conditions",
+    "colEffects": "Effets"
   }
 }

@@ -969,5 +969,24 @@
     "requestId": "رقم الطلب",
     "before": "قبل",
     "after": "بعد"
+  },
+  "workflowDefinitions": {
+    "title": "تعريفات مسارات العمل",
+    "subtitle": "آلات دورة حياة مُرقّمة الإصدار — للقراءة فقط",
+    "colKey": "المفتاح",
+    "colVersion": "الإصدار",
+    "colSubject": "الكائن",
+    "colStatus": "الحالة",
+    "colInstances": "النُسخ",
+    "colDescription": "الوصف",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "statesLabel": "الحالات",
+    "transitionsLabel": "الانتقالات",
+    "colFrom": "من",
+    "colTo": "إلى",
+    "colAction": "الإجراء",
+    "colGuards": "الشروط",
+    "colEffects": "التأثيرات"
   }
 }

@@ -969,5 +969,24 @@
     "requestId": "Request id",
     "before": "Before",
     "after": "After"
+  },
+  "workflowDefinitions": {
+    "title": "Workflow definitions",
+    "subtitle": "versioned lifecycle machines — read-only",
+    "colKey": "Key",
+    "colVersion": "Version",
+    "colSubject": "Subject",
+    "colStatus": "Status",
+    "colInstances": "Instances",
+    "colDescription": "Description",
+    "active": "active",
+    "inactive": "inactive",
+    "statesLabel": "States",
+    "transitionsLabel": "Transitions",
+    "colFrom": "From",
+    "colTo": "To",
+    "colAction": "Action",
+    "colGuards": "Guards",
+    "colEffects": "Effects"
   }
 }
