@@ -939,5 +939,35 @@
       "orgActivated": "تم تفعيل المنظمة",
       "orgSuspended": "تم إيقاف المنظمة"
     }
+  },
+  "audit": {
+    "title": "سجل التدقيق",
+    "subtitle": "سجل ثابت لكل تعديل",
+    "adminOnly": "يمكن للمسؤولين فقط عرض سجل التدقيق.",
+    "filterAction": "الإجراء",
+    "filterActionPlaceholder": "مثال: \"donation.\"",
+    "filterSubjectType": "نوع الكائن",
+    "filterSubjectId": "رقم الكائن",
+    "filterActorUserId": "رقم المستخدم الفاعل",
+    "filterFrom": "من",
+    "filterTo": "إلى",
+    "reset": "إعادة تعيين",
+    "colIndex": "#",
+    "colTimestamp": "التاريخ والوقت",
+    "colAction": "الإجراء",
+    "colSubject": "الكائن",
+    "colActorUser": "المستخدم الفاعل",
+    "colRequestId": "رقم الطلب",
+    "loading": "جار التحميل…",
+    "noEntries": "لا توجد سجلات مطابقة للفلاتر.",
+    "system": "النظام",
+    "entriesSummary": "{total} سجلاً · صفحة {page} / {totalPages}",
+    "entryTitle": "سجل التدقيق رقم {id}",
+    "actorUserId": "رقم المستخدم الفاعل",
+    "systemOrAnonymous": "النظام / مجهول",
+    "ip": "عنوان IP",
+    "requestId": "رقم الطلب",
+    "before": "قبل",
+    "after": "بعد"
   }
 }

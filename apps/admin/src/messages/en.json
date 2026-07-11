@@ -939,5 +939,35 @@
       "orgActivated": "Organization activated",
       "orgSuspended": "Organization suspended"
     }
+  },
+  "audit": {
+    "title": "Audit Trail",
+    "subtitle": "append-only record of every mutation",
+    "adminOnly": "Only administrators can view the audit trail.",
+    "filterAction": "Action",
+    "filterActionPlaceholder": "e.g. \"donation.\"",
+    "filterSubjectType": "Subject type",
+    "filterSubjectId": "Subject id",
+    "filterActorUserId": "Actor user id",
+    "filterFrom": "From",
+    "filterTo": "To",
+    "reset": "Reset",
+    "colIndex": "#",
+    "colTimestamp": "Timestamp",
+    "colAction": "Action",
+    "colSubject": "Subject",
+    "colActorUser": "Actor user",
+    "colRequestId": "Request id",
+    "loading": "Loading…",
+    "noEntries": "No audit entries match the filters.",
+    "system": "system",
+    "entriesSummary": "{total} entries · page {page} / {totalPages}",
+    "entryTitle": "Audit entry #{id}",
+    "actorUserId": "Actor user id",
+    "systemOrAnonymous": "system / anonymous",
+    "ip": "IP",
+    "requestId": "Request id",
+    "before": "Before",
+    "after": "After"
   }
 }

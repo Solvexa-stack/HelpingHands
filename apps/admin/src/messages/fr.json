@@ -939,5 +939,35 @@
       "orgActivated": "Organisation activée",
       "orgSuspended": "Organisation suspendue"
     }
+  },
+  "audit": {
+    "title": "Journal d'audit",
+    "subtitle": "registre immuable de chaque modification",
+    "adminOnly": "Seuls les administrateurs peuvent consulter le journal d'audit.",
+    "filterAction": "Action",
+    "filterActionPlaceholder": "ex. « donation. »",
+    "filterSubjectType": "Type de sujet",
+    "filterSubjectId": "ID du sujet",
+    "filterActorUserId": "ID utilisateur acteur",
+    "filterFrom": "Du",
+    "filterTo": "Au",
+    "reset": "Réinitialiser",
+    "colIndex": "#",
+    "colTimestamp": "Horodatage",
+    "colAction": "Action",
+    "colSubject": "Sujet",
+    "colActorUser": "Utilisateur acteur",
+    "colRequestId": "ID de requête",
+    "loading": "Chargement…",
+    "noEntries": "Aucune entrée d'audit ne correspond aux filtres.",
+    "system": "système",
+    "entriesSummary": "{total} entrées · page {page} / {totalPages}",
+    "entryTitle": "Entrée d'audit n°{id}",
+    "actorUserId": "ID utilisateur acteur",
+    "systemOrAnonymous": "système / anonyme",
+    "ip": "IP",
+    "requestId": "ID de requête",
+    "before": "Avant",
+    "after": "Après"
   }
 }

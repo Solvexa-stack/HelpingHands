@@ -43,7 +43,7 @@ function Snapshot({ label, value }: { label: string; value: unknown }) {
 }
 
 export default function AuditPage() {
-  const { locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const { user } = useAuth();
   const [page, setPage] = useState(1);
   const [action, setAction] = useState('');
@@ -75,7 +75,7 @@ export default function AuditPage() {
   if (!isAdministrator) {
     return (
       <div className="card p-8 text-center text-gray-500">
-        Only administrators can view the audit trail.
+        {t('audit.adminOnly')}
       </div>
     );
   }
@@ -91,44 +91,44 @@ export default function AuditPage() {
     <div className="space-y-5">
       <div className="flex items-center gap-2">
         <ScrollText className="w-5 h-5 text-primary-600" />
-        <h1 className="text-lg font-semibold">Audit Trail</h1>
-        <span className="text-sm text-gray-400">append-only record of every mutation</span>
+        <h1 className="text-lg font-semibold">{t('audit.title')}</h1>
+        <span className="text-sm text-gray-400">{t('audit.subtitle')}</span>
       </div>
 
       {/* Filters */}
       <div className="card p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 items-end">
         <div className="col-span-2 lg:col-span-1">
-          <label className="text-xs text-gray-500">Action</label>
-          <input className="input" placeholder='e.g. "donation."' value={action}
+          <label className="text-xs text-gray-500">{t('audit.filterAction')}</label>
+          <input className="input" placeholder={t('audit.filterActionPlaceholder')} value={action}
             onChange={(e) => { setAction(e.target.value); setPage(1); }} />
         </div>
         <div>
-          <label className="text-xs text-gray-500">Subject type</label>
+          <label className="text-xs text-gray-500">{t('audit.filterSubjectType')}</label>
           <input className="input" placeholder="project" value={subjectType}
             onChange={(e) => { setSubjectType(e.target.value); setPage(1); }} />
         </div>
         <div>
-          <label className="text-xs text-gray-500">Subject id</label>
+          <label className="text-xs text-gray-500">{t('audit.filterSubjectId')}</label>
           <input className="input" value={subjectId}
             onChange={(e) => { setSubjectId(e.target.value); setPage(1); }} />
         </div>
         <div>
-          <label className="text-xs text-gray-500">Actor user id</label>
+          <label className="text-xs text-gray-500">{t('audit.filterActorUserId')}</label>
           <input className="input" type="number" value={actorUserId}
             onChange={(e) => { setActorUserId(e.target.value); setPage(1); }} />
         </div>
         <div>
-          <label className="text-xs text-gray-500">From</label>
+          <label className="text-xs text-gray-500">{t('audit.filterFrom')}</label>
           <input className="input" type="date" value={from}
             onChange={(e) => { setFrom(e.target.value); setPage(1); }} />
         </div>
         <div>
-          <label className="text-xs text-gray-500">To</label>
+          <label className="text-xs text-gray-500">{t('audit.filterTo')}</label>
           <input className="input" type="date" value={to}
             onChange={(e) => { setTo(e.target.value); setPage(1); }} />
         </div>
         <button onClick={resetFilters} className="btn-secondary btn-md gap-2">
-          <Filter className="w-4 h-4" /> Reset
+          <Filter className="w-4 h-4" /> {t('audit.reset')}
         </button>
       </div>
 
@@ -138,20 +138,20 @@ export default function AuditPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="table-header">#</th>
-                <th className="table-header">Timestamp</th>
-                <th className="table-header">Action</th>
-                <th className="table-header">Subject</th>
-                <th className="table-header">Actor user</th>
-                <th className="table-header">Request id</th>
+                <th className="table-header">{t('audit.colIndex')}</th>
+                <th className="table-header">{t('audit.colTimestamp')}</th>
+                <th className="table-header">{t('audit.colAction')}</th>
+                <th className="table-header">{t('audit.colSubject')}</th>
+                <th className="table-header">{t('audit.colActorUser')}</th>
+                <th className="table-header">{t('audit.colRequestId')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading && (
-                <tr><td colSpan={6} className="p-6 text-center text-gray-400">Loading…</td></tr>
+                <tr><td colSpan={6} className="p-6 text-center text-gray-400">{t('audit.loading')}</td></tr>
               )}
               {!isLoading && logs.length === 0 && (
-                <tr><td colSpan={6} className="p-6 text-center text-gray-400">No audit entries match the filters.</td></tr>
+                <tr><td colSpan={6} className="p-6 text-center text-gray-400">{t('audit.noEntries')}</td></tr>
               )}
               {logs.map((log: any) => (
                 <tr
@@ -165,7 +165,7 @@ export default function AuditPage() {
                     <span className={cn('badge', actionBadge(log.action))}>{log.action}</span>
                   </td>
                   <td className="table-cell">{log.subjectType} #{log.subjectId}</td>
-                  <td className="table-cell">{log.actorUserId ?? <span className="text-gray-400">system</span>}</td>
+                  <td className="table-cell">{log.actorUserId ?? <span className="text-gray-400">{t('audit.system')}</span>}</td>
                   <td className="table-cell font-mono text-xs text-gray-500 max-w-[180px] truncate">{log.requestId}</td>
                 </tr>
               ))}
@@ -176,7 +176,7 @@ export default function AuditPage() {
         {/* Pagination */}
         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
           <span className="text-sm text-gray-500">
-            {meta.total ?? 0} entries · page {meta.page ?? 1} / {meta.totalPages ?? 1}
+            {t('audit.entriesSummary', { total: meta.total ?? 0, page: meta.page ?? 1, totalPages: meta.totalPages ?? 1 })}
           </span>
           <div className="flex gap-2">
             <button
@@ -205,23 +205,23 @@ export default function AuditPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold">Audit entry #{selected.id}</h2>
+              <h2 className="font-semibold">{t('audit.entryTitle', { id: selected.id })}</h2>
               <button onClick={() => setSelected(null)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><div className="text-xs text-gray-500">Action</div><span className={cn('badge', actionBadge(selected.action))}>{selected.action}</span></div>
-              <div><div className="text-xs text-gray-500">Timestamp</div>{new Date(selected.timestamp).toLocaleString(locale)}</div>
-              <div><div className="text-xs text-gray-500">Subject</div>{selected.subjectType} #{selected.subjectId}</div>
-              <div><div className="text-xs text-gray-500">Actor user id</div>{selected.actorUserId ?? 'system / anonymous'}</div>
-              <div><div className="text-xs text-gray-500">IP</div>{selected.ip ?? '—'}</div>
-              <div className="col-span-2"><div className="text-xs text-gray-500">Request id</div><span className="font-mono text-xs">{selected.requestId}</span></div>
+              <div><div className="text-xs text-gray-500">{t('audit.colAction')}</div><span className={cn('badge', actionBadge(selected.action))}>{selected.action}</span></div>
+              <div><div className="text-xs text-gray-500">{t('audit.colTimestamp')}</div>{new Date(selected.timestamp).toLocaleString(locale)}</div>
+              <div><div className="text-xs text-gray-500">{t('audit.colSubject')}</div>{selected.subjectType} #{selected.subjectId}</div>
+              <div><div className="text-xs text-gray-500">{t('audit.actorUserId')}</div>{selected.actorUserId ?? t('audit.systemOrAnonymous')}</div>
+              <div><div className="text-xs text-gray-500">{t('audit.ip')}</div>{selected.ip ?? '—'}</div>
+              <div className="col-span-2"><div className="text-xs text-gray-500">{t('audit.requestId')}</div><span className="font-mono text-xs">{selected.requestId}</span></div>
             </div>
 
-            <Snapshot label="Before" value={selected.before} />
-            <Snapshot label="After" value={selected.after} />
+            <Snapshot label={t('audit.before')} value={selected.before} />
+            <Snapshot label={t('audit.after')} value={selected.after} />
           </div>
         </div>
       )}
