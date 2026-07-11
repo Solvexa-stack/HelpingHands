@@ -151,8 +151,12 @@ export const votingApi = {
 
 // ─── Payments ─────────────────────────────────────────────────────────────────
 export const paymentsApi = {
-  createCheckout: (projectId: number, amount: number, provider: 'stripe' | 'paypal', currency = 'USD') =>
-    api.post('/payments/checkout', { projectId, amount, provider, currency }).then((r) => r.data.data),
+  createCheckout: (
+    target: { projectId: number } | { fundId: number },
+    amount: number,
+    provider: 'stripe' | 'paypal',
+    currency = 'USD',
+  ) => api.post('/payments/checkout', { ...target, amount, provider, currency }).then((r) => r.data.data),
   getDonationStatus: (id: number) =>
     api.get(`/payments/donations/${id}/status`).then((r) => r.data.data),
   listDonations: (params?: Record<string, any>) =>
@@ -180,4 +184,11 @@ export const transparencyApi = {
   organizations: () => api.get('/transparency/organizations').then((r) => r.data.data),
   organization: (id: number) => api.get(`/transparency/organizations/${id}`).then((r) => r.data.data),
   decisions: (limit = 50) => api.get('/transparency/decisions', { params: { limit } }).then((r) => r.data.data),
+  // W9 — sector report: donations, allocated, spent, remaining balance, active projects
+  sector: (id: number) => api.get(`/transparency/sectors/${id}`).then((r) => r.data.data),
+};
+
+// ─── Categories (W6 taxonomy; W9 sector browsing) ────────────────────────────
+export const categoriesApi = {
+  tree: () => api.get('/categories').then((r) => r.data.data),
 };

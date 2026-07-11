@@ -6,7 +6,7 @@ import {
   LayoutDashboard, FolderKanban, Heart, Users, UserCheck,
   FileText, Newspaper, CalendarDays, Info, Globe, Heart as HeartIcon,
   ChevronRight, FlaskConical, BarChart3, ScrollText, Building2, Landmark, GitBranch, Banknote,
-  HandCoins, Receipt,
+  HandCoins, Receipt, FolderTree,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useLanguage } from '@/contexts/language-context';
@@ -33,6 +33,7 @@ const navItems = [
   { href: '/organizations', icon: Building2, tKey: 'nav.organizations', roles: ['administrator'], platformOnly: true },
   { href: '/workflow', icon: GitBranch, tKey: 'nav.workflow', roles: ['administrator'], platformOnly: true },
   { href: '/funds', icon: Banknote, tKey: 'nav.funds', roles: ['administrator'], platformOnly: true },
+  { href: '/categories', icon: FolderTree, tKey: 'nav.sectors', roles: ['administrator'], platformOnly: true },
   { href: '/donors', icon: HandCoins, tKey: 'nav.donors', roles: ['administrator'], platformOnly: true },
   { href: '/expenses', icon: Receipt, tKey: 'nav.expenses', roles: ['administrator', 'financial_officer'], platformOnly: true },
   { href: '/board', icon: Landmark, tKey: 'nav.board', roles: ['administrator'], boardOnly: true },

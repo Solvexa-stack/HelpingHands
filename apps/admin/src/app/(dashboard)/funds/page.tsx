@@ -4,11 +4,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Banknote, CheckCircle2, FolderTree, Gift, Landmark, PauseCircle, Plus, Send, UserPlus, X } from 'lucide-react';
-import { fundsApi, governanceApi, transparencyApi, type FundType } from '@/lib/api';
+import { fundsApi, governanceApi, transparencyApi, type ExecutionStage, type FundType } from '@/lib/api';
 import { useToast } from '@/components/ui/toaster';
 import { ProjectPicker } from '@/components/ui/project-picker';
+import { CategoryPicker } from '@/components/ui/category-picker';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuth } from '@/contexts/auth-context';
 
 /** W7-E3-S2 — monthly intake/outflow trend rows from the ledger read layer. */
 function FundTrends({ fundId }: { fundId: number }) {
@@ -55,6 +57,7 @@ const ALLOC_BADGE: Record<string, string> = {
   rejected: 'bg-red-100 text-red-700',
 };
 const TYPE_BADGE: Record<string, string> = {
+  master: 'bg-purple-100 text-purple-700',
   organization: 'bg-slate-100 text-slate-700',
   council: 'bg-indigo-100 text-indigo-700',
   donor: 'bg-pink-100 text-pink-700',
@@ -62,9 +65,15 @@ const TYPE_BADGE: Record<string, string> = {
 const DONATION_BADGE: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   approved: 'bg-green-100 text-green-800',
+  completed: 'bg-green-100 text-green-800',
   rejected: 'bg-red-100 text-red-700',
+  failed: 'bg-red-100 text-red-700',
+  refunded: 'bg-gray-100 text-gray-500',
 };
 const PAYMENT_METHODS = ['cash', 'bank_transfer', 'check', 'card', 'online'];
+// W9 bugfix — payment methods that only appear on the unified donations list
+// (auto-routed project/online donations, never manually recorded here).
+const READ_ONLY_PAYMENT_METHODS = ['qr_cash', 'stripe', 'paypal'];
 
 /**
  * W5-E7 — fund dashboards & operations: balance/intake/allocations/spend,
@@ -73,15 +82,16 @@ const PAYMENT_METHODS = ['cash', 'bank_transfer', 'check', 'card', 'online'];
  */
 export default function FundsPage() {
   const { t, locale } = useLanguage();
+  const { user } = useAuth();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState<{ name: string; purpose: string; type: FundType; managingOrganizationId: string; donorId: string }>({
-    name: '', purpose: '', type: 'organization', managingOrganizationId: '', donorId: '',
+  const [form, setForm] = useState<{ name: string; purpose: string; type: FundType; managingOrganizationId: string; donorId: string; categoryId: number | '' }>({
+    name: '', purpose: '', type: 'organization', managingOrganizationId: '', donorId: '', categoryId: '',
   });
   const [officer, setOfficer] = useState({ userId: '', role: 'fund_director' });
-  const [proposal, setProposal] = useState<{ projectId: number | ''; amount: string; note: string }>({ projectId: '', amount: '', note: '' });
+  const [proposal, setProposal] = useState<{ projectId: number | ''; amount: string; note: string; stage: ExecutionStage | '' }>({ projectId: '', amount: '', note: '', stage: '' });
   const [tranche, setTranche] = useState<Record<number, string>>({});
   const [donationForm, setDonationForm] = useState({
     donorId: '', participantId: '', amount: '', paymentMethod: 'cash', referenceNumber: '', donatedAt: '', notes: '',
@@ -126,11 +136,12 @@ export default function FundsPage() {
         type: form.type,
         managingOrganizationId: isPositiveInt(form.managingOrganizationId) ? Number(form.managingOrganizationId) : undefined,
         donorId: isPositiveInt(form.donorId) ? Number(form.donorId) : undefined,
+        categoryId: form.categoryId === '' ? undefined : form.categoryId,
       }),
     onSuccess: () => {
       success(t('funds.toast.created'));
       setCreateOpen(false);
-      setForm({ name: '', purpose: '', type: 'organization', managingOrganizationId: '', donorId: '' });
+      setForm({ name: '', purpose: '', type: 'organization', managingOrganizationId: '', donorId: '', categoryId: '' });
       refresh();
     },
     onError,
@@ -204,12 +215,18 @@ export default function FundsPage() {
                 value={form.type}
                 onChange={(e) => setForm({ ...form, type: e.target.value as FundType })}
               >
-                {(['organization', 'council', 'donor'] as FundType[]).map((ft) => (
+                {(['master', 'organization', 'council', 'donor'] as FundType[]).map((ft) => (
                   <option key={ft} value={ft}>{t(`funds.types.${ft}`)}</option>
                 ))}
               </select>
             </div>
-            {form.type !== 'donor' ? (
+            {form.type === 'master' ? (
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500">{t('funds.createModal.sectorLabel')}</label>
+                <CategoryPicker value={form.categoryId} onChange={(categoryId) => setForm({ ...form, categoryId })} />
+                <p className="text-xs text-gray-400">{t('funds.createModal.masterFundNote')}</p>
+              </div>
+            ) : form.type !== 'donor' ? (
               <input
                 className="input w-full"
                 placeholder={t('funds.createModal.organizationPlaceholder')}
@@ -225,7 +242,13 @@ export default function FundsPage() {
               />
             )}
             <p className="text-xs text-gray-400">{t('funds.createModal.launchCeilingNote')}</p>
-            <button className="btn-primary btn-md w-full" disabled={!form.name} onClick={() => createMutation.mutate()}>{t('common.create')}</button>
+            <button
+              className="btn-primary btn-md w-full"
+              disabled={!form.name || (form.type === 'master' && form.categoryId === '')}
+              onClick={() => createMutation.mutate()}
+            >
+              {t('common.create')}
+            </button>
           </div>
         </div>
       )}
@@ -260,6 +283,37 @@ export default function FundsPage() {
               ))}
             </div>
 
+            {/* Active projects — this fund is the default fund for these (backend
+                already returned this in dashboard.activeProjects; UI never rendered it) */}
+            {dashboard.activeProjects.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-gray-500 uppercase">{t('funds.drawer.activeProjectsHeading')}</div>
+                {dashboard.activeProjects.map((p: any) => (
+                  <div key={p.id} className="flex items-center justify-between text-sm border border-gray-100 dark:border-gray-800 rounded-lg px-3 py-2">
+                    <span>{p.name}</span>
+                    <span className="text-gray-400">{Number(p.value).toLocaleString(locale)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Spend by project — allocation-derived, includes co-financed projects
+                too (backend already returned dashboard.spendByProject; UI never rendered it) */}
+            {dashboard.spendByProject.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-gray-500 uppercase">{t('funds.drawer.spendByProjectHeading')}</div>
+                {dashboard.spendByProject.map((s: any) => (
+                  <div key={s.projectId} className="flex items-center justify-between text-sm border border-gray-100 dark:border-gray-800 rounded-lg px-3 py-2">
+                    <span>{t('funds.drawer.projectRef', { id: s.projectId })}</span>
+                    <span className="flex items-center gap-2">
+                      <span className={cn('badge', ALLOC_BADGE[s.status])}>{s.status}</span>
+                      <span className="text-gray-400">{Number(s.disbursed).toLocaleString(locale)} / {Number(s.allocated).toLocaleString(locale)}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Freeze / unfreeze + W7 statement export */}
             <div className="flex gap-2 items-center">
               {dashboard.fund.status === 'active' ? (
@@ -284,30 +338,45 @@ export default function FundsPage() {
             {/* W7: monthly trends from the ledger */}
             <FundTrends fundId={selectedId} />
 
-            {/* Fund donations: Donor → FundDonation → Fund → FundAllocation → Project */}
+            {/* Fund donations: every donation that funded this fund's ledger balance —
+                direct (Donor/participant → FundDonation, or a fund-directed online
+                payment) AND donations made straight to a project whose default fund
+                is this one, auto-routed here (W9). `source` distinguishes them; only
+                `fund_donation` entries have anything left to decide here — the others
+                were already approved by their own flow before ever reaching the fund. */}
             <div className="space-y-2">
               <div className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1">
                 <Gift className="w-3 h-3" /> {t('funds.donations.heading')}
               </div>
               {(donations ?? []).map((d: any) => (
-                <div key={d.id} className="flex items-center justify-between text-sm border border-gray-100 dark:border-gray-800 rounded-lg px-3 py-2">
-                  <span>
-                    {t('funds.donations.rowSummary', { id: d.id, amount: Number(d.amount).toLocaleString(locale), method: d.paymentMethod })}
-                    {d.donor ? ` · ${d.donor.name}` : d.participant ? ` · ${d.participant.firstName} ${d.participant.lastName}` : ''}
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span className={cn('badge', DONATION_BADGE[d.status])}>{d.status}</span>
-                    {d.status === 'pending' && (
-                      <>
-                        <button className="btn-secondary btn-sm" onClick={() => mutate(() => fundsApi.confirmDonation(d.id), t('funds.toast.donationConfirmed'))}>
-                          {t('funds.donations.confirm')}
-                        </button>
-                        <button className="btn-secondary btn-sm" onClick={() => mutate(() => fundsApi.rejectDonation(d.id), t('funds.toast.donationRejected'))}>
-                          {t('funds.donations.reject')}
-                        </button>
-                      </>
-                    )}
-                  </span>
+                <div key={`${d.source}-${d.id}`} className="border border-gray-100 dark:border-gray-800 rounded-lg px-3 py-2 space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">
+                      {t('funds.donations.rowTitle', { id: d.id })} · {Number(d.amount).toLocaleString(locale)} {d.currency}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className={cn('badge', DONATION_BADGE[d.status])}>{t(`funds.donations.statuses.${d.status}`) || d.status}</span>
+                      {/* Server always enforces this (createdByUserId != actor) — hiding for
+                          the recorder's own submission avoids a button that would just 403. */}
+                      {d.source === 'fund_donation' && d.status === 'pending' && user?.id !== d.createdByUserId && (
+                        <>
+                          <button className="btn-secondary btn-sm" onClick={() => mutate(() => fundsApi.confirmDonation(d.id), t('funds.toast.donationConfirmed'))}>
+                            {t('funds.donations.confirm')}
+                          </button>
+                          <button className="btn-secondary btn-sm" onClick={() => mutate(() => fundsApi.rejectDonation(d.id), t('funds.toast.donationRejected'))}>
+                            {t('funds.donations.reject')}
+                          </button>
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500">
+                    <span>{t('funds.donations.method')}: {t(`funds.donations.methods.${d.paymentMethod}`) || d.paymentMethod}</span>
+                    <span>{t('funds.donations.date')}: {new Date(d.donatedAt).toLocaleDateString(locale)}</span>
+                    {d.referenceNumber && <span>{t('funds.donations.reference')}: {d.referenceNumber}</span>}
+                    {d.donorName && <span>{t('funds.donations.donor')}: {d.donorName}</span>}
+                    {d.project && <span>{t('funds.donations.viaProject')}: {d.project.name}</span>}
+                  </div>
                 </div>
               ))}
               {(donations ?? []).length === 0 && <p className="text-xs text-gray-400">{t('funds.donations.empty')}</p>}
@@ -367,7 +436,7 @@ export default function FundsPage() {
             {/* Propose allocation */}
             <div className="space-y-2">
               <div className="text-xs font-semibold text-gray-500 uppercase">{t('funds.propose.heading')}</div>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-5 gap-2">
                 <ProjectPicker
                   organizationId={detail.managingOrganizationId ?? undefined}
                   value={proposal.projectId}
@@ -375,14 +444,25 @@ export default function FundsPage() {
                 />
                 <input className="input" placeholder={t('funds.propose.amountPlaceholder')} value={proposal.amount} onChange={(e) => setProposal({ ...proposal, amount: e.target.value })} />
                 <input className="input" placeholder={t('funds.propose.notePlaceholder')} value={proposal.note} onChange={(e) => setProposal({ ...proposal, note: e.target.value })} />
+                <select
+                  className="input"
+                  value={proposal.stage}
+                  onChange={(e) => setProposal({ ...proposal, stage: e.target.value as ExecutionStage | '' })}
+                  aria-label={t('expenses.createModal.stageLabel')}
+                >
+                  <option value="">{t('expenses.createModal.stageLabel')}</option>
+                  {(['planning', 'procurement', 'execution', 'inspection', 'completion'] as ExecutionStage[]).map((s) => (
+                    <option key={s} value={s}>{t(`expenses.stages.${s}`)}</option>
+                  ))}
+                </select>
                 <button
                   className="btn-primary btn-sm gap-1"
                   disabled={!proposal.projectId || !isPositiveNumber(proposal.amount)}
                   onClick={() =>
                     mutate(
-                      () => fundsApi.propose(selectedId, { projectId: Number(proposal.projectId), amount: Number(proposal.amount), note: proposal.note || undefined }),
+                      () => fundsApi.propose(selectedId, { projectId: Number(proposal.projectId), amount: Number(proposal.amount), note: proposal.note || undefined, stage: proposal.stage || undefined }),
                       t('funds.toast.allocationProposed'),
-                    ).then(() => setProposal({ projectId: '', amount: '', note: '' }))
+                    ).then(() => setProposal({ projectId: '', amount: '', note: '', stage: '' }))
                   }
                 >
                   <Send className="w-3 h-3" /> {t('funds.propose.submit')}

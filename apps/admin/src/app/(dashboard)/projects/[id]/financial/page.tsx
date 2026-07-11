@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { financialApi } from '@/lib/api';
+import { financialApi, expensesApi, projectsApi, type ExecutionStage } from '@/lib/api';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/contexts/auth-context';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -25,6 +25,7 @@ const TX_TYPE_COLORS: Record<string, string> = {
 };
 
 function Modal({ title, onClose, onSave, saving, children }: any) {
+  const { t } = useLanguage();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md mx-4">
@@ -34,9 +35,9 @@ function Modal({ title, onClose, onSave, saving, children }: any) {
         </div>
         <div className="px-6 py-4 space-y-4">{children}</div>
         <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">Cancel</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">{t('common.cancel')}</button>
           <button onClick={onSave} disabled={saving} className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2">
-            {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save
+            {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />} {t('common.save')}
           </button>
         </div>
       </div>
@@ -80,6 +81,9 @@ export default function FinancialPage() {
   const [budgets, setBudgets] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [stageSummary, setStageSummary] = useState<{ stage: string; allocated: number; spent: number }[]>([]);
+  const [currentStage, setCurrentStage] = useState<ExecutionStage | ''>('');
+  const [savingStage, setSavingStage] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [modal, setModal] = useState<null | 'budget' | 'expense' | 'transaction' | 'expense-status'>(null);
@@ -93,16 +97,23 @@ export default function FinancialPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [sm, bg, ex, tx] = await Promise.all([
+      const [sm, bg, ex, tx, stg, proj] = await Promise.all([
         financialApi.getSummary(projectId),
         financialApi.listBudgets(projectId),
         financialApi.listExpenses(projectId),
         financialApi.listTransactions(projectId),
+        // W9-stabilization — Funding Platform Audit §3: spending by execution
+        // stage, from the ledger-backed Expense/FundAllocation tagging (a
+        // different module than the legacy financialApi calls above).
+        expensesApi.stageSummary(projectId).catch(() => []),
+        projectsApi.get(projectId).catch(() => null),
       ]);
       setSummary(sm);
       setBudgets(bg || []);
       setExpenses(ex || []);
       setTransactions(tx || []);
+      setStageSummary(stg || []);
+      setCurrentStage((proj?.currentStage as ExecutionStage) ?? '');
     } catch { /* ignore */ } finally {
       setLoading(false);
     }
@@ -197,6 +208,56 @@ export default function FinancialPage() {
             </div>
           )}
 
+          {/* Current execution stage (Funding Platform Audit §3) */}
+          {tab === 'summary' && canFinancial && (
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3">
+              <span className="text-sm text-gray-500 dark:text-gray-400">{t('expenses.stages.label')}</span>
+              <select
+                className="input"
+                value={currentStage}
+                disabled={savingStage}
+                onChange={async (e) => {
+                  const next = e.target.value as ExecutionStage | '';
+                  setCurrentStage(next);
+                  setSavingStage(true);
+                  try { await projectsApi.update(projectId, { currentStage: next || null }); } finally { setSavingStage(false); }
+                }}
+              >
+                <option value="">{t('common.none')}</option>
+                {(['planning', 'procurement', 'execution', 'inspection', 'completion'] as ExecutionStage[]).map((s) => (
+                  <option key={s} value={s}>{t(`expenses.stages.${s}`)}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Spending by execution stage (Funding Platform Audit §3) */}
+          {tab === 'summary' && stageSummary.length > 0 && (
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
+                {t('expenses.stages.label')}
+              </div>
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-800">
+                  <tr>
+                    {[t('expenses.stages.label'), t('financial.approvedAmount'), t('financial.actualSpent')].map((h, i) => (
+                      <th key={i} className="text-start py-2 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {stageSummary.map((row) => (
+                    <tr key={row.stage} className="border-t border-gray-100 dark:border-gray-800">
+                      <td className="py-2 px-4 text-sm">{row.stage === 'untagged' ? t('common.none') : t(`expenses.stages.${row.stage}`)}</td>
+                      <td className="py-2 px-4 text-sm">{formatCurrency(row.allocated, undefined, locale)}</td>
+                      <td className="py-2 px-4 text-sm">{formatCurrency(row.spent, undefined, locale)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
           {/* Budgets */}
           {tab === 'budgets' && (
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -224,7 +285,7 @@ export default function FinancialPage() {
                               <button onClick={() => { setEditing(b); setForm({ estimatedAmount: Number(b.estimatedAmount), approvedAmount: Number(b.approvedAmount) }); setModal('budget'); }} className="p-1.5 text-gray-500 hover:bg-gray-100 rounded">
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
-                              <button onClick={async () => { if (confirm('Delete?')) { await financialApi.deleteBudget(projectId, b.id); load(); } }} className="p-1.5 text-red-400 hover:bg-red-50 rounded">
+                              <button onClick={async () => { if (confirm(t('common.confirmDeleteGeneric'))) { await financialApi.deleteBudget(projectId, b.id); load(); } }} className="p-1.5 text-red-400 hover:bg-red-50 rounded">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
@@ -352,7 +413,7 @@ export default function FinancialPage() {
           )}
           <Field label={t('financial.budget')}>
             <select value={form.budgetId || ''} onChange={(e) => setForm({ ...form, budgetId: e.target.value ? Number(e.target.value) : undefined })} className={INPUT}>
-              <option value="">None</option>
+              <option value="">{t('common.none')}</option>
               {budgets.map((b) => <option key={b.id} value={b.id}>{b.block?.translations?.[0]?.name || `Budget #${b.id}`}</option>)}
             </select>
           </Field>

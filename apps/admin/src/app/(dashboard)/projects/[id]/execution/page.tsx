@@ -90,6 +90,7 @@ function StepRow({ step, onEdit, onDelete, onProgressUpdate, depth = 0 }: any) {
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 function Modal({ title, onClose, onSave, saving, children }: any) {
+  const { t } = useLanguage();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md mx-4">
@@ -100,11 +101,11 @@ function Modal({ title, onClose, onSave, saving, children }: any) {
         <div className="px-6 py-4 space-y-4">{children}</div>
         <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
           <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-            Cancel
+            {t('common.cancel')}
           </button>
           <button onClick={onSave} disabled={saving} className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2">
             {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            Save
+            {t('common.save')}
           </button>
         </div>
       </div>
@@ -215,7 +216,7 @@ export default function ExecutionPage() {
   };
 
   const deleteItem = async (type: 'step' | 'phase' | 'task', id: number) => {
-    if (!confirm('Are you sure?')) return;
+    if (!confirm(t('common.confirmAction'))) return;
     try {
       if (type === 'step') await executionApi.deleteStep(projectId, id);
       else if (type === 'phase') await executionApi.deletePhase(projectId, id);
@@ -417,7 +418,7 @@ export default function ExecutionPage() {
           </Field>
           <Field label={t('execution.parentStep')}>
             <select value={form.parentId || ''} onChange={(e) => setForm({ ...form, parentId: e.target.value ? Number(e.target.value) : undefined })} className={SELECT}>
-              <option value="">None</option>
+              <option value="">{t('common.none')}</option>
               {steps.map((s) => <option key={s.id} value={s.id}>{s.block?.translations?.[0]?.name || `Step #${s.id}`}</option>)}
             </select>
           </Field>
@@ -455,7 +456,7 @@ export default function ExecutionPage() {
           </Field>
           <Field label={t('execution.phase')}>
             <select value={form.phaseId || ''} onChange={(e) => setForm({ ...form, phaseId: e.target.value ? Number(e.target.value) : undefined })} className={SELECT}>
-              <option value="">None</option>
+              <option value="">{t('common.none')}</option>
               {phases.map((p) => <option key={p.id} value={p.id}>{p.block?.translations?.[0]?.name || `Phase #${p.id}`}</option>)}
             </select>
           </Field>

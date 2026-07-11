@@ -157,4 +157,50 @@ export class FundHierarchyService {
     const account = await this.prisma.account.findFirst({ where: { ownerType: 'fund', ownerId: fundId } });
     return account ? this.treasury.balance(account.id) : 0;
   }
+
+  /**
+   * W9 — read-only "what would fund this project" preview for the project
+   * creation flow (Step 2 of the spec's project-creation workflow: "System
+   * suggests available funds"). Never creates anything — the master/org
+   * funds are still lazily created on first use by `create()` (project
+   * creation, via ensureOrganizationFund) or an explicit Super Admin action,
+   * never by a read. `otherFunds` surfaces council/donor funds already
+   * scoped to this sector (or an ancestor) as additional, optional sources —
+   * the spec's "Council Funds" / "Donor Funds" as alternative funding.
+   */
+  async suggestedFunds(categoryId: number, organizationId?: number) {
+    const category = await this.prisma.projectCategoryNode.findUnique({ where: { id: categoryId } });
+    if (!category) throw new NotFoundException(`Category #${categoryId} not found`);
+
+    const ancestorIds: number[] = [categoryId];
+    let current = category;
+    while (current.parentId != null) {
+      const parent = await this.prisma.projectCategoryNode.findUnique({ where: { id: current.parentId } });
+      if (!parent) break;
+      ancestorIds.push(parent.id);
+      current = parent;
+    }
+
+    const [masterFund, organizationFund, otherFunds] = await Promise.all([
+      this.prisma.fund.findFirst({ where: { type: 'master', categoryId, deletedAt: null, status: 'active' } }),
+      organizationId != null
+        ? this.prisma.fund.findFirst({
+            where: { type: 'organization', categoryId, managingOrganizationId: organizationId, deletedAt: null, status: 'active' },
+          })
+        : Promise.resolve(null),
+      this.prisma.fund.findMany({
+        where: { type: { in: ['council', 'donor'] }, categoryId: { in: ancestorIds }, deletedAt: null, status: 'active' },
+        select: { id: true, name: true, type: true, categoryId: true },
+      }),
+    ]);
+
+    return {
+      category: { id: category.id, key: category.key, name: category.name },
+      masterFund: masterFund ? { id: masterFund.id, name: masterFund.name, type: masterFund.type } : null,
+      organizationFund: organizationFund
+        ? { id: organizationFund.id, name: organizationFund.name, type: organizationFund.type }
+        : null,
+      otherFunds,
+    };
+  }
 }

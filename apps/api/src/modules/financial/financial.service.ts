@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
@@ -10,7 +10,7 @@ import {
   CreateExpenseDto, UpdateExpenseDto, UpdateExpenseStatusDto,
   CreateTransactionDto,
 } from './dto/financial.dto';
-import { ExpenseStatus } from '@prisma/client';
+import { AdminRole, ExpenseStatus } from '@prisma/client';
 
 @Injectable()
 export class FinancialService {
@@ -34,6 +34,21 @@ export class FinancialService {
     if (!block) throw new NotFoundException(`Block #${blockId} not found`);
   }
 
+  /**
+   * BUG-5 fix: donations.service.updateStatus already restricts financial
+   * officers to their assigned project; this module had no equivalent, so any
+   * financial officer could create/update budgets, decide expenses, or post
+   * manual transactions against a project they aren't assigned to.
+   * Administrators are unrestricted (matches the donations.service check).
+   */
+  private async assertFinancialOfficerAssigned(projectId: number, adminId: number, adminRole: string) {
+    if (adminRole !== AdminRole.financial_officer) return;
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (project?.financialOfficerId !== adminId) {
+      throw new ForbiddenException('You are not assigned to this project');
+    }
+  }
+
   // ─── Budgets ──────────────────────────────────────────────────────────────
 
   async findBudgets(projectId: number) {
@@ -49,8 +64,9 @@ export class FinancialService {
   }
 
   // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
-  async createBudget(projectId: number, dto: CreateBudgetDto) {
+  async createBudget(projectId: number, dto: CreateBudgetDto, adminId: number, adminRole: string) {
     const projectBlockId = await this.getProjectBlockId(projectId);
+    await this.assertFinancialOfficerAssigned(projectId, adminId, adminRole);
     await this.assertBlockExists(dto.blockId);
 
     return this.prisma.projectBudget.create({
@@ -66,8 +82,9 @@ export class FinancialService {
   }
 
   // eslint-disable-next-line require-actor-context -- legacy (pre-W0-E2): thread ActorContext when this method is next touched
-  async updateBudget(projectId: number, budgetId: number, dto: UpdateBudgetDto) {
+  async updateBudget(projectId: number, budgetId: number, dto: UpdateBudgetDto, adminId: number, adminRole: string) {
     const projectBlockId = await this.getProjectBlockId(projectId);
+    await this.assertFinancialOfficerAssigned(projectId, adminId, adminRole);
     const budget = await this.prisma.projectBudget.findFirst({ where: { id: budgetId, projectRefId: projectId } });
     if (!budget) throw new NotFoundException(`Budget #${budgetId} not found`);
 
@@ -156,8 +173,11 @@ export class FinancialService {
     projectId: number,
     expenseId: number,
     dto: UpdateExpenseStatusDto,
+    adminId: number,
+    adminRole: string,
   ) {
     const projectBlockId = await this.getProjectBlockId(projectId);
+    await this.assertFinancialOfficerAssigned(projectId, adminId, adminRole);
     const expense = await this.prisma.projectExpense.findFirst({ where: { id: expenseId, projectRefId: projectId } });
     if (!expense) throw new NotFoundException(`Expense #${expenseId} not found`);
     if (expense.status !== ExpenseStatus.pending) throw new BadRequestException('Only pending expenses can be approved/rejected');
@@ -242,8 +262,9 @@ export class FinancialService {
 
   /** W5: manual journal entries post through Treasury (ledger + legacy dual-write). */
   // eslint-disable-next-line require-actor-context -- actor resolved from ALS (currentOrSystem); endpoint signature kept for contract parity
-  async createTransaction(projectId: number, dto: CreateTransactionDto) {
+  async createTransaction(projectId: number, dto: CreateTransactionDto, adminId: number, adminRole: string) {
     const projectBlockId = await this.getProjectBlockId(projectId);
+    await this.assertFinancialOfficerAssigned(projectId, adminId, adminRole);
     const actor = this.actorContext.currentOrSystem();
     const [projectAccount, cash, external] = await Promise.all([
       this.treasury.projectAccount(projectId),
@@ -278,9 +299,52 @@ export class FinancialService {
   }
 
   async getSummary(projectId: number) {
-    const projectBlockId = await this.getProjectBlockId(projectId);
+    await this.getProjectBlockId(projectId); // tenancy visibility + not-found check (W2-E3-S1)
 
-    const [income, expense, budgets] = await Promise.all([
+    const [{ totalIncome, totalExpense }, budgets] = await Promise.all([
+      this.projectMoneyTotals(projectId),
+      this.prisma.projectBudget.aggregate({
+        where: { projectRefId: projectId },
+        _sum: { estimatedAmount: true, approvedAmount: true, actualAmount: true },
+      }),
+    ]);
+
+    return {
+      totalIncome,
+      totalExpense,
+      balance: totalIncome - totalExpense,
+      estimatedBudget: Number(budgets._sum.estimatedAmount ?? 0),
+      approvedBudget: Number(budgets._sum.approvedAmount ?? 0),
+      actualSpent: Number(budgets._sum.actualAmount ?? 0),
+    };
+  }
+
+  /**
+   * W9-stabilization: getSummary() unconditionally read the frozen
+   * `ProjectTransaction` dual-write mirror while its sibling findTransactions()
+   * (above) already branches on TREASURY_LEDGER_READS to read the real ledger —
+   * same file, same money, two different answers once the flag flips on. Same
+   * gate, same account lookup, applied here so both methods agree.
+   */
+  private async projectMoneyTotals(projectId: number): Promise<{ totalIncome: number; totalExpense: number }> {
+    if (process.env.TREASURY_LEDGER_READS === 'true') {
+      const account = await this.prisma.account.findFirst({
+        where: { ownerType: 'project', ownerId: projectId },
+      });
+      if (account) {
+        const grouped = await this.prisma.ledgerEntry.groupBy({
+          by: ['direction'],
+          where: { accountId: account.id, transaction: { status: 'posted' } },
+          _sum: { amount: true },
+        });
+        return {
+          totalIncome: Number(grouped.find((g) => g.direction === 'credit')?._sum.amount ?? 0),
+          totalExpense: Number(grouped.find((g) => g.direction === 'debit')?._sum.amount ?? 0),
+        };
+      }
+    }
+
+    const [income, expense] = await Promise.all([
       this.prisma.projectTransaction.aggregate({
         where: { projectRefId: projectId, type: { in: ['income', 'adjustment'] } },
         _sum: { amount: true },
@@ -289,21 +353,10 @@ export class FinancialService {
         where: { projectRefId: projectId, type: 'expense' },
         _sum: { amount: true },
       }),
-      this.prisma.projectBudget.aggregate({
-        where: { projectRefId: projectId },
-        _sum: { estimatedAmount: true, approvedAmount: true, actualAmount: true },
-      }),
     ]);
-
-    const totalIncome = Number(income._sum.amount ?? 0);
-    const totalExpense = Number(expense._sum.amount ?? 0);
     return {
-      totalIncome,
-      totalExpense,
-      balance: totalIncome - totalExpense,
-      estimatedBudget: Number(budgets._sum.estimatedAmount ?? 0),
-      approvedBudget: Number(budgets._sum.approvedAmount ?? 0),
-      actualSpent: Number(budgets._sum.actualAmount ?? 0),
+      totalIncome: Number(income._sum.amount ?? 0),
+      totalExpense: Number(expense._sum.amount ?? 0),
     };
   }
 }

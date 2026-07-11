@@ -113,7 +113,7 @@ export function ProjectDonateSidebar({ projectId, locale, studyStatus, isComplet
                 <DonateButton projectId={projectId} locale={locale} />
               )}
               {mode === 'online' && (
-                <OnlineDonateButton projectId={projectId} />
+                <OnlineDonateButton target={{ projectId }} redirectPath={`/projects/${projectId}`} />
               )}
               {mode === null && (
                 <p className="text-sm text-gray-400 text-center">Select a donation method above</p>

@@ -41,7 +41,7 @@ export default async function TransparencyPage({ params: { locale } }: Props) {
   } catch {
     return (
       <div className="min-h-screen bg-gray-50 py-16 text-center text-gray-500">
-        {t('title')} — currently unavailable.
+        {t('title')} — {t('loadError')}
       </div>
     );
   }
@@ -65,11 +65,12 @@ export default async function TransparencyPage({ params: { locale } }: Props) {
         {/* Intake by channel */}
         <section className="card p-6">
           <h2 className="font-bold text-lg mb-4">{t('intakeByChannel')}</h2>
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               [t('qrCash'), intake.qr_cash_donations],
               [t('online'), intake.online_project_donations],
               [`${t('online')} → ${t('funds')}`, intake.online_fund_donations],
+              [t('fundDonations'), intake.fund_donations],
             ].map(([label, channel]: any) => (
               <div key={label} className="p-4 bg-gray-50 rounded-xl text-center">
                 <p className="text-2xl font-extrabold text-primary-600">{formatCurrency(channel.amount, undefined, locale)}</p>

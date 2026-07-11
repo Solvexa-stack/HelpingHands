@@ -91,6 +91,17 @@ describe('Execution & financial lifecycle (W0-E1-S4)', () => {
       'execution',
       { value: 10000 },
     ));
+
+    // BUG-5 fix (backlog/BACKLOG_BUGS.md): financial endpoints now enforce the
+    // same financial-officer project-assignment check donations.service.ts
+    // already applies. Assign the seeded officer used throughout this suite
+    // so its budget/expense/transaction flow stays the "assigned officer,
+    // still green" happy path.
+    const officerUser = await prisma.user.findUnique({ where: { email: 'officer@helpinghands.org' } });
+    await prisma.project.update({
+      where: { id: projectId },
+      data: { financialOfficerId: officerUser!.referenceId },
+    });
   });
 
   afterAll(async () => {
@@ -363,9 +374,7 @@ describe('Execution & financial lifecycle (W0-E1-S4)', () => {
     let budgetId: number;
     let approvedExpenseId: number;
 
-    it('financial officer creates a budget (no project-assignment check — current behavior)', async () => {
-      // NOTE: unlike donations approval, financial endpoints never check
-      // Project.financialOfficerId (BUG-5 in backlog/BACKLOG_BUGS.md).
+    it('financial officer assigned to the project creates a budget', async () => {
       const blockId = await newBlock('budget-1');
       const res = await http()
         .post(`${base()}/financial/budgets`)
@@ -377,6 +386,19 @@ describe('Execution & financial lifecycle (W0-E1-S4)', () => {
       expect(Number(res.body.data.estimatedAmount)).toBe(5000);
       expect(Number(res.body.data.approvedAmount)).toBe(4000);
       expect(Number(res.body.data.actualAmount)).toBe(0);
+    });
+
+    it('BUG-5 fixed: the officer is rejected on a project they are not assigned to', async () => {
+      // A fresh project with no financial officer assigned — the seeded data
+      // already assigns the seeded officer to a project by default, so an
+      // arbitrary "other" project can't be trusted to be actually unassigned.
+      const { projectId: unassignedProjectId } = await createProjectViaApi(app, employee, 'budget-foreign-officer', { value: 1000 });
+      const blockId = await createBlockViaApi(app, employee, 'budget-foreign-officer-block');
+      await http()
+        .post(`/api/v1/projects/${unassignedProjectId}/financial/budgets`)
+        .set('Authorization', officer)
+        .send({ blockId, estimatedAmount: 1000, approvedAmount: 500 })
+        .expect(403);
     });
 
     it('employee submits an expense against the budget (pending)', async () => {

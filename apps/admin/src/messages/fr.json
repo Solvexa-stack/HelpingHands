@@ -20,7 +20,8 @@
     "workflow": "Flux de travail",
     "funds": "Fonds",
     "donors": "Donateurs",
-    "expenses": "Dépenses"
+    "expenses": "Dépenses",
+    "sectors": "Secteurs"
   },
   "execution": {
     "title": "Exécution du projet",
@@ -180,7 +181,10 @@
     "failed": "Échec",
     "confirm": "Confirmer",
     "notAvailable": "N/D",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "none": "Aucun",
+    "confirmDeleteGeneric": "Voulez-vous vraiment supprimer cet élément ?",
+    "confirmAction": "Êtes-vous sûr ?"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -703,7 +707,9 @@
       "launchCeilingNote": "Les nouveaux fonds démarrent avec le plafond de lancement : chaque allocation nécessite une décision du conseil.",
       "typeLabel": "Type de fonds",
       "organizationPlaceholder": "Id de l'organisation gérante (optionnel)",
-      "donorPlaceholder": "Id du donateur (requis pour un fonds de type donateur)"
+      "donorPlaceholder": "Id du donateur (requis pour un fonds de type donateur)",
+      "sectorLabel": "Secteur",
+      "masterFundNote": "Un seul fonds maître par secteur — s'il existe déjà, il sera réutilisé au lieu d'en créer un autre."
     },
     "drawer": {
       "tileBalance": "Solde",
@@ -712,7 +718,10 @@
       "tileDisbursed": "Décaissé",
       "officersHeading": "Responsables",
       "tileDonations": "Dons",
-      "tileSpent": "Dépensé"
+      "tileSpent": "Dépensé",
+      "activeProjectsHeading": "Projets actifs (fonds par défaut)",
+      "spendByProjectHeading": "Dépenses par projet",
+      "projectRef": "Projet n°{id}"
     },
     "officer": {
       "userIdPlaceholder": "ID utilisateur"
@@ -763,6 +772,7 @@
       "donationRejected": "Don rejeté"
     },
     "types": {
+      "master": "Fonds maître",
       "organization": "Organisation",
       "council": "Conseil",
       "donor": "Donateur"
@@ -778,9 +788,32 @@
       "notesPlaceholder": "Notes",
       "submit": "Enregistrer le don",
       "empty": "Aucun don enregistré pour le moment.",
-      "rowSummary": "#{id} · {amount} · {method}",
       "confirm": "Confirmer",
-      "reject": "Rejeter"
+      "reject": "Rejeter",
+      "rowTitle": "Don n°{id}",
+      "method": "Méthode",
+      "date": "Date",
+      "reference": "Référence",
+      "donor": "Donateur",
+      "viaProject": "Via le projet",
+      "statuses": {
+        "pending": "En attente",
+        "approved": "Approuvé",
+        "completed": "Approuvé",
+        "rejected": "Rejeté",
+        "failed": "Échoué",
+        "refunded": "Remboursé"
+      },
+      "methods": {
+        "cash": "Espèces",
+        "bank_transfer": "Virement bancaire",
+        "check": "Chèque",
+        "card": "Carte",
+        "online": "En ligne",
+        "qr_cash": "QR/Espèces",
+        "stripe": "Carte (Stripe)",
+        "paypal": "PayPal"
+      }
     },
     "viewHierarchy": "Voir la hiérarchie",
     "hierarchy": {
@@ -1359,6 +1392,7 @@
       "recipientNamePlaceholder": "Nom du bénéficiaire",
       "recipientTypeLabel": "Type de bénéficiaire",
       "notesPlaceholder": "Notes",
+      "stageLabel": "Étape d'exécution",
       "submit": "Soumettre la dépense"
     },
     "invoice": {
@@ -1372,13 +1406,65 @@
     "actions": {
       "approve": "Approuver",
       "reject": "Rejeter",
-      "viewInvoice": "Voir la facture"
+      "viewInvoice": "Voir la facture",
+      "markPaid": "Marquer comme payé"
+    },
+    "paidOn": "Payé le {date}",
+    "notPaidYet": "Pas encore payé",
+    "stages": {
+      "label": "Étape",
+      "none": "Aucune étape",
+      "planning": "Planification",
+      "procurement": "Approvisionnement",
+      "execution": "Exécution",
+      "inspection": "Inspection",
+      "completion": "Achèvement"
     },
     "toast": {
       "created": "Dépense soumise",
       "approved": "Dépense approuvée — solde du fonds diminué",
       "rejected": "Dépense rejetée",
-      "invoiceUploaded": "Facture téléversée et jointe"
+      "invoiceUploaded": "Facture téléversée et jointe",
+      "markedPaid": "Dépense marquée comme payée"
     }
+  },
+  "sectors": {
+    "title": "Secteurs",
+    "subtitle": "taxonomie dynamique des secteurs — le fonds maître est créé automatiquement pour chaque secteur",
+    "newSector": "Nouveau secteur",
+    "empty": "Aucun secteur pour le moment.",
+    "badges": {
+      "archived": "Archivé"
+    },
+    "actions": {
+      "archive": "Archiver",
+      "activate": "Réactiver"
+    },
+    "createModal": {
+      "title": "Nouveau secteur",
+      "keyPlaceholder": "Clé (ex. tourisme)",
+      "namePlaceholder": "Nom",
+      "nameArPlaceholder": "Nom (arabe)",
+      "nameFrPlaceholder": "Nom (français)",
+      "descriptionPlaceholder": "Description",
+      "parentLabel": "Secteur parent (optionnel)",
+      "parentNone": "— secteur de premier niveau —"
+    },
+    "editModal": {
+      "title": "Modifier le secteur"
+    },
+    "toast": {
+      "created": "Secteur créé",
+      "updated": "Secteur mis à jour",
+      "archived": "Secteur archivé",
+      "activated": "Secteur réactivé"
+    }
+  },
+  "fundPicker": {
+    "label": "Source de financement",
+    "autoOption": "Automatique (fonds de l'organisation pour ce secteur)",
+    "note": "Choisissez un fonds spécifique, ou laissez sur automatique pour utiliser le fonds de l'organisation pour ce secteur — créé automatiquement dès sa première utilisation.",
+    "suggestedOrgFund": "suggéré — fonds de votre organisation",
+    "masterFund": "fonds maître du secteur"
   }
 }

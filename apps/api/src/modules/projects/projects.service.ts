@@ -109,8 +109,29 @@ export class ProjectsService {
       this.prisma.project.count({ where: scopedWhere }),
     ]);
 
+    // W9-stabilization: findAll() never computed collectedAmount, so every
+    // card on the public /projects listing rendered "Collected: 0" — the
+    // per-project detail endpoint (findById) computes it correctly (cash +
+    // online, see comment there); mirror that here for the list.
+    const projectIds = data.map((p) => p.id);
+    const [cashByProject, onlineByProject] = await Promise.all([
+      this.prisma.projectDonation.groupBy({
+        by: ['projectId'],
+        where: { projectId: { in: projectIds }, status: 'approved' },
+        _sum: { amount: true },
+      }),
+      this.prisma.onlineDonation.groupBy({
+        by: ['projectId'],
+        where: { projectId: { in: projectIds }, status: 'completed' },
+        _sum: { amount: true },
+      }),
+    ]);
+    const cashMap = new Map(cashByProject.map((c) => [c.projectId, Number(c._sum.amount ?? 0)]));
+    const onlineMap = new Map(onlineByProject.map((o) => [o.projectId!, Number(o._sum.amount ?? 0)]));
+
     const mapped = data.map(({ study, ...project }) => ({
       ...project,
+      collectedAmount: (cashMap.get(project.id) ?? 0) + (onlineMap.get(project.id) ?? 0),
       studyId: study?.id ?? null,
       studyStatus: study?.status ?? null,
     }));
@@ -148,10 +169,18 @@ export class ProjectsService {
     });
     if (!project) throw new NotFoundException(`Project #${id} not found`);
 
-    const collectedAmount = project.donations.reduce(
-      (sum, d) => sum + Number(d.amount),
-      0,
-    );
+    // W9-stabilization: collectedAmount previously summed QR/cash donations only
+    // (`project.donations`), diverging from the transparency money-trail figure
+    // shown further down the same public page, which also counts online
+    // donations (transparency-read.service.ts projectPublic()). Same two channels,
+    // same total, on one screen.
+    const onlineCollected = await this.prisma.onlineDonation.aggregate({
+      where: { projectId: id, status: 'completed' },
+      _sum: { amount: true },
+    });
+    const collectedAmount =
+      project.donations.reduce((sum, d) => sum + Number(d.amount), 0) +
+      Number(onlineCollected._sum.amount ?? 0);
 
     const { study, ...rest } = project;
     return { ...rest, collectedAmount, studyId: study?.id ?? null, studyStatus: study?.status ?? null };

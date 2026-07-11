@@ -1,11 +1,12 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ExpenseStatus } from '@prisma/client';
 import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { PolicyService } from '../policy/policy.service';
 import { TenancyRepository } from '../policy/tenancy.repository';
 import { TreasuryService } from '../treasury/treasury.service';
-import { CreateExpenseDto, ExpenseQueryDto } from './dto/expense.dto';
+import { CreateExpenseDto, ExpenseQueryDto, MarkExpensePaidDto } from './dto/expense.dto';
 
 const EXPENSE_INCLUDE = {
   fund: { select: { id: true, name: true, type: true } },
@@ -31,6 +32,7 @@ export class ExpensesService {
     private eventBus: EventBusService,
     private tenancy: TenancyRepository,
     private treasury: TreasuryService,
+    private policy: PolicyService,
   ) {}
 
   async create(actor: ActorContext, dto: CreateExpenseDto) {
@@ -62,6 +64,7 @@ export class ExpensesService {
         recipientId: dto.recipientId,
         invoiceId: dto.invoiceId,
         notes: dto.notes,
+        stage: dto.stage,
         createdByUserId: actor.userId!,
       },
       include: EXPENSE_INCLUDE,
@@ -75,6 +78,43 @@ export class ExpensesService {
     });
 
     return expense;
+  }
+
+  /**
+   * Funding Platform Audit §3: "Reports must show spending by phase."
+   * Groups this project's reserved budget (FundAllocation) and actual
+   * spending (approved Expense) by ExecutionStage — the tagging both models
+   * carry (see schema comment). Untagged rows fall under `null`.
+   */
+  async stageSummary(projectId: number) {
+    await this.tenancy.assertProjectVisible(projectId);
+    const [allocations, expenses] = await Promise.all([
+      this.prisma.fundAllocation.findMany({
+        where: { projectId, status: { notIn: ['rejected', 'proposed'] } },
+        select: { stage: true, amount: true },
+      }),
+      this.prisma.expense.findMany({
+        where: { projectId, status: 'approved' },
+        select: { stage: true, amount: true },
+      }),
+    ]);
+
+    const key = (s: string | null) => s ?? 'untagged';
+    const byStage = new Map<string, { allocated: number; spent: number }>();
+    for (const a of allocations) {
+      const k = key(a.stage);
+      const row = byStage.get(k) ?? { allocated: 0, spent: 0 };
+      row.allocated += Number(a.amount);
+      byStage.set(k, row);
+    }
+    for (const e of expenses) {
+      const k = key(e.stage);
+      const row = byStage.get(k) ?? { allocated: 0, spent: 0 };
+      row.spent += Number(e.amount);
+      byStage.set(k, row);
+    }
+
+    return [...byStage.entries()].map(([stage, totals]) => ({ stage, ...totals }));
   }
 
   async findAll(query: ExpenseQueryDto) {
@@ -129,13 +169,41 @@ export class ExpensesService {
     return this.decide(actor, id, ExpenseStatus.rejected);
   }
 
+  /** Council/Board/super_admin — the oversight roles exempt from ordinary submitter-side restrictions. */
+  private async isCouncilOrBoard(actor: ActorContext): Promise<boolean> {
+    if (actor.userId == null) return false;
+    return this.policy.holdsAnyGrant(
+      actor.userId,
+      [{ scope: 'platform', roles: ['board_chair', 'board_member', 'super_admin'] }],
+      {},
+    );
+  }
+
   private async decide(actor: ActorContext, id: number, status: ExpenseStatus) {
     const expense = await this.findById(id);
     if (expense.status !== ExpenseStatus.pending) {
       throw new BadRequestException(`Expense is ${expense.status} — only pending expenses can be approved/rejected`);
     }
 
+    // W9 — segregation of duties: an organization cannot approve its own
+    // expense submission. Platform-scope actors (board_chair/board_member/
+    // super_admin) are exempt — Council/Board oversight is the whole point of
+    // the check, not another thing it should be blocked by.
+    if (expense.createdByUserId === actor.userId && !(await this.isCouncilOrBoard(actor))) {
+      throw new ForbiddenException('You cannot approve or reject your own expense submission');
+    }
+
     if (status === ExpenseStatus.approved) {
+      // Funding Platform Audit §4: expenses without supporting documents
+      // should not be approvable unless explicitly allowed by policy — Board/
+      // Council oversight can sign off without one (e.g. an emergency
+      // disbursement), everyone else must attach an invoice first.
+      if (expense.invoiceId == null && !(await this.isCouncilOrBoard(actor))) {
+        throw new BadRequestException(
+          'This expense has no attached invoice — attach one, or have Board/Council approve without it',
+        );
+      }
+
       // Never let the ledger go negative on the fund's own recorded balance —
       // validated on the backend regardless of what the UI already checked.
       const fundAccount = await this.treasury.fundAccount(expense.fundId);
@@ -164,6 +232,39 @@ export class ExpensesService {
       actor,
       subject: { type: 'expense', id },
       data: { fundId: expense.fundId, projectId: expense.projectId, amount: Number(expense.amount) },
+    });
+
+    return updated;
+  }
+
+  /**
+   * Funding Platform Audit §2/§4: approval and payment are separate steps
+   * (Expense Approval → Payment → Actual Spending). The ledger debit already
+   * posts at approval time (money is reserved/spent from the fund's
+   * perspective then); markPaid records the real-world disbursement date —
+   * "approved" and "paid" can now be reported on independently.
+   */
+  async markPaid(actor: ActorContext, id: number, dto: MarkExpensePaidDto) {
+    const expense = await this.findById(id);
+    if (expense.status !== ExpenseStatus.approved) {
+      throw new BadRequestException('Only approved expenses can be marked paid');
+    }
+    if (expense.paidAt != null) {
+      throw new BadRequestException('This expense is already marked paid');
+    }
+
+    const paidAt = dto.paidAt ? new Date(dto.paidAt) : new Date();
+    const updated = await this.prisma.expense.update({
+      where: { id },
+      data: { paidAt },
+      include: EXPENSE_INCLUDE,
+    });
+
+    this.eventBus.publish({
+      event: 'fund_expense.paid',
+      actor,
+      subject: { type: 'expense', id },
+      data: { fundId: expense.fundId, projectId: expense.projectId, amount: Number(expense.amount), paidAt },
     });
 
     return updated;

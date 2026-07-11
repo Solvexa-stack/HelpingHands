@@ -7,6 +7,12 @@ import { Prisma, PrismaClient } from '@prisma/client';
  *   every admin user        → member of the default org
  *   administrator           → additionally member of the Board org
  *   administrator           → grants: board_chair (platform) + org_admin (default org)
+ *   administrator           → W9: also super_admin (platform) — the legacy
+ *                             `administrator` enum is the only role this
+ *                             backfill maps FROM, so it stays the one account
+ *                             that exercises both governance (board_chair)
+ *                             and system structure (super_admin) authority;
+ *                             see workspaceroadmap/20_WAVE_9_FUND_HIERARCHY_AND_SECTOR_GOVERNANCE.md
  *   employee                → grant: staff (default org)
  *   financial_officer       → grant: org_accountant (default org)
  *   participants            → no grants
@@ -21,6 +27,7 @@ export const ROLE_GRANT_MAPPING: Record<
 > = {
   administrator: [
     { role: 'board_chair', scopeType: 'platform' },
+    { role: 'super_admin', scopeType: 'platform' },
     { role: 'org_admin', scopeType: 'organization' },
   ],
   employee: [{ role: 'staff', scopeType: 'organization' }],

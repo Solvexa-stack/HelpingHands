@@ -211,6 +211,26 @@ describe('W9 — Fund hierarchy', () => {
       const allocationCount = await prisma.fundAllocation.count({ where: { fundId, projectId, note: { contains: `donation #${donation!.id}` } } });
       expect(allocationCount).toBe(1);
     });
+
+    // Bugfix regression (UI data binding pass): a direct project donation
+    // auto-routed through the project's default fund used to be invisible on
+    // GET /funds/:id/donations — that endpoint only ever queried FundDonation,
+    // never the ProjectDonation the auto-allocation actually came from.
+    it('GET /funds/:id/donations surfaces the auto-routed project donation, not just direct FundDonations', async () => {
+      const donation = await prisma.projectDonation.findFirst({ where: { projectId, amount: 750 } });
+      const res = await http().get(`/api/v1/funds/${fundId}/donations`).set('Authorization', admin).expect(200);
+      const entry = res.body.data.find((d: any) => d.source === 'project_donation' && d.id === donation!.id);
+      expect(entry).toBeDefined();
+      expect(Number(entry.amount)).toBe(750);
+      expect(entry.status).toBe('approved');
+      expect(entry.paymentMethod).toBe('qr_cash');
+      expect(entry.project.id).toBe(projectId);
+
+      // and the fund dashboard's "totalDonations" tile counts it too — it
+      // used to silently exclude every auto-routed donation
+      const dashboard = await http().get(`/api/v1/funds/${fundId}/dashboard`).set('Authorization', admin).expect(200);
+      expect(dashboard.body.data.totalDonations).toBeGreaterThanOrEqual(750);
+    });
   });
 
   describe('Backward compatibility — a project with no default fund keeps the original direct posting', () => {

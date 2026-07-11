@@ -363,6 +363,22 @@ describe('W8 — Fund financial extension', () => {
         .send({ fundId: scopedFundId, projectId, amount: 100, category: 'other', description: 'scoped', recipientId })
         .expect(201);
       scopedExpenseId = scopedExpense.body.data.id;
+      // Funding Platform Audit §4: expenses need an attached invoice to be
+      // approvable (unless Board/Council) — this fixture is about fund-scope
+      // segregation, not the invoice policy, so give it a real invoice.
+      const scopedInvoice = await http()
+        .post('/api/v1/invoices')
+        .set('Authorization', admin)
+        .field('invoiceNumber', 'INV-SCOPED-1')
+        .field('invoiceDate', new Date().toISOString())
+        .field('recipientId', String(recipientId))
+        .attach('file', Buffer.from('%PDF-1.4 fake invoice content'), 'INV-SCOPED-1.pdf')
+        .expect(201);
+      await http()
+        .post(`/api/v1/expenses/${scopedExpenseId}/invoice`)
+        .set('Authorization', admin)
+        .send({ invoiceId: scopedInvoice.body.data.id })
+        .expect(201);
       const otherExpense = await http()
         .post('/api/v1/expenses')
         .set('Authorization', admin)

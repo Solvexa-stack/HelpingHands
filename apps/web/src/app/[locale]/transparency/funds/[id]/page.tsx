@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import { Banknote, Download } from 'lucide-react';
+import { Banknote, Download, Heart } from 'lucide-react';
 import { transparencyApi } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
+import { OnlineDonateButton } from '@/components/donations/online-donate-button';
 import type { Metadata } from 'next';
 
 interface Props { params: { locale: string; id: string } }
@@ -81,6 +82,15 @@ export default async function FundTransparencyPage({ params: { locale, id } }: P
             ))}
           </div>
         </div>
+
+        {fund.status === 'active' && (
+          <div className="card p-6">
+            <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <Heart className="w-5 h-5 text-primary-600" /> {t('donateToFund')}
+            </h2>
+            <OnlineDonateButton target={{ fundId: fund.id }} redirectPath={`/transparency/funds/${fund.id}`} />
+          </div>
+        )}
 
         {fund.spendByCategory && (
           <div className="card p-6">

@@ -77,6 +77,14 @@ export class TransparencyController {
     return { ...aggregate, data };
   }
 
+  @Get('sectors/:id')
+  @Header('Cache-Control', 'public, max-age=30')
+  @ApiOperation({ summary: 'Sector report: donations, allocated, spent, remaining balance, active projects (rolled up over the sector and its descendants)' })
+  async sector(@Param('id', ParseIntPipe) id: number) {
+    await this.assertPublished('sector.totals');
+    return this.readService.sectorPublic(id);
+  }
+
   @Get('organizations')
   @Header('Cache-Control', 'public, max-age=30')
   @ApiOperation({ summary: 'Active organizations directory' })

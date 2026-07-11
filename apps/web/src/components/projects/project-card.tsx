@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { getTranslations } from 'next-intl/server';
 import { MapPin, Target, TrendingUp } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { cn, formatCurrency, getTranslation } from '@/lib/utils';
@@ -10,7 +11,8 @@ interface ProjectCardProps {
   className?: string;
 }
 
-export function ProjectCard({ project, locale, className }: ProjectCardProps) {
+export async function ProjectCard({ project, locale, className }: ProjectCardProps) {
+  const t = await getTranslations({ locale, namespace: 'projects' });
   const translation = getTranslation(project.block?.translations || [], locale);
   const coverFile = project.block?.files?.[0];
   const progression = Number(project.progression || 0);
@@ -35,7 +37,7 @@ export function ProjectCard({ project, locale, className }: ProjectCardProps) {
         {/* Status badge */}
         <div className="absolute top-3 end-3">
           <span className={cn('badge text-xs', isCompleted ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700')}>
-            {isCompleted ? 'Completed' : 'Active'}
+            {isCompleted ? t('filters.completed') : t('filters.inProgress')}
           </span>
         </div>
         {/* Category badge */}
@@ -49,7 +51,7 @@ export function ProjectCard({ project, locale, className }: ProjectCardProps) {
       {/* Content */}
       <div className="p-5">
         <h3 className="font-bold text-gray-900 text-lg mb-1 line-clamp-2 group-hover:text-primary-600 transition-colors">
-          {translation?.name || 'Unnamed Project'}
+          {translation?.name || t('projectFallback')}
         </h3>
 
         {translation?.brief && (
@@ -69,15 +71,15 @@ export function ProjectCard({ project, locale, className }: ProjectCardProps) {
 
         <div className="flex justify-between text-sm">
           <div>
-            <p className="text-gray-400 text-xs">Collected</p>
+            <p className="text-gray-400 text-xs">{t('collected')}</p>
             <p className="font-bold text-primary-600">{formatCurrency(project.collectedAmount || 0, undefined, locale)}</p>
           </div>
           <div className="text-end">
-            <p className="text-gray-400 text-xs">Target</p>
+            <p className="text-gray-400 text-xs">{t('target')}</p>
             <p className="font-bold text-gray-700">{formatCurrency(Number(project.value), undefined, locale)}</p>
           </div>
           <div className="text-end">
-            <p className="text-gray-400 text-xs">Progress</p>
+            <p className="text-gray-400 text-xs">{t('progress')}</p>
             <p className="font-bold text-gray-700">{progression.toFixed(1)}%</p>
           </div>
         </div>

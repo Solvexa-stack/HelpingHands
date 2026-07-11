@@ -11,6 +11,7 @@ import {
 } from './dto/financial.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentActor } from '../../common/decorators/current-actor.decorator';
+import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
 import { ActorContext } from '../../events/actor-context';
 
 @ApiTags('Financial')
@@ -34,8 +35,9 @@ export class FinancialController {
   createBudget(
     @Param('projectId', ParseIntPipe) projectId: number,
     @Body() dto: CreateBudgetDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.financialService.createBudget(projectId, dto);
+    return this.financialService.createBudget(projectId, dto, user.referenceId, user.role);
   }
 
   @Patch('budgets/:id')
@@ -45,8 +47,9 @@ export class FinancialController {
     @Param('projectId', ParseIntPipe) projectId: number,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateBudgetDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.financialService.updateBudget(projectId, id, dto);
+    return this.financialService.updateBudget(projectId, id, dto, user.referenceId, user.role);
   }
 
   @Delete('budgets/:id')
@@ -102,8 +105,9 @@ export class FinancialController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateExpenseStatusDto,
     @CurrentActor() actor: ActorContext,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.financialService.updateExpenseStatus(actor, projectId, id, dto);
+    return this.financialService.updateExpenseStatus(actor, projectId, id, dto, user.referenceId, user.role);
   }
 
   @Delete('expenses/:id')
@@ -131,8 +135,9 @@ export class FinancialController {
   createTransaction(
     @Param('projectId', ParseIntPipe) projectId: number,
     @Body() dto: CreateTransactionDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.financialService.createTransaction(projectId, dto);
+    return this.financialService.createTransaction(projectId, dto, user.referenceId, user.role);
   }
 
   @Get('summary')

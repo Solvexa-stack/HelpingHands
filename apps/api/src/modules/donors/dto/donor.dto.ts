@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
 import { PartyType } from '@prisma/client';
 
 export class CreateDonorDto {
@@ -29,6 +29,13 @@ export class CreateDonorDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  // W9-stabilization — Funding Platform Audit §5: link to this person's
+  // logged-in Participant identity, if known, so donor reports can aggregate
+  // across every channel instead of leaving two disconnected identities.
+  @IsOptional()
+  @IsInt()
+  participantId?: number;
 }
 
 export class UpdateDonorDto {
@@ -60,4 +67,8 @@ export class UpdateDonorDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsInt()
+  participantId?: number;
 }

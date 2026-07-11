@@ -269,7 +269,7 @@ export const auditApi = {
 };
 
 // ─── Funds & treasury (W5-E7, W8 fund types/donations) ────────────────────────
-export type FundType = 'organization' | 'council' | 'donor';
+export type FundType = 'master' | 'organization' | 'council' | 'donor';
 
 export interface FundInput {
   name: string;
@@ -277,13 +277,32 @@ export interface FundInput {
   type?: FundType;
   managingOrganizationId?: number;
   donorId?: number;
+  // W9 — required for type=master (Super Admin only); optional for type=organization
+  categoryId?: number;
   policy?: Record<string, unknown>;
+}
+
+/** A single row in the fund's unified donations panel — see FundsService.listDonations. */
+export interface FundDonationEntry {
+  id: number;
+  source: 'fund_donation' | 'online_donation' | 'project_donation';
+  amount: number;
+  currency: string;
+  paymentMethod: string;
+  donatedAt: string;
+  referenceNumber: string | null;
+  donorName: string | null;
+  status: string;
+  project: { id: number; name: string } | null;
 }
 
 export const fundsApi = {
   list: () => api.get('/funds').then((r) => r.data.data),
   // W9 — master funds (mirroring the category taxonomy) → organization funds → projects
   hierarchy: () => api.get('/funds/hierarchy').then((r) => r.data.data),
+  // W9 — "what would fund a project in this sector" preview for the project create/edit fund picker
+  suggested: (categoryId: number, organizationId?: number) =>
+    api.get('/funds/suggested', { params: { categoryId, organizationId } }).then((r) => r.data.data),
   detail: (id: number) => api.get(`/funds/${id}`).then((r) => r.data.data),
   dashboard: (id: number) => api.get(`/funds/${id}/dashboard`).then((r) => r.data.data),
   create: (data: FundInput) => api.post('/funds', data).then((r) => r.data.data),
@@ -293,7 +312,7 @@ export const fundsApi = {
     api.post(`/funds/${id}/officers`, { userId, role }).then((r) => r.data.data),
   removeOfficer: (id: number, userId: number, role: string) =>
     api.delete(`/funds/${id}/officers/${userId}/${role}`),
-  propose: (id: number, data: { projectId: number; amount: number; note?: string }) =>
+  propose: (id: number, data: { projectId: number; amount: number; note?: string; stage?: ExecutionStage }) =>
     api.post(`/funds/${id}/allocations`, data).then((r) => r.data.data),
   approve: (allocationId: number) => api.post(`/funds/allocations/${allocationId}/approve`).then((r) => r.data.data),
   disburse: (allocationId: number, amount: number) =>
@@ -315,7 +334,12 @@ export const fundsApi = {
       notes?: string;
     },
   ) => api.post(`/funds/${id}/donations`, data).then((r) => r.data.data),
-  listDonations: (id: number) => api.get(`/funds/${id}/donations`).then((r) => r.data.data),
+  // Unified list: direct FundDonation/OnlineDonation-to-fund entries, PLUS
+  // donations made straight to a project whose default fund is this one,
+  // auto-routed here (W9) — see FundsService.listDonations. `source`
+  // distinguishes them; only `fund_donation` entries can be confirmed/
+  // rejected here (the others were already decided by their own flow).
+  listDonations: (id: number): Promise<FundDonationEntry[]> => api.get(`/funds/${id}/donations`).then((r) => r.data.data),
   confirmDonation: (donationId: number) =>
     api.post(`/funds/donations/${donationId}/approve`).then((r) => r.data.data),
   rejectDonation: (donationId: number) =>
@@ -377,6 +401,10 @@ export type ExpenseCategory =
   | 'administrative'
   | 'other';
 
+// W9-stabilization — Funding Platform Audit §3: standard civic project
+// execution lifecycle tag (Expense/FundAllocation/Project.currentStage).
+export type ExecutionStage = 'planning' | 'procurement' | 'execution' | 'inspection' | 'completion';
+
 export interface ExpenseInput {
   fundId: number;
   projectId: number;
@@ -386,6 +414,7 @@ export interface ExpenseInput {
   recipientId: number;
   invoiceId?: number;
   notes?: string;
+  stage?: ExecutionStage;
 }
 
 export const expensesApi = {
@@ -397,6 +426,9 @@ export const expensesApi = {
     api.post(`/expenses/${id}/invoice`, { invoiceId }).then((r) => r.data.data),
   approve: (id: number) => api.post(`/expenses/${id}/approve`).then((r) => r.data.data),
   reject: (id: number) => api.post(`/expenses/${id}/reject`).then((r) => r.data.data),
+  markPaid: (id: number, paidAt?: string) => api.post(`/expenses/${id}/mark-paid`, paidAt ? { paidAt } : {}).then((r) => r.data.data),
+  stageSummary: (projectId: number) =>
+    api.get('/expenses/stage-summary', { params: { projectId } }).then((r) => r.data.data as { stage: string; allocated: number; spent: number }[]),
 };
 
 // ─── Workflow engine (W4-E5) ──────────────────────────────────────────────────
@@ -448,8 +480,25 @@ export const organizationsApi = {
 };
 
 // ─── W6 — categories, participations, agreements, reporting, verification ────
+export interface CategoryInput {
+  key: string;
+  name: string;
+  nameAr?: string;
+  nameFr?: string;
+  description?: string;
+  parentId?: number;
+  order?: number;
+}
+
 export const categoriesApi = {
   tree: () => api.get('/categories').then((r) => r.data.data),
+  // W9 — Super Admin sector CRUD; adminTree includes archived (isActive:false) nodes
+  adminTree: () => api.get('/categories/admin-tree').then((r) => r.data.data),
+  create: (data: CategoryInput) => api.post('/categories', data).then((r) => r.data.data),
+  update: (id: number, data: Partial<CategoryInput> & { isActive?: boolean }) =>
+    api.patch(`/categories/${id}`, data).then((r) => r.data.data),
+  archive: (id: number) => api.post(`/categories/${id}/archive`).then((r) => r.data.data),
+  activate: (id: number) => api.post(`/categories/${id}/activate`).then((r) => r.data.data),
 };
 
 export const participationsApi = {

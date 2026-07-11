@@ -11,7 +11,8 @@
     "register": "إنشاء حساب",
     "dashboard": "لوحة التحكم",
     "logout": "تسجيل الخروج",
-    "transparency": "الشفافية"
+    "transparency": "الشفافية",
+    "sectors": "القطاعات"
   },
   "home": {
     "hero": {
@@ -147,6 +148,13 @@
     "summary": "الملخص التنفيذي",
     "results": "نتائج التصويت",
     "noVotes": "لم يتم الإدلاء بأي أصوات بعد.",
+    "pageLabel": "الدراسة",
+    "required": "مطلوب",
+    "noContent": "لا يوجد محتوى بعد.",
+    "attachedFiles": "الملفات المرفقة",
+    "fileFallback": "ملف",
+    "castYourVote": "أدلِ بصوتك",
+    "backToProject": "العودة إلى المشروع",
     "vote": {
       "for": "مع",
       "against": "ضد",
@@ -238,9 +246,12 @@
     "downloadStatement": "تنزيل كشف الحساب (CSV)",
     "qrCash": "تبرعات نقدية (QR)",
     "online": "تبرعات إلكترونية",
+    "fundDonations": "تبرعات يدوية للصناديق",
+    "loadError": "غير متاح حاليًا.",
     "fundAllocations": "مخصصات الصناديق",
     "spend": "الإنفاق",
-    "remaining": "المتبقي في حساب المشروع"
+    "remaining": "المتبقي في حساب المشروع",
+    "donateToFund": "تبرّع لهذا الصندوق"
   },
   "about": {
     "hero": {
@@ -313,5 +324,22 @@
       "notes": "ملاحظات",
       "provider": "مزود الخدمة"
     }
+  },
+  "sectors": {
+    "title": "القطاعات",
+    "subtitle": "تصفّح وجهة التبرعات حسب القطاع — الزراعة، البنية التحتية، التعليم، الصحة، والمزيد",
+    "empty": "لا توجد قطاعات منشورة بعد.",
+    "loadError": "غير متاح حاليًا.",
+    "subsectorsCount": "{count, plural, one {# قطاع فرعي} other {# قطاعات فرعية}}",
+    "asOf": "اعتباراً من",
+    "totalDonations": "إجمالي التبرعات",
+    "totalAllocated": "المخصص",
+    "totalSpent": "المُنفق",
+    "remainingBalance": "الرصيد المتبقي",
+    "subsectors": "القطاعات الفرعية",
+    "funds": "الصناديق",
+    "activeProjects": "المشاريع النشطة",
+    "browseProjects": "تصفح جميع مشاريع هذا القطاع ←",
+    "noActiveProjects": "لا توجد مشاريع نشطة في هذا القطاع حالياً."
   }
 }

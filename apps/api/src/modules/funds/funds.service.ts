@@ -9,9 +9,11 @@ import { DonationStatus, FundStatus, FundType, Prisma } from '@prisma/client';
 import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { PolicyService } from '../policy/policy.service';
 import { TreasuryService } from '../treasury/treasury.service';
 import { WorkflowService } from '../workflow/workflow.service';
 import { ReportingObligationsService } from '../org-reporting/reporting-obligations.service';
+import { FundHierarchyService } from '../fund-hierarchy/fund-hierarchy.service';
 import { CreateFundDonationDto, CreateFundDto, ProposeAllocationDto, UpdateFundDto } from './dto/fund.dto';
 
 export const FUND_ROLES = ['fund_director', 'fund_deputy', 'fund_secretary', 'fund_accountant', 'fund_controller'];
@@ -33,12 +35,43 @@ export class FundsService {
     private treasury: TreasuryService,
     private workflow: WorkflowService,
     private reportingObligations: ReportingObligationsService,
+    private fundHierarchy: FundHierarchyService,
+    private policy: PolicyService,
   ) {}
 
   // ─── Fund CRUD (Board) ───────────────────────────────────────────────────────
 
+  /**
+   * W9 — master-fund creation is system structure, not day-to-day fund
+   * management: even though this whole route is already gated to
+   * `fund.manage` (board_chair) at the guard level, creating a `master` fund
+   * additionally requires `platform:super_admin`, and always goes through
+   * FundHierarchyService.ensureMasterFund — idempotent (returns the existing
+   * one rather than creating a stray duplicate) and keeps the one-master-
+   * fund-per-sector invariant intact. An organization fund with a categoryId
+   * similarly delegates to ensureOrganizationFund, for the same reason.
+   * Donor/council funds and category-less organization funds (the shape
+   * every existing W5/W8 test creates) are untouched — raw create, as before.
+   */
   async create(actor: ActorContext, dto: CreateFundDto) {
     await this.assertOwnerConsistent(dto.type, dto.managingOrganizationId, dto.donorId);
+
+    if (dto.type === FundType.master) {
+      if (dto.categoryId == null) {
+        throw new BadRequestException('A master fund must reference a categoryId (its sector)');
+      }
+      if (!(await this.actorIsSuperAdmin(actor))) {
+        throw new ForbiddenException('Only Super Admin can create a master fund');
+      }
+      return this.fundHierarchy.ensureMasterFund(actor, dto.categoryId);
+    }
+    if (dto.type === FundType.organization && dto.categoryId != null) {
+      if (dto.managingOrganizationId == null) {
+        throw new BadRequestException('An organization fund with a categoryId must also reference managingOrganizationId');
+      }
+      return this.fundHierarchy.ensureOrganizationFund(actor, dto.managingOrganizationId, dto.categoryId);
+    }
+
     const fund = await this.prisma.fund.create({
       data: {
         name: dto.name,
@@ -58,6 +91,11 @@ export class FundsService {
       data: { name: fund.name, type: fund.type },
     });
     return fund;
+  }
+
+  private async actorIsSuperAdmin(actor: ActorContext): Promise<boolean> {
+    if (actor.userId == null) return false;
+    return this.policy.holdsAnyGrant(actor.userId, [{ scope: 'platform', roles: ['super_admin'] }], {});
   }
 
   async list() {
@@ -260,6 +298,7 @@ export class FundsService {
         amount: new Prisma.Decimal(dto.amount),
         note: dto.note,
         fundingAgreementId: dto.fundingAgreementId,
+        stage: dto.stage,
         createdByUserId: actor.userId,
       },
     });
@@ -426,13 +465,25 @@ export class FundsService {
     // fund (manual + online, approved/completed only), and total spent via
     // Expense (approved only). `intake` above already reflects both in the
     // ledger balance; these are named breakdowns for the report UI.
-    const [fundDonationsSum, onlineDonationsSum, expensesSum] = await Promise.all([
+    //
+    // Bugfix (UI data binding pass): this sum previously missed donations
+    // made directly to a PROJECT whose default fund is this one, auto-routed
+    // here via MoneyEventsSubscriber.routeProjectIncomeThroughDefaultFund
+    // (W9). Every such routing creates an `isAutoAllocated` FundAllocation
+    // whose `amount` exactly equals the originating donation (see that
+    // method) — summing those closes the gap without re-deriving anything
+    // the ledger doesn't already know, and without touching the ledger or
+    // balance calculations themselves.
+    const [fundDonationsSum, onlineDonationsSum, autoAllocatedDonationsSum, expensesSum] = await Promise.all([
       this.prisma.fundDonation.aggregate({ where: { fundId, status: 'approved' }, _sum: { amount: true } }),
       this.prisma.onlineDonation.aggregate({ where: { fundId, status: 'completed' }, _sum: { amount: true } }),
+      this.prisma.fundAllocation.aggregate({ where: { fundId, isAutoAllocated: true }, _sum: { amount: true } }),
       this.prisma.expense.aggregate({ where: { fundId, status: 'approved' }, _sum: { amount: true } }),
     ]);
     const totalDonations =
-      Number(fundDonationsSum._sum.amount ?? 0) + Number(onlineDonationsSum._sum.amount ?? 0);
+      Number(fundDonationsSum._sum.amount ?? 0) +
+      Number(onlineDonationsSum._sum.amount ?? 0) +
+      Number(autoAllocatedDonationsSum._sum.amount ?? 0);
     const totalSpent = Number(expensesSum._sum.amount ?? 0);
 
     // W9 — projects this fund is the default fund for (Step 7: "Organization
@@ -501,15 +552,131 @@ export class FundsService {
     return donation;
   }
 
+  /**
+   * Bugfix (UI data binding pass) — the fund's donations panel previously
+   * showed only `FundDonation` (Donor/participant → fund, direct). Two other
+   * real, already-ledgered sources were invisible here:
+   *   B. `OnlineDonation` directed straight at this fund (`fundId` set, no
+   *      project) — Wave 5, existed but was never queried by this method.
+   *   C. A donation made straight to a PROJECT whose default fund is this
+   *      one, auto-routed here (W9, MoneyEventsSubscriber.
+   *      routeProjectIncomeThroughDefaultFund): `ProjectDonation` (QR/cash)
+   *      or `OnlineDonation` (online, `projectId` set). Every such routing
+   *      creates an `isAutoAllocated` FundAllocation whose `note` records
+   *      exactly which donation funded it — the only reliable link back,
+   *      since that's money-movement metadata, not a new relation (no
+   *      schema change). Reading it is how the two donations in the bug
+   *      report (`Auto-allocated from donation #4/#5`) get found.
+   * Read-only aggregation across three tables that already contain this
+   * data — no new rows, no ledger/balance changes.
+   */
   async listDonations(fundId: number) {
-    return this.prisma.fundDonation.findMany({
-      where: { fundId },
-      orderBy: { id: 'desc' },
-      include: {
-        donor: { select: { id: true, name: true, type: true } },
-        participant: { select: { id: true, firstName: true, lastName: true } },
-      },
-    });
+    const [fundDonations, directOnlineDonations, autoAllocations] = await Promise.all([
+      this.prisma.fundDonation.findMany({
+        where: { fundId },
+        orderBy: { id: 'desc' },
+        include: {
+          donor: { select: { id: true, name: true, type: true } },
+          participant: { select: { id: true, firstName: true, lastName: true } },
+        },
+      }),
+      this.prisma.onlineDonation.findMany({
+        where: { fundId },
+        orderBy: { id: 'desc' },
+        include: { participant: { select: { id: true, firstName: true, lastName: true } } },
+      }),
+      this.prisma.fundAllocation.findMany({
+        where: { fundId, isAutoAllocated: true },
+        select: { note: true },
+      }),
+    ]);
+
+    const NOTE_RE = /Auto-allocated from (donation|online_donation) #(\d+)/;
+    const projectDonationIds: number[] = [];
+    const routedOnlineDonationIds: number[] = [];
+    for (const { note } of autoAllocations) {
+      const match = note?.match(NOTE_RE);
+      if (!match) continue;
+      (match[1] === 'donation' ? projectDonationIds : routedOnlineDonationIds).push(Number(match[2]));
+    }
+
+    const [projectDonations, routedOnlineDonations] = await Promise.all([
+      projectDonationIds.length
+        ? this.prisma.projectDonation.findMany({
+            where: { id: { in: projectDonationIds } },
+            include: {
+              participant: { select: { id: true, firstName: true, lastName: true } },
+              project: { select: { id: true, block: { select: { translations: { take: 1 } } } } },
+            },
+          })
+        : [],
+      routedOnlineDonationIds.length
+        ? this.prisma.onlineDonation.findMany({
+            where: { id: { in: routedOnlineDonationIds } },
+            include: { participant: { select: { id: true, firstName: true, lastName: true } } },
+          })
+        : [],
+    ]);
+
+    const donorName = (p: { firstName: string; lastName: string } | null) =>
+      p ? `${p.firstName} ${p.lastName}` : null;
+
+    const unified = [
+      ...fundDonations.map((d) => ({
+        id: d.id,
+        source: 'fund_donation' as const,
+        amount: d.amount,
+        currency: d.currency,
+        paymentMethod: d.paymentMethod as string,
+        donatedAt: d.donatedAt,
+        referenceNumber: d.referenceNumber,
+        donorName: d.donor?.name ?? donorName(d.participant),
+        status: d.status as string,
+        project: null as { id: number; name: string } | null,
+        // W9-stabilization: lets the admin UI hide confirm/reject for the
+        // recorder's own submission instead of showing a button that 403s
+        // (decideDonation enforces the real check server-side regardless).
+        createdByUserId: d.createdByUserId as number | null,
+      })),
+      ...directOnlineDonations.map((d) => ({
+        id: d.id,
+        source: 'online_donation' as const,
+        amount: d.amount,
+        currency: d.currency,
+        paymentMethod: d.provider as string,
+        donatedAt: d.paidAt ?? d.createdAt,
+        referenceNumber: d.providerPaymentId ?? d.providerSessionId,
+        donorName: donorName(d.participant),
+        status: d.status as string,
+        project: null,
+      })),
+      ...projectDonations.map((d) => ({
+        id: d.id,
+        source: 'project_donation' as const,
+        amount: d.amount,
+        currency: 'USD',
+        paymentMethod: 'qr_cash',
+        donatedAt: d.approvedAt ?? d.createdAt,
+        referenceNumber: d.qrToken,
+        donorName: donorName(d.participant),
+        status: d.status as string,
+        project: { id: d.project.id, name: d.project.block.translations[0]?.name ?? `Project #${d.project.id}` },
+      })),
+      ...routedOnlineDonations.map((d) => ({
+        id: d.id,
+        source: 'online_donation' as const,
+        amount: d.amount,
+        currency: d.currency,
+        paymentMethod: d.provider as string,
+        donatedAt: d.paidAt ?? d.createdAt,
+        referenceNumber: d.providerPaymentId ?? d.providerSessionId,
+        donorName: donorName(d.participant),
+        status: d.status as string,
+        project: d.projectId ? { id: d.projectId, name: `Project #${d.projectId}` } : null,
+      })),
+    ];
+
+    return unified.sort((a, b) => new Date(b.donatedAt).getTime() - new Date(a.donatedAt).getTime());
   }
 
   /** Confirming a donation is the trigger: Treasury posts the ledger credit and the fund's available balance increases. */
@@ -526,6 +693,18 @@ export class FundsService {
     if (!donation) throw new NotFoundException(`Fund donation #${donationId} not found`);
     if (donation.status !== 'pending') {
       throw new BadRequestException(`Donation is ${donation.status} — only pending donations can be decided`);
+    }
+
+    // W9 — same segregation-of-duties rule as ExpensesService.decide(): the
+    // person who recorded a donation cannot also be the one who confirms it,
+    // unless they hold Council/Board (or Super Admin) oversight authority.
+    if (donation.createdByUserId === actor.userId) {
+      const isCouncilOrAdmin = actor.userId != null
+        ? await this.policy.holdsAnyGrant(actor.userId, [{ scope: 'platform', roles: ['board_chair', 'board_member', 'super_admin'] }], {})
+        : false;
+      if (!isCouncilOrAdmin) {
+        throw new ForbiddenException('You cannot confirm or reject a donation you recorded yourself');
+      }
     }
     const updated = await this.prisma.fundDonation.update({
       where: { id: donationId },

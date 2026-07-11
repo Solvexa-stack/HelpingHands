@@ -25,6 +25,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 export default async function StudyPage({ params: { locale, id } }: Props) {
   const t = await getTranslations({ locale, namespace: 'study' });
+  const tNav = await getTranslations({ locale, namespace: 'nav' });
 
   let project: any;
   let study: any;
@@ -47,13 +48,13 @@ export default async function StudyPage({ params: { locale, id } }: Props) {
       <div className="container max-w-4xl space-y-8">
         {/* Breadcrumb */}
         <nav className="text-sm text-gray-500 flex items-center gap-1.5">
-          <Link href={`/${locale}`} className="hover:text-primary-600">Home</Link>
+          <Link href={`/${locale}`} className="hover:text-primary-600">{tNav('home')}</Link>
           <span>/</span>
-          <Link href={`/${locale}/projects`} className="hover:text-primary-600">Projects</Link>
+          <Link href={`/${locale}/projects`} className="hover:text-primary-600">{tNav('projects')}</Link>
           <span>/</span>
           <Link href={`/${locale}/projects/${id}`} className="hover:text-primary-600">{translation?.name}</Link>
           <span>/</span>
-          <span className="text-gray-900">Study</span>
+          <span className="text-gray-900">{t('pageLabel')}</span>
         </nav>
 
         {/* Project header */}
@@ -107,7 +108,7 @@ export default async function StudyPage({ params: { locale, id } }: Props) {
                     <FileText className="w-4 h-4 text-primary-500 flex-shrink-0" />
                     <span className="font-semibold text-gray-900 text-sm">{sec.name}</span>
                     {sec.isRequired && (
-                      <span className="badge bg-primary-50 text-primary-700 text-xs">Required</span>
+                      <span className="badge bg-primary-50 text-primary-700 text-xs">{t('required')}</span>
                     )}
                   </div>
                   <ChevronDown className="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180" />
@@ -119,11 +120,11 @@ export default async function StudyPage({ params: { locale, id } }: Props) {
                   {sec.content ? (
                     <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap mt-3">{sec.content}</p>
                   ) : (
-                    <p className="text-sm text-gray-400 italic mt-3">No content yet.</p>
+                    <p className="text-sm text-gray-400 italic mt-3">{t('noContent')}</p>
                   )}
                   {sec.files && sec.files.length > 0 && (
                     <div className="mt-4 space-y-2">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Attached Files</p>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('attachedFiles')}</p>
                       {sec.files.map((f: any) => (
                         <a
                           key={f.id}
@@ -133,7 +134,7 @@ export default async function StudyPage({ params: { locale, id } }: Props) {
                           className="flex items-center gap-2 text-sm text-primary-600 hover:underline"
                         >
                           <FileText className="w-3.5 h-3.5" />
-                          {f.originalName || f.name || 'File'}
+                          {f.originalName || f.name || t('fileFallback')}
                         </a>
                       ))}
                     </div>
@@ -146,7 +147,7 @@ export default async function StudyPage({ params: { locale, id } }: Props) {
 
         {/* Vote section */}
         <div className="card p-6 space-y-4">
-          <h2 className="text-xl font-bold text-gray-900">Cast Your Vote</h2>
+          <h2 className="text-xl font-bold text-gray-900">{t('castYourVote')}</h2>
           <VoteForm
             studyId={study.id}
             studyStatus={study.status}
@@ -166,7 +167,7 @@ export default async function StudyPage({ params: { locale, id } }: Props) {
         {/* Back link */}
         <Link href={`/${locale}/projects/${id}`} className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary-600 transition-colors">
           <ArrowLeft className="w-4 h-4" />
-          Back to project
+          {t('backToProject')}
         </Link>
       </div>
     </div>

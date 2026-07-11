@@ -9,7 +9,7 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
-import { FundStatus, FundType, FundDonationMethod } from '@prisma/client';
+import { ExecutionStage, FundStatus, FundType, FundDonationMethod } from '@prisma/client';
 
 export class CreateFundDto {
   @IsString()
@@ -31,6 +31,13 @@ export class CreateFundDto {
   @IsOptional()
   @IsInt()
   donorId?: number;
+
+  // W9 — required for type=master (delegates to FundHierarchyService.ensureMasterFund,
+  // one master fund per sector) and, when given, also for type=organization
+  // (delegates to ensureOrganizationFund). See FundsService.create.
+  @IsOptional()
+  @IsInt()
+  categoryId?: number;
 
   @IsOptional()
   @IsObject()
@@ -83,6 +90,12 @@ export class ProposeAllocationDto {
   @IsOptional()
   @IsInt()
   fundingAgreementId?: number;
+
+  // W9-stabilization — Funding Platform Audit §3: which execution stage this
+  // reserved budget is for.
+  @IsOptional()
+  @IsEnum(ExecutionStage)
+  stage?: ExecutionStage;
 }
 
 export class CreateFundDonationDto {

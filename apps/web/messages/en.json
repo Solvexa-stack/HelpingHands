@@ -11,7 +11,8 @@
     "register": "Sign Up",
     "dashboard": "My Dashboard",
     "logout": "Sign Out",
-    "transparency": "Transparency"
+    "transparency": "Transparency",
+    "sectors": "Sectors"
   },
   "home": {
     "hero": {
@@ -147,6 +148,13 @@
     "summary": "Executive Summary",
     "results": "Vote Results",
     "noVotes": "No votes cast yet.",
+    "pageLabel": "Study",
+    "required": "Required",
+    "noContent": "No content yet.",
+    "attachedFiles": "Attached Files",
+    "fileFallback": "File",
+    "castYourVote": "Cast Your Vote",
+    "backToProject": "Back to project",
     "vote": {
       "for": "In favour",
       "against": "Against",
@@ -238,9 +246,12 @@
     "downloadStatement": "Download statement (CSV)",
     "qrCash": "Cash donations (QR)",
     "online": "Online donations",
+    "fundDonations": "Fund donations (manual)",
+    "loadError": "Currently unavailable.",
     "fundAllocations": "Fund allocations",
     "spend": "Spend",
-    "remaining": "Remaining in project account"
+    "remaining": "Remaining in project account",
+    "donateToFund": "Donate to this Fund"
   },
   "about": {
     "hero": {
@@ -313,5 +324,22 @@
       "notes": "Notes",
       "provider": "Provider"
     }
+  },
+  "sectors": {
+    "title": "Sectors",
+    "subtitle": "Browse where donations go by sector — agriculture, infrastructure, education, health, and more",
+    "empty": "No sectors published yet.",
+    "loadError": "Currently unavailable.",
+    "subsectorsCount": "{count, plural, one {# sub-sector} other {# sub-sectors}}",
+    "asOf": "As of",
+    "totalDonations": "Total donations",
+    "totalAllocated": "Allocated",
+    "totalSpent": "Spent",
+    "remainingBalance": "Remaining balance",
+    "subsectors": "Sub-sectors",
+    "funds": "Funds",
+    "activeProjects": "Active projects",
+    "browseProjects": "Browse all projects in this sector →",
+    "noActiveProjects": "No active projects in this sector right now."
   }
 }

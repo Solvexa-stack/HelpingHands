@@ -77,6 +77,10 @@ describe('Identity backfill & role parity (W1-E3)', () => {
 
     await expectGrants(SEED_ACCOUNTS.administrator.email, [
       ['board_chair', 'platform', null],
+      // W9 — Super Admin (sector/master-fund/system structure) is separate
+      // from board_chair (governance/approval); the administrator seed
+      // account is the one account this backfill maps both onto.
+      ['super_admin', 'platform', null],
       ['org_admin', 'organization', defaultOrg.id],
     ]);
     await expectGrants(SEED_ACCOUNTS.employee.email, [['staff', 'organization', defaultOrg.id]]);
@@ -88,7 +92,7 @@ describe('Identity backfill & role parity (W1-E3)', () => {
 
   it('the backfill is audited and re-runnable without duplicates (S2 AC)', async () => {
     const audited = await prisma.auditLog.count({ where: { requestId: 'w1-backfill' } });
-    expect(audited).toBeGreaterThanOrEqual(8); // 4 memberships + 4 grants
+    expect(audited).toBeGreaterThanOrEqual(9); // 4 memberships + 5 grants (W9: administrator now grants board_chair + super_admin + org_admin)
 
     const [membershipsBefore, grantsBefore] = [
       await prisma.organizationMembership.count(),

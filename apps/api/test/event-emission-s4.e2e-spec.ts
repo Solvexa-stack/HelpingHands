@@ -94,6 +94,12 @@ describe('Domain event emission: donations, payments, execution, financial, mile
     participantId = participantUser!.referenceId;
 
     ({ projectId } = await createProjectViaApi(app, employee, 's4-events', { value: 10000 }));
+
+    // BUG-5 fix (backlog/BACKLOG_BUGS.md): financial endpoints now enforce
+    // the financial-officer project-assignment check donations.service.ts
+    // already applied. Assign the seeded officer used throughout this suite.
+    const officerUser = await prisma.user.findUnique({ where: { email: SEED_ACCOUNTS.financial_officer.email } });
+    await prisma.project.update({ where: { id: projectId }, data: { financialOfficerId: officerUser!.referenceId } });
   });
 
   afterAll(async () => {

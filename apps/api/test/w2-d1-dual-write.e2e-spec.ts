@@ -38,6 +38,12 @@ describe('D1 dual-write & FK consistency (W2-E1)', () => {
       authHeaderFor(prisma, 'participant'),
     ]);
     ({ projectId, blockId } = await createProjectViaApi(app, employee, 'w2-d1', { value: 10000 }));
+
+    // BUG-5 fix (backlog/BACKLOG_BUGS.md): financial endpoints now enforce
+    // the financial-officer project-assignment check donations.service.ts
+    // already applied. Assign the seeded officer used throughout this suite.
+    const officerUser = await prisma.user.findUnique({ where: { email: 'officer@helpinghands.org' } });
+    await prisma.project.update({ where: { id: projectId }, data: { financialOfficerId: officerUser!.referenceId } });
   });
 
   afterAll(async () => {

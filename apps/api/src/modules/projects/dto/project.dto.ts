@@ -11,7 +11,7 @@ import {
   IsBoolean,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { ProjectCategory } from '@prisma/client';
+import { ExecutionStage, ProjectCategory } from '@prisma/client';
 
 export class CreateProjectDto {
   @ApiProperty({ description: 'Block ID for project content' })
@@ -74,6 +74,13 @@ export class CreateProjectDto {
   @IsOptional()
   @IsInt()
   financialOfficerId?: number;
+
+  // W9-stabilization — Funding Platform Audit §3: current stage in the
+  // standard execution lifecycle (planning/procurement/execution/inspection/completion).
+  @ApiPropertyOptional({ enum: ExecutionStage })
+  @IsOptional()
+  @IsEnum(ExecutionStage)
+  currentStage?: ExecutionStage;
 }
 
 export class UpdateProjectDto extends PartialType(CreateProjectDto) {}

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CategoriesModule } from '../categories/categories.module';
 import { OrgReportingModule } from '../org-reporting/org-reporting.module';
 import { TreasuryModule } from '../treasury/treasury.module';
 import { DashboardsController } from './dashboards.controller';
@@ -16,7 +17,7 @@ import { TransparencyRefreshSubscriber } from './transparency-refresh.subscriber
  * no new domain truth.
  */
 @Module({
-  imports: [TreasuryModule, OrgReportingModule],
+  imports: [TreasuryModule, OrgReportingModule, CategoriesModule],
   controllers: [
     TransparencyController,
     PublicationPolicyController,

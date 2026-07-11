@@ -20,6 +20,7 @@ export const PUBLICATION_POLICY_DEFAULTS: Array<{
   { fieldClass: 'project.spend', visibility: 'public', description: 'Project money trail: intake → account credit → spend category' },
   { fieldClass: 'project.decisions', visibility: 'public', description: 'Board decision registry entries (decision, rationale, date — no member identities)' },
   { fieldClass: 'org.portfolio', visibility: 'public', description: 'Organization profile, verified badge, project portfolio' },
+  { fieldClass: 'sector.totals', visibility: 'public', description: 'Sector-level totals: donations, allocated, spent, remaining balance, active projects (W9)' },
   { fieldClass: 'donor.identity', visibility: 'workspace_only', description: 'Donor names/emails — private unless the donor opts in (opt-in arrives with a later wave)' },
   { fieldClass: 'beneficiary.data', visibility: 'never_public', description: 'Personal beneficiary data (social-support categories) — hard-excluded from the public layer at query level; cannot be opened by policy' },
 ];

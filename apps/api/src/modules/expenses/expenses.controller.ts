@@ -4,7 +4,7 @@ import { AdminRole } from '@prisma/client';
 import { CurrentActor } from '../../common/decorators/current-actor.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ActorContext } from '../../events/actor-context';
-import { CreateExpenseDto, ExpenseQueryDto } from './dto/expense.dto';
+import { CreateExpenseDto, ExpenseQueryDto, MarkExpensePaidDto } from './dto/expense.dto';
 import { ExpensesService } from './expenses.service';
 
 /**
@@ -33,6 +33,12 @@ export class ExpensesController {
     return this.expensesService.findAll(query);
   }
 
+  @Get('stage-summary')
+  @ApiOperation({ summary: 'Reserved budget and actual spending for a project, grouped by execution stage' })
+  stageSummary(@Query('projectId', ParseIntPipe) projectId: number) {
+    return this.expensesService.stageSummary(projectId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Expense detail' })
   findById(@Param('id', ParseIntPipe) id: number) {
@@ -59,5 +65,15 @@ export class ExpensesController {
   @ApiOperation({ summary: 'Reject a pending expense (no ledger entry posted)' })
   reject(@Param('id', ParseIntPipe) id: number, @CurrentActor() actor: ActorContext) {
     return this.expensesService.reject(actor, id);
+  }
+
+  @Post(':id/mark-paid')
+  @ApiOperation({ summary: 'Record the payment date for an approved expense (approval and payment are separate steps)' })
+  markPaid(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: MarkExpensePaidDto,
+    @CurrentActor() actor: ActorContext,
+  ) {
+    return this.expensesService.markPaid(actor, id, dto);
   }
 }

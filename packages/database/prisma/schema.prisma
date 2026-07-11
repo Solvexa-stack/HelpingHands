@@ -164,6 +164,20 @@ enum PartyType {
   organization
 }
 
+// W9-stabilization — Funding Platform Audit §3: standard civic project
+// execution lifecycle. Tags the ledger-backed money flow (Expense,
+// FundAllocation) and the project's current stage; NOT the legacy
+// Block-rooted ProjectPhase/ProjectBudget system (ad-hoc, per-project phases,
+// out of scope — see PROGRESS.md D1 debt). Additive/nullable throughout: no
+// existing row needs a stage to remain valid.
+enum ExecutionStage {
+  planning
+  procurement
+  execution
+  inspection
+  completion
+}
+
 enum FundDonationMethod {
   cash
   bank_transfer
@@ -379,6 +393,11 @@ model Participant {
   donations       ProjectDonation[]
   onlineDonations OnlineDonation[]
   fundDonations   FundDonation[]
+  // W9-stabilization — Funding Platform Audit §5: links a logged-in donor's
+  // Participant identity to any staff-managed Donor record entered for the
+  // same person (e.g. a cash/check gift), so donor reports can aggregate
+  // across channels instead of leaving two disconnected identities.
+  donorRecords    Donor[]           @relation("DonorParticipant")
 
   deletedAt DateTime? @map("deleted_at")
   deletedBy Int?      @map("deleted_by")
@@ -477,6 +496,9 @@ model Project {
   financialOfficerId  Int?             @map("financial_officer_id")
   studyStatus         StudyStatus?     @map("study_status")
   ownerOrganizationId Int              @map("owner_organization_id")
+  // W9-stabilization — Funding Platform Audit §3: current stage in the
+  // standard execution lifecycle (tagging only, see ExecutionStage comment).
+  currentStage        ExecutionStage?  @map("current_stage")
   createdAt           DateTime         @default(now()) @map("created_at")
   updatedAt           DateTime         @updatedAt @map("updated_at")
 
@@ -1418,6 +1440,9 @@ model FundAllocation {
   // an auto-allocation DOES have a legacy counterpart (the donation itself,
   // dual-written on the leg that credits the fund).
   isAutoAllocated      Boolean              @default(false) @map("is_auto_allocated")
+  // W9-stabilization — Funding Platform Audit §3: which execution stage this
+  // allocation (reserved budget) was made for.
+  stage                ExecutionStage?      @map("stage")
   createdAt            DateTime             @default(now()) @map("created_at")
   updatedAt            DateTime             @updatedAt @map("updated_at")
 
@@ -1440,18 +1465,24 @@ model FundAllocation {
 // standard soft-delete columns.
 
 model Donor {
-  id              Int       @id @default(autoincrement())
-  name            String    @db.VarChar(255)
-  type            PartyType @default(person)
-  contactEmail    String?   @map("contact_email") @db.VarChar(255)
-  contactPhone    String?   @map("contact_phone") @db.VarChar(50)
-  contactAddress  String?   @map("contact_address") @db.Text
-  taxId           String?   @map("tax_id") @db.VarChar(100)
-  notes           String?   @db.Text
-  createdByUserId Int?      @map("created_by_user_id")
-  createdByUser   User?     @relation("DonorCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id              Int          @id @default(autoincrement())
+  name            String       @db.VarChar(255)
+  type            PartyType    @default(person)
+  contactEmail    String?      @map("contact_email") @db.VarChar(255)
+  contactPhone    String?      @map("contact_phone") @db.VarChar(50)
+  contactAddress  String?      @map("contact_address") @db.Text
+  taxId           String?      @map("tax_id") @db.VarChar(100)
+  notes           String?      @db.Text
+  createdByUserId Int?         @map("created_by_user_id")
+  createdByUser   User?        @relation("DonorCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  // W9-stabilization — Funding Platform Audit §5: optional link to the same
+  // person's logged-in Participant identity (see Participant.donorRecords).
+  // Nullable — most Donor rows are anonymous/offline gifts with no platform
+  // login to link.
+  participantId   Int?         @map("participant_id")
+  participant     Participant? @relation("DonorParticipant", fields: [participantId], references: [id], onDelete: Restrict)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
 
   funds     Fund[]
   donations FundDonation[]
@@ -1583,6 +1614,14 @@ model Expense {
   approvedByUserId Int?            @map("approved_by_user_id")
   approvedByUser   User?           @relation("ExpenseApprovedBy", fields: [approvedByUserId], references: [id], onDelete: Restrict)
   approvedAt       DateTime?       @map("approved_at")
+  // W9-stabilization — Funding Platform Audit §2/§4: approval and payment are
+  // separate steps (Expense Approval → Payment → Actual Spending). approvedAt
+  // marks the approval decision; paidAt marks money actually leaving —
+  // distinct dates, both may be present, only paidAt implies "actually spent".
+  paidAt           DateTime?       @map("paid_at")
+  // W9-stabilization — Funding Platform Audit §3: which execution stage this
+  // expense was incurred for (nullable — tagging, no new relation table).
+  stage            ExecutionStage? @map("stage")
   notes            String?         @db.Text
   createdAt        DateTime        @default(now()) @map("created_at")
   updatedAt        DateTime        @updatedAt @map("updated_at")

@@ -5,7 +5,11 @@ import { RoleScopeType } from '@prisma/client';
  * Extendable data, stable keys.
  */
 export const ROLE_CATALOG: Record<RoleScopeType, readonly string[]> = {
-  platform: ['board_chair', 'board_member', 'board_secretary', 'platform_auditor'],
+  // W9 — `super_admin` is deliberately separate from `board_chair`: it owns
+  // system-level structure (sectors, master funds, global fund shape),
+  // while board_chair keeps governance/approval authority. See
+  // workspaceroadmap/20_WAVE_9_FUND_HIERARCHY_AND_SECTOR_GOVERNANCE.md.
+  platform: ['super_admin', 'board_chair', 'board_member', 'board_secretary', 'platform_auditor'],
   organization: ['org_admin', 'project_manager', 'staff', 'org_accountant', 'viewer'],
   fund: ['fund_director', 'fund_deputy', 'fund_secretary', 'fund_accountant', 'fund_controller'],
   project: ['project_lead', 'contributor', 'financial_delegate'],

@@ -80,7 +80,7 @@ export class DashboardService {
     let collected = Number(totalCollected._sum.amount || 0);
     if (orgId == null && role === AdminRole.administrator) {
       const stats = await this.readLayer.platformStats();
-      collected = stats.data.intakeByChannel.qr_cash_donations.amount;
+      collected = TransparencyReadService.totalIntake(stats.data.intakeByChannel);
     }
 
     return {

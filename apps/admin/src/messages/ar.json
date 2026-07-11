@@ -20,7 +20,8 @@
     "workflow": "مسارات العمل",
     "funds": "الصناديق",
     "donors": "المانحون",
-    "expenses": "المصروفات"
+    "expenses": "المصروفات",
+    "sectors": "القطاعات"
   },
   "execution": {
     "title": "تنفيذ المشروع",
@@ -180,7 +181,10 @@
     "failed": "فشل",
     "confirm": "تأكيد",
     "notAvailable": "غير متاح",
-    "retry": "إعادة المحاولة"
+    "retry": "إعادة المحاولة",
+    "none": "بلا",
+    "confirmDeleteGeneric": "هل أنت متأكد أنك تريد حذف هذا؟",
+    "confirmAction": "هل أنت متأكد؟"
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -703,7 +707,9 @@
       "launchCeilingNote": "تبدأ الصناديق الجديدة بسقف الإطلاق: كل تخصيص يتطلب قرار مجلس.",
       "typeLabel": "نوع الصندوق",
       "organizationPlaceholder": "معرف المؤسسة المديرة (اختياري)",
-      "donorPlaceholder": "معرف المانح (مطلوب للصناديق من نوع مانح)"
+      "donorPlaceholder": "معرف المانح (مطلوب للصناديق من نوع مانح)",
+      "sectorLabel": "القطاع",
+      "masterFundNote": "صندوق رئيسي واحد لكل قطاع — إذا كان موجوداً بالفعل، سيُعاد استخدامه بدلاً من إنشاء نسخة مكررة."
     },
     "drawer": {
       "tileBalance": "الرصيد",
@@ -712,7 +718,10 @@
       "tileDisbursed": "المصروف",
       "officersHeading": "الموظفون",
       "tileDonations": "التبرعات",
-      "tileSpent": "المنفق"
+      "tileSpent": "المنفق",
+      "activeProjectsHeading": "المشاريع النشطة (الصندوق الافتراضي)",
+      "spendByProjectHeading": "الإنفاق حسب المشروع",
+      "projectRef": "المشروع رقم {id}"
     },
     "officer": {
       "userIdPlaceholder": "معرّف المستخدم"
@@ -763,6 +772,7 @@
       "donationRejected": "تم رفض التبرع"
     },
     "types": {
+      "master": "الصندوق الرئيسي",
       "organization": "مؤسسة",
       "council": "مجلس",
       "donor": "مانح"
@@ -778,9 +788,32 @@
       "notesPlaceholder": "ملاحظات",
       "submit": "تسجيل التبرع",
       "empty": "لا توجد تبرعات مسجلة بعد.",
-      "rowSummary": "#{id} · {amount} · {method}",
       "confirm": "تأكيد",
-      "reject": "رفض"
+      "reject": "رفض",
+      "rowTitle": "التبرع رقم {id}",
+      "method": "الطريقة",
+      "date": "التاريخ",
+      "reference": "المرجع",
+      "donor": "المتبرع",
+      "viaProject": "عبر المشروع",
+      "statuses": {
+        "pending": "قيد الانتظار",
+        "approved": "معتمد",
+        "completed": "معتمد",
+        "rejected": "مرفوض",
+        "failed": "فشل",
+        "refunded": "مسترد"
+      },
+      "methods": {
+        "cash": "نقداً",
+        "bank_transfer": "تحويل بنكي",
+        "check": "شيك",
+        "card": "بطاقة",
+        "online": "عبر الإنترنت",
+        "qr_cash": "رمز QR / نقداً",
+        "stripe": "بطاقة (Stripe)",
+        "paypal": "PayPal"
+      }
     },
     "viewHierarchy": "عرض التسلسل الهرمي",
     "hierarchy": {
@@ -1359,6 +1392,7 @@
       "recipientNamePlaceholder": "اسم المستلم",
       "recipientTypeLabel": "نوع المستلم",
       "notesPlaceholder": "ملاحظات",
+      "stageLabel": "مرحلة التنفيذ",
       "submit": "إرسال المصروف"
     },
     "invoice": {
@@ -1372,13 +1406,65 @@
     "actions": {
       "approve": "موافقة",
       "reject": "رفض",
-      "viewInvoice": "عرض الفاتورة"
+      "viewInvoice": "عرض الفاتورة",
+      "markPaid": "تحديد كمدفوع"
+    },
+    "paidOn": "دُفع في {date}",
+    "notPaidYet": "لم يُدفع بعد",
+    "stages": {
+      "label": "المرحلة",
+      "none": "بلا مرحلة",
+      "planning": "التخطيط",
+      "procurement": "الشراء",
+      "execution": "التنفيذ",
+      "inspection": "التفتيش",
+      "completion": "الإنجاز"
     },
     "toast": {
       "created": "تم إرسال المصروف",
       "approved": "تمت الموافقة على المصروف — انخفض رصيد الصندوق",
       "rejected": "تم رفض المصروف",
-      "invoiceUploaded": "تم رفع الفاتورة وإرفاقها"
+      "invoiceUploaded": "تم رفع الفاتورة وإرفاقها",
+      "markedPaid": "تم تحديد المصروف كمدفوع"
     }
+  },
+  "sectors": {
+    "title": "القطاعات",
+    "subtitle": "شجرة قطاعات ديناميكية — يُنشأ الصندوق الرئيسي تلقائياً لكل قطاع",
+    "newSector": "قطاع جديد",
+    "empty": "لا توجد قطاعات بعد.",
+    "badges": {
+      "archived": "مؤرشف"
+    },
+    "actions": {
+      "archive": "أرشفة",
+      "activate": "إعادة تفعيل"
+    },
+    "createModal": {
+      "title": "قطاع جديد",
+      "keyPlaceholder": "المعرّف (مثال: السياحة)",
+      "namePlaceholder": "الاسم",
+      "nameArPlaceholder": "الاسم (بالعربية)",
+      "nameFrPlaceholder": "الاسم (بالفرنسية)",
+      "descriptionPlaceholder": "الوصف",
+      "parentLabel": "القطاع الأب (اختياري)",
+      "parentNone": "— قطاع رئيسي —"
+    },
+    "editModal": {
+      "title": "تعديل القطاع"
+    },
+    "toast": {
+      "created": "تم إنشاء القطاع",
+      "updated": "تم تحديث القطاع",
+      "archived": "تم أرشفة القطاع",
+      "activated": "تمت إعادة تفعيل القطاع"
+    }
+  },
+  "fundPicker": {
+    "label": "مصدر التمويل",
+    "autoOption": "تلقائي (صندوق المؤسسة لهذا القطاع)",
+    "note": "اختر صندوقاً محدداً، أو اتركه على تلقائي لاستخدام صندوق المؤسسة لهذا القطاع — يُنشأ تلقائياً عند الحاجة إليه لأول مرة.",
+    "suggestedOrgFund": "مقترح — صندوق مؤسستك",
+    "masterFund": "الصندوق الرئيسي للقطاع"
   }
 }

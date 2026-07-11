@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminRole } from '@prisma/client';
 import { CurrentActor } from '../../common/decorators/current-actor.decorator';
@@ -43,6 +43,15 @@ export class FundsController {
   @ApiOperation({ summary: 'Fund hierarchy: master funds (mirroring the category taxonomy) → organization funds → projects' })
   hierarchy() {
     return this.fundHierarchy.tree();
+  }
+
+  // W9 — same literal-segment-before-:id reasoning as `hierarchy` above.
+  // Read-only "what would fund a project in this sector" preview for the
+  // project creation flow's fund picker.
+  @Get('suggested')
+  @ApiOperation({ summary: 'Suggested funds for a sector: master fund, the organization\'s fund, and any council/donor funds scoped to it' })
+  suggested(@Query('categoryId', ParseIntPipe) categoryId: number, @Query('organizationId') organizationId?: string) {
+    return this.fundHierarchy.suggestedFunds(categoryId, organizationId ? Number(organizationId) : undefined);
   }
 
   @Get(':id')

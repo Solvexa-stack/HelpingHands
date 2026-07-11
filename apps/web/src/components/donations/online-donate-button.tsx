@@ -8,14 +8,21 @@ import { useAuth } from '@/contexts/auth-context';
 import { paymentsApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
+// W9 — a fund target (master or organization fund) works exactly like a
+// project target: the backend already supports fund-directed online
+// donations end-to-end (Wave 5, payments.service.ts) via `fundId` instead of
+// `projectId`; only the public UI never exposed it until now.
+type DonationTarget = { projectId: number } | { fundId: number };
+
 interface OnlineDonateButtonProps {
-  projectId: number;
+  target: DonationTarget;
+  redirectPath: string;
 }
 
 const PRESETS = [100, 250, 500, 1000, 2500, 5000];
 const CURRENCIES = ['USD', 'EUR', 'GBP'];
 
-export function OnlineDonateButton({ projectId }: OnlineDonateButtonProps) {
+export function OnlineDonateButton({ target, redirectPath }: OnlineDonateButtonProps) {
   const t = useTranslations('payment');
   const locale = useLocale();
   const { user } = useAuth();
@@ -28,7 +35,7 @@ export function OnlineDonateButton({ projectId }: OnlineDonateButtonProps) {
 
   const handlePay = async (provider: 'stripe' | 'paypal') => {
     if (!user) {
-      router.push(`/${locale}/auth/login?redirect=/projects/${projectId}`);
+      router.push(`/${locale}/auth/login?redirect=${redirectPath}`);
       return;
     }
     if (user.referenceType !== 'participant') {
@@ -43,7 +50,7 @@ export function OnlineDonateButton({ projectId }: OnlineDonateButtonProps) {
     setError('');
     try {
       const { checkoutUrl } = await paymentsApi.createCheckout(
-        projectId,
+        target,
         Number(amount),
         provider,
         currency,

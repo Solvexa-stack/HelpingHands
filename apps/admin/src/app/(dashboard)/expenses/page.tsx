@@ -2,14 +2,16 @@
 
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, FileUp, Plus, Receipt, XCircle } from 'lucide-react';
-import { expensesApi, fundsApi, invoicesApi, recipientsApi, type ExpenseCategory, type RecipientInput } from '@/lib/api';
+import { Banknote, CheckCircle2, FileUp, Plus, Receipt, XCircle } from 'lucide-react';
+import { expensesApi, fundsApi, invoicesApi, recipientsApi, type ExecutionStage, type ExpenseCategory, type RecipientInput } from '@/lib/api';
 import { ProjectPicker } from '@/components/ui/project-picker';
 import { useToast } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/language-context';
+import { useAuth } from '@/contexts/auth-context';
 
 const CATEGORIES: ExpenseCategory[] = ['materials', 'labor', 'services', 'equipment', 'transport', 'administrative', 'other'];
+const STAGES: ExecutionStage[] = ['planning', 'procurement', 'execution', 'inspection', 'completion'];
 const STATUS_BADGE: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   approved: 'bg-green-100 text-green-800',
@@ -25,6 +27,7 @@ const isPositiveNumber = (s: string) => s.trim() !== '' && Number.isFinite(Numbe
  */
 export default function ExpensesPage() {
   const { t, locale } = useLanguage();
+  const { user } = useAuth();
   const { success, error: toastError } = useToast();
   const qc = useQueryClient();
 
@@ -34,8 +37,8 @@ export default function ExpensesPage() {
   const [invoiceRowOpen, setInvoiceRowOpen] = useState<number | null>(null);
   const [invoiceForm, setInvoiceForm] = useState<{ number: string; date: string; file: File | null }>({ number: '', date: '', file: null });
 
-  const [form, setForm] = useState<{ fundId: number | ''; projectId: number | ''; amount: string; category: ExpenseCategory; description: string; recipientId: number | ''; notes: string }>({
-    fundId: '', projectId: '', amount: '', category: 'materials', description: '', recipientId: '', notes: '',
+  const [form, setForm] = useState<{ fundId: number | ''; projectId: number | ''; amount: string; category: ExpenseCategory; description: string; recipientId: number | ''; notes: string; stage: ExecutionStage | '' }>({
+    fundId: '', projectId: '', amount: '', category: 'materials', description: '', recipientId: '', notes: '', stage: '',
   });
   const [recipientForm, setRecipientForm] = useState<RecipientInput>({ name: '', type: 'person' });
 
@@ -80,11 +83,12 @@ export default function ExpensesPage() {
         description: form.description,
         recipientId: Number(form.recipientId),
         notes: form.notes || undefined,
+        stage: form.stage || undefined,
       }),
     onSuccess: () => {
       success(t('expenses.toast.created'));
       setCreateOpen(false);
-      setForm({ fundId: '', projectId: '', amount: '', category: 'materials', description: '', recipientId: '', notes: '' });
+      setForm({ fundId: '', projectId: '', amount: '', category: 'materials', description: '', recipientId: '', notes: '', stage: '' });
       refresh();
     },
     onError,
@@ -147,10 +151,18 @@ export default function ExpensesPage() {
                 </p>
                 <p className="text-xs text-gray-500">
                   {e.fund.name} → project #{e.projectId} · {e.recipient.name} ({t(`donors.types.${e.recipient.type}`)})
+                  {e.stage && <> · {t(`expenses.stages.${e.stage}`)}</>}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{e.description}</p>
               </div>
-              <span className={cn('badge', STATUS_BADGE[e.status])}>{t(`expenses.statuses.${e.status}`)}</span>
+              <div className="flex flex-col items-end gap-1">
+                <span className={cn('badge', STATUS_BADGE[e.status])}>{t(`expenses.statuses.${e.status}`)}</span>
+                {e.status === 'approved' && (
+                  <span className="text-xs text-gray-400">
+                    {e.paidAt ? t('expenses.paidOn', { date: new Date(e.paidAt).toLocaleDateString(locale) }) : t('expenses.notPaidYet')}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
@@ -166,7 +178,10 @@ export default function ExpensesPage() {
                   <FileUp className="w-3 h-3" /> {t('expenses.invoice.uploadLabel')}
                 </button>
               )}
-              {e.status === 'pending' && (
+              {/* Server always enforces this (createdByUserId != actor, or Board/Council
+                  exemption) — hiding the buttons for the common self-approval case avoids
+                  showing an action that would just 403. */}
+              {e.status === 'pending' && user?.id !== e.createdByUserId && (
                 <>
                   <button className="btn-secondary btn-sm gap-1" onClick={() => mutate(() => expensesApi.approve(e.id), t('expenses.toast.approved'))}>
                     <CheckCircle2 className="w-3 h-3" /> {t('expenses.actions.approve')}
@@ -175,6 +190,11 @@ export default function ExpensesPage() {
                     <XCircle className="w-3 h-3" /> {t('expenses.actions.reject')}
                   </button>
                 </>
+              )}
+              {e.status === 'approved' && !e.paidAt && (
+                <button className="btn-secondary btn-sm gap-1" onClick={() => mutate(() => expensesApi.markPaid(e.id), t('expenses.toast.markedPaid'))}>
+                  <Banknote className="w-3 h-3" /> {t('expenses.actions.markPaid')}
+                </button>
               )}
             </div>
 
@@ -211,6 +231,15 @@ export default function ExpensesPage() {
               <input className="input" placeholder={t('expenses.createModal.amountPlaceholder')} value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
               <select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as ExpenseCategory })}>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{t(`expenses.categories.${c}`)}</option>)}
+              </select>
+              <select
+                className="input"
+                value={form.stage}
+                onChange={(e) => setForm({ ...form, stage: e.target.value as ExecutionStage | '' })}
+                aria-label={t('expenses.createModal.stageLabel')}
+              >
+                <option value="">{t('expenses.createModal.stageLabel')}</option>
+                {STAGES.map((s) => <option key={s} value={s}>{t(`expenses.stages.${s}`)}</option>)}
               </select>
             </div>
             <textarea className="input w-full" rows={2} placeholder={t('expenses.createModal.descriptionPlaceholder')} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />

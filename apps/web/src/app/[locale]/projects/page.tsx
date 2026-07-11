@@ -10,7 +10,7 @@ export const revalidate = 60;
 
 interface Props {
   params: { locale: string };
-  searchParams: { category?: string; search?: string; isCompleted?: string; page?: string; location?: string };
+  searchParams: { category?: string; categoryKey?: string; search?: string; isCompleted?: string; page?: string; location?: string };
 }
 
 export default async function ProjectsPage({ params: { locale }, searchParams }: Props) {
@@ -21,7 +21,11 @@ export default async function ProjectsPage({ params: { locale }, searchParams }:
     limit: 12,
     page: searchParams.page || 1,
   };
-  if (searchParams.category) params.category = searchParams.category;
+  // categoryKey resolves through the full sector taxonomy (any sector, not
+  // just the three legacy enum values `category` maps to) — see
+  // ProjectsService.findAll / CategoriesService.byKey.
+  if (searchParams.categoryKey) params.categoryKey = searchParams.categoryKey;
+  else if (searchParams.category) params.category = searchParams.category;
   if (searchParams.search) params.search = searchParams.search;
   if (searchParams.isCompleted !== undefined) params.isCompleted = searchParams.isCompleted === 'true';
   if (searchParams.location) params.location = searchParams.location;

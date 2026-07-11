@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/toaster';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { CategoryPicker } from '@/components/ui/category-picker';
+import { FundPicker } from '@/components/ui/fund-picker';
 import { useLanguage } from '@/contexts/language-context';
 
 function slugify(text: string) {
@@ -37,6 +38,7 @@ export default function NewProjectPage() {
 
   const [project, setProject] = useState({
     categoryId: '' as number | '',
+    fundId: '' as number | '',
     value: '',
     location: '',
     expectedStartDate: '',
@@ -51,7 +53,7 @@ export default function NewProjectPage() {
   });
 
   const qc = useQueryClient();
-  const { workspaceType } = useAuth();
+  const { workspaceType, activeOrgId } = useAuth();
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -63,6 +65,7 @@ export default function NewProjectPage() {
       return projectsApi.create({
         blockId: block.id,
         categoryId: Number(project.categoryId),
+        fundId: project.fundId === '' ? undefined : project.fundId,
         value: Number(project.value),
         location: project.location || undefined,
         expectedStartDate: project.expectedStartDate || undefined,
@@ -153,7 +156,15 @@ export default function NewProjectPage() {
             <label className="label">{t('projectForm.categoryLabel')}</label>
             <CategoryPicker
               value={project.categoryId}
-              onChange={(categoryId) => setProject({ ...project, categoryId })}
+              onChange={(categoryId) => setProject({ ...project, categoryId, fundId: '' })}
+            />
+          </div>
+          <div>
+            <FundPicker
+              categoryId={project.categoryId}
+              organizationId={activeOrgId ?? undefined}
+              value={project.fundId}
+              onChange={(fundId) => setProject({ ...project, fundId })}
             />
           </div>
           <div>

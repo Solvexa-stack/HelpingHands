@@ -20,7 +20,8 @@
     "workflow": "Workflows",
     "funds": "Funds",
     "donors": "Donors",
-    "expenses": "Expenses"
+    "expenses": "Expenses",
+    "sectors": "Sectors"
   },
   "execution": {
     "title": "Project Execution",
@@ -180,7 +181,10 @@
     "failed": "Failed",
     "confirm": "Confirm",
     "notAvailable": "N/A",
-    "retry": "Retry"
+    "retry": "Retry",
+    "none": "None",
+    "confirmDeleteGeneric": "Are you sure you want to delete this?",
+    "confirmAction": "Are you sure?"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -703,7 +707,9 @@
       "launchCeilingNote": "New funds start with the launch ceiling: every allocation needs a Board decision.",
       "typeLabel": "Fund type",
       "organizationPlaceholder": "Managing organization id (optional)",
-      "donorPlaceholder": "Donor id (required for donor funds)"
+      "donorPlaceholder": "Donor id (required for donor funds)",
+      "sectorLabel": "Sector",
+      "masterFundNote": "One master fund per sector — if it already exists, this reuses it instead of creating a duplicate."
     },
     "drawer": {
       "tileBalance": "Balance",
@@ -712,7 +718,10 @@
       "tileDisbursed": "Disbursed",
       "officersHeading": "Officers",
       "tileDonations": "Donations",
-      "tileSpent": "Spent"
+      "tileSpent": "Spent",
+      "activeProjectsHeading": "Active projects (default fund)",
+      "spendByProjectHeading": "Spend by project",
+      "projectRef": "Project #{id}"
     },
     "officer": {
       "userIdPlaceholder": "User id"
@@ -763,6 +772,7 @@
       "donationRejected": "Donation rejected"
     },
     "types": {
+      "master": "Master fund",
       "organization": "Organization",
       "council": "Council",
       "donor": "Donor"
@@ -778,9 +788,32 @@
       "notesPlaceholder": "Notes",
       "submit": "Record donation",
       "empty": "No donations recorded yet.",
-      "rowSummary": "#{id} · {amount} · {method}",
       "confirm": "Confirm",
-      "reject": "Reject"
+      "reject": "Reject",
+      "rowTitle": "Donation #{id}",
+      "method": "Method",
+      "date": "Date",
+      "reference": "Reference",
+      "donor": "Donor",
+      "viaProject": "Via project",
+      "statuses": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "completed": "Approved",
+        "rejected": "Rejected",
+        "failed": "Failed",
+        "refunded": "Refunded"
+      },
+      "methods": {
+        "cash": "Cash",
+        "bank_transfer": "Bank transfer",
+        "check": "Check",
+        "card": "Card",
+        "online": "Online",
+        "qr_cash": "QR/Cash",
+        "stripe": "Card (Stripe)",
+        "paypal": "PayPal"
+      }
     },
     "viewHierarchy": "View hierarchy",
     "hierarchy": {
@@ -1359,6 +1392,7 @@
       "recipientNamePlaceholder": "Recipient name",
       "recipientTypeLabel": "Recipient type",
       "notesPlaceholder": "Notes",
+      "stageLabel": "Execution stage",
       "submit": "Submit expense"
     },
     "invoice": {
@@ -1372,13 +1406,65 @@
     "actions": {
       "approve": "Approve",
       "reject": "Reject",
-      "viewInvoice": "View invoice"
+      "viewInvoice": "View invoice",
+      "markPaid": "Mark paid"
+    },
+    "paidOn": "Paid {date}",
+    "notPaidYet": "Not yet paid",
+    "stages": {
+      "label": "Stage",
+      "none": "No stage",
+      "planning": "Planning",
+      "procurement": "Procurement",
+      "execution": "Execution",
+      "inspection": "Inspection",
+      "completion": "Completion"
     },
     "toast": {
       "created": "Expense submitted",
       "approved": "Expense approved — fund balance decreased",
       "rejected": "Expense rejected",
-      "invoiceUploaded": "Invoice uploaded and attached"
+      "invoiceUploaded": "Invoice uploaded and attached",
+      "markedPaid": "Expense marked as paid"
     }
+  },
+  "sectors": {
+    "title": "Sectors",
+    "subtitle": "dynamic sector taxonomy — master funds are created automatically per sector",
+    "newSector": "New sector",
+    "empty": "No sectors yet.",
+    "badges": {
+      "archived": "Archived"
+    },
+    "actions": {
+      "archive": "Archive",
+      "activate": "Reactivate"
+    },
+    "createModal": {
+      "title": "New sector",
+      "keyPlaceholder": "Key (e.g. tourism)",
+      "namePlaceholder": "Name",
+      "nameArPlaceholder": "Name (Arabic)",
+      "nameFrPlaceholder": "Name (French)",
+      "descriptionPlaceholder": "Description",
+      "parentLabel": "Parent sector (optional)",
+      "parentNone": "— top-level sector —"
+    },
+    "editModal": {
+      "title": "Edit sector"
+    },
+    "toast": {
+      "created": "Sector created",
+      "updated": "Sector updated",
+      "archived": "Sector archived",
+      "activated": "Sector reactivated"
+    }
+  },
+  "fundPicker": {
+    "label": "Funding source",
+    "autoOption": "Auto (organization's fund for this sector)",
+    "note": "Choose a specific fund, or leave on auto to use the organization's fund for this sector — created automatically the first time it's needed.",
+    "suggestedOrgFund": "suggested — your organization's fund",
+    "masterFund": "sector master fund"
   }
 }

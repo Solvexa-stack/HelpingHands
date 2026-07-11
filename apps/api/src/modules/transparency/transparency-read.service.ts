@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CategoriesService } from '../categories/categories.service';
 import { PublicationPolicyService } from './publication-policy.service';
 
 /** Every aggregate carries the moment it was computed (18: visible freshness). */
@@ -38,6 +39,7 @@ export class TransparencyReadService {
   constructor(
     private prisma: PrismaService,
     private policy: PublicationPolicyService,
+    private categories: CategoriesService,
   ) {}
 
   private cache = new Map<string, { at: number; value: Aggregate<unknown> }>();
@@ -60,7 +62,7 @@ export class TransparencyReadService {
 
   platformStats() {
     return this.cached('platform-stats', async () => {
-      const [categoryGroups, categories, instances, orgGroups, cashIntake, onlineProject, onlineFund] =
+      const [categoryGroups, categories, instances, orgGroups, cashIntake, onlineProject, onlineFund, manualFund] =
         await Promise.all([
           this.prisma.project.groupBy({ by: ['categoryId'], _count: { id: true }, _sum: { value: true } }),
           this.prisma.projectCategoryNode.findMany({
@@ -87,6 +89,14 @@ export class TransparencyReadService {
             _sum: { amount: true },
             _count: { id: true },
           }),
+          // W9-stabilization: offline/manual donations recorded straight against a fund
+          // (Donor/participant cash, check, wire) — same channel sectorPublic() already
+          // includes; platformStats() previously omitted it, undercounting platform intake.
+          this.prisma.fundDonation.aggregate({
+            where: { status: 'approved' },
+            _sum: { amount: true },
+            _count: { id: true },
+          }),
         ]);
 
       const categoryOf = new Map(categories.map((c) => [c.id, c]));
@@ -102,10 +112,16 @@ export class TransparencyReadService {
           qr_cash_donations: { count: cashIntake._count.id, amount: Number(cashIntake._sum.amount ?? 0) },
           online_project_donations: { count: onlineProject._count.id, amount: Number(onlineProject._sum.amount ?? 0) },
           online_fund_donations: { count: onlineFund._count.id, amount: Number(onlineFund._sum.amount ?? 0) },
+          fund_donations: { count: manualFund._count.id, amount: Number(manualFund._sum.amount ?? 0) },
         },
         funds: await this.fundsOverviewData(),
       };
     });
+  }
+
+  /** Total platform intake across every donation channel — the one number "total collected" means. */
+  static totalIntake(intakeByChannel: Record<string, { amount: number }>): number {
+    return round2(Object.values(intakeByChannel).reduce((sum, c) => sum + c.amount, 0));
   }
 
   // ─── Funds (W7-E2-S1) ────────────────────────────────────────────────────────
@@ -421,6 +437,80 @@ export class TransparencyReadService {
           targetValue: round2(portfolio.reduce((s, p) => s + p.target, 0)),
           collected: round2(portfolio.reduce((s, p) => s + p.collected, 0)),
         },
+      };
+    });
+  }
+
+  // ─── Sectors (W9 — spec §11 "Sector reports") ───────────────────────────────
+
+  /**
+   * Rolls a category node and all its descendants up into one sector report:
+   * donations received (project cash/online + fund manual/online), amount
+   * allocated/spent/remaining across every fund scoped to the sector, and its
+   * active projects. Same money sources `fundMoney`/platformStats already
+   * read — no new domain truth, just a different grouping.
+   */
+  sectorPublic(categoryId: number) {
+    return this.cached(`sector-${categoryId}`, async () => {
+      const category = await this.prisma.projectCategoryNode.findUnique({ where: { id: categoryId } });
+      if (!category) throw new NotFoundException(`Category #${categoryId} not found`);
+      const ids = await this.categories.selfAndDescendantIds(categoryId);
+
+      const funds = await this.prisma.fund.findMany({
+        where: { categoryId: { in: ids }, deletedAt: null },
+        select: { id: true, name: true, type: true },
+      });
+      const fundMoneys = await Promise.all(funds.map(async (f) => ({ fund: f, ...(await this.fundMoney(f.id)) })));
+
+      const [projectCash, projectOnline, fundOnline, fundManual, expenses, activeProjects, totalProjectCount] =
+        await Promise.all([
+          this.prisma.projectDonation.aggregate({
+            where: { status: 'approved', project: { categoryId: { in: ids } } },
+            _sum: { amount: true },
+          }),
+          this.prisma.onlineDonation.aggregate({
+            where: { status: 'completed', project: { categoryId: { in: ids } } },
+            _sum: { amount: true },
+          }),
+          this.prisma.onlineDonation.aggregate({
+            where: { status: 'completed', fund: { categoryId: { in: ids } } },
+            _sum: { amount: true },
+          }),
+          this.prisma.fundDonation.aggregate({
+            where: { status: 'approved', fund: { categoryId: { in: ids } } },
+            _sum: { amount: true },
+          }),
+          this.prisma.expense.aggregate({
+            where: { status: 'approved', fund: { categoryId: { in: ids } } },
+            _sum: { amount: true },
+          }),
+          this.prisma.project.findMany({
+            where: { categoryId: { in: ids }, isCompleted: false, deletedAt: null },
+            select: { id: true, value: true, block: { select: { translations: { take: 1 } } } },
+          }),
+          this.prisma.project.count({ where: { categoryId: { in: ids }, deletedAt: null } }),
+        ]);
+
+      const totalDonations = round2(
+        Number(projectCash._sum.amount ?? 0) +
+          Number(projectOnline._sum.amount ?? 0) +
+          Number(fundOnline._sum.amount ?? 0) +
+          Number(fundManual._sum.amount ?? 0),
+      );
+
+      return {
+        category: { id: category.id, key: category.key, name: category.name, nameAr: category.nameAr, nameFr: category.nameFr },
+        totalDonations,
+        totalAllocated: round2(fundMoneys.reduce((s, f) => s + f.allocated, 0)),
+        totalSpent: round2(fundMoneys.reduce((s, f) => s + f.disbursed, 0) + Number(expenses._sum.amount ?? 0)),
+        remainingBalance: round2(fundMoneys.reduce((s, f) => s + f.balance, 0)),
+        totalProjects: totalProjectCount,
+        activeProjects: activeProjects.map((p) => ({
+          id: p.id,
+          name: p.block.translations[0]?.name ?? `#${p.id}`,
+          value: Number(p.value),
+        })),
+        funds: fundMoneys.map((f) => ({ id: f.fund.id, name: f.fund.name, type: f.fund.type, balance: f.balance })),
       };
     });
   }

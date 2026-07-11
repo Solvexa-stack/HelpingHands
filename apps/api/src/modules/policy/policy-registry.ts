@@ -249,6 +249,25 @@ export const POLICY_REGISTRY: Record<string, PolicyEntry> = {
       { scopeType: 'platform', roles: ['board_chair', 'board_member', 'board_secretary', 'platform_auditor'] },
     ],
   },
+
+  // ─── W9 — sector taxonomy & fund-suggestion (system structure, Super Admin) ─
+  // Sector CRUD is system-level structure, deliberately narrower than
+  // fund.manage/organization.manage — only Super Admin, never board_chair.
+  'sector.manage': {
+    anyGrants: [{ scopeType: 'platform', roles: ['super_admin'] }],
+    sensitive: true,
+  },
+  // Narrow, non-sensitive read (id/name/type only, no balances) so org staff
+  // can see candidate funds while creating a project — fund.read does not
+  // grant organization-scope roles at all, and shouldn't (it also exposes
+  // balances/allocations), so this is a separate, smaller action.
+  'fund.suggest': {
+    anyGrants: [
+      { scopeType: 'organization', roles: ['org_admin', 'project_manager', 'staff'] },
+      { scopeType: 'platform', roles: ['super_admin', 'board_chair', 'board_member', 'board_secretary', 'platform_auditor'] },
+      { scopeType: 'fund', roles: ['fund_director', 'fund_deputy', 'fund_secretary', 'fund_accountant', 'fund_controller'] },
+    ],
+  },
 };
 
 /**
@@ -362,9 +381,11 @@ export const ROUTE_ACTION_MAP: Record<string, string> = {
   'POST /api/v1/funds/donations/:donationId/reject': 'fund_donation.decide',
   'POST /api/v1/expenses': 'fund_expense.create',
   'GET /api/v1/expenses': 'fund_expense.read',
+  'GET /api/v1/expenses/stage-summary': 'fund_expense.read',
   'GET /api/v1/expenses/:id': 'fund_expense.read',
   'POST /api/v1/expenses/:id/approve': 'fund_expense.decide',
   'POST /api/v1/expenses/:id/reject': 'fund_expense.decide',
+  'POST /api/v1/expenses/:id/mark-paid': 'fund_expense.decide',
   'POST /api/v1/expenses/:id/invoice': 'fund_expense.create',
   'POST /api/v1/recipients': 'fund_expense.create',
   'GET /api/v1/recipients': 'fund_expense.read',
@@ -372,4 +393,12 @@ export const ROUTE_ACTION_MAP: Record<string, string> = {
   'PUT /api/v1/recipients/:id': 'fund_expense.create',
   'POST /api/v1/invoices': 'fund_expense.create',
   'GET /api/v1/invoices/:id': 'fund_expense.read',
+
+  // W9 — sectors & fund suggestion
+  'GET /api/v1/categories/admin-tree': 'sector.manage',
+  'POST /api/v1/categories': 'sector.manage',
+  'PATCH /api/v1/categories/:id': 'sector.manage',
+  'POST /api/v1/categories/:id/archive': 'sector.manage',
+  'POST /api/v1/categories/:id/activate': 'sector.manage',
+  'GET /api/v1/funds/suggested': 'fund.suggest',
 };

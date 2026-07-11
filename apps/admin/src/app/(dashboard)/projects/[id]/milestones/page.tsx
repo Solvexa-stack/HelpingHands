@@ -19,6 +19,7 @@ const STATUS_CONFIG: Record<string, { color: string; icon: any }> = {
 const STATUSES = ['pending', 'in_progress', 'completed', 'missed'];
 
 function Modal({ title, onClose, onSave, saving, children }: any) {
+  const { t } = useLanguage();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md mx-4">
@@ -28,9 +29,9 @@ function Modal({ title, onClose, onSave, saving, children }: any) {
         </div>
         <div className="px-6 py-4 space-y-4">{children}</div>
         <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">Cancel</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">{t('common.cancel')}</button>
           <button onClick={onSave} disabled={saving} className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2">
-            {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save
+            {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />} {t('common.save')}
           </button>
         </div>
       </div>
@@ -101,7 +102,7 @@ export default function MilestonesPage() {
   };
 
   const remove = async (milestoneId: number) => {
-    if (!confirm('Delete this milestone?')) return;
+    if (!confirm(t('common.confirmDeleteGeneric'))) return;
     await milestonesApi.delete(projectId, milestoneId);
     load();
   };

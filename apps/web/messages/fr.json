@@ -11,7 +11,8 @@
     "register": "S'inscrire",
     "dashboard": "Mon espace",
     "logout": "Se déconnecter",
-    "transparency": "Transparence"
+    "transparency": "Transparence",
+    "sectors": "Secteurs"
   },
   "home": {
     "hero": {
@@ -147,6 +148,13 @@
     "summary": "Résumé exécutif",
     "results": "Résultats du vote",
     "noVotes": "Aucun vote enregistré pour l'instant.",
+    "pageLabel": "Étude",
+    "required": "Requis",
+    "noContent": "Aucun contenu pour l'instant.",
+    "attachedFiles": "Fichiers joints",
+    "fileFallback": "Fichier",
+    "castYourVote": "Votez maintenant",
+    "backToProject": "Retour au projet",
     "vote": {
       "for": "Pour",
       "against": "Contre",
@@ -238,9 +246,12 @@
     "downloadStatement": "Télécharger le relevé (CSV)",
     "qrCash": "Dons en espèces (QR)",
     "online": "Dons en ligne",
+    "fundDonations": "Dons manuels aux fonds",
+    "loadError": "Actuellement indisponible.",
     "fundAllocations": "Allocations de fonds",
     "spend": "Dépenses",
-    "remaining": "Restant sur le compte du projet"
+    "remaining": "Restant sur le compte du projet",
+    "donateToFund": "Faire un don à ce fonds"
   },
   "about": {
     "hero": {
@@ -313,5 +324,22 @@
       "notes": "Notes",
       "provider": "Fournisseur"
     }
+  },
+  "sectors": {
+    "title": "Secteurs",
+    "subtitle": "Découvrez où vont les dons par secteur — agriculture, infrastructure, éducation, santé, et plus",
+    "empty": "Aucun secteur publié pour le moment.",
+    "loadError": "Actuellement indisponible.",
+    "subsectorsCount": "{count, plural, one {# sous-secteur} other {# sous-secteurs}}",
+    "asOf": "En date du",
+    "totalDonations": "Total des dons",
+    "totalAllocated": "Alloué",
+    "totalSpent": "Dépensé",
+    "remainingBalance": "Solde restant",
+    "subsectors": "Sous-secteurs",
+    "funds": "Fonds",
+    "activeProjects": "Projets actifs",
+    "browseProjects": "Parcourir tous les projets de ce secteur →",
+    "noActiveProjects": "Aucun projet actif dans ce secteur pour le moment."
   }
 }

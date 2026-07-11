@@ -11,7 +11,14 @@ export class DonorsService {
     private eventBus: EventBusService,
   ) {}
 
+  private async assertParticipantExists(participantId?: number) {
+    if (participantId == null) return;
+    const participant = await this.prisma.participant.findFirst({ where: { id: participantId, deletedAt: null } });
+    if (!participant) throw new NotFoundException(`Participant #${participantId} not found`);
+  }
+
   async create(actor: ActorContext, dto: CreateDonorDto) {
+    await this.assertParticipantExists(dto.participantId);
     const donor = await this.prisma.donor.create({
       data: { ...dto, createdByUserId: actor.userId },
     });
@@ -44,6 +51,7 @@ export class DonorsService {
   async update(actor: ActorContext, id: number, dto: UpdateDonorDto) {
     const donor = await this.prisma.donor.findFirst({ where: { id, deletedAt: null } });
     if (!donor) throw new NotFoundException(`Donor #${id} not found`);
+    await this.assertParticipantExists(dto.participantId);
     const updated = await this.prisma.donor.update({ where: { id }, data: dto });
     this.eventBus.publish({
       event: 'donor.updated',
@@ -70,6 +78,41 @@ export class DonorsService {
     const totalDonated = donations
       .filter((d) => d.status === 'approved')
       .reduce((sum, d) => sum + Number(d.amount), 0);
+
+    // W9-stabilization — Funding Platform Audit §5: this Donor row is a
+    // staff-managed identity; `donations` above only ever sees FundDonation
+    // rows filed straight against this Donor (a cash/check gift, say). If the
+    // same person also has a logged-in Participant identity (donor.participantId,
+    // see the schema comment), the SAME person's online/QR/project-cash gifts
+    // and any fund donations they made themselves live in different tables
+    // under participantId, not donorId — the total below previously missed
+    // them entirely. Zero cost when unlinked (the common case today).
+    const participantId = donor.participantId;
+    const otherChannels = participantId == null
+      ? { fundDonationsByParticipant: 0, onlineDonations: 0, projectDonations: 0 }
+      : await (async () => {
+          const [byParticipant, online, cash] = await Promise.all([
+            this.prisma.fundDonation.aggregate({
+              where: { participantId, donorId: null, status: 'approved' },
+              _sum: { amount: true },
+            }),
+            this.prisma.onlineDonation.aggregate({
+              where: { participantId, status: 'completed' },
+              _sum: { amount: true },
+            }),
+            this.prisma.projectDonation.aggregate({
+              where: { participantId, status: 'approved' },
+              _sum: { amount: true },
+            }),
+          ]);
+          return {
+            fundDonationsByParticipant: Number(byParticipant._sum.amount ?? 0),
+            onlineDonations: Number(online._sum.amount ?? 0),
+            projectDonations: Number(cash._sum.amount ?? 0),
+          };
+        })();
+    const totalDonatedAllChannels =
+      totalDonated + otherChannels.fundDonationsByParticipant + otherChannels.onlineDonations + otherChannels.projectDonations;
 
     const fundIds = [...new Set(donations.map((d) => d.fundId))];
 
@@ -132,8 +175,10 @@ export class DonorsService {
     const totalSpent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
     return {
-      donor: { id: donor.id, name: donor.name, type: donor.type },
+      donor: { id: donor.id, name: donor.name, type: donor.type, participantId: donor.participantId },
       totalDonated,
+      totalDonatedAllChannels,
+      otherChannels,
       donations,
       fundedProjectIds,
       fundedSectors,
