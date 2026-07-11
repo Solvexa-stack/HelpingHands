@@ -1130,5 +1130,26 @@
       "submitted": "Rapport soumis au conseil",
       "resubmitted": "Rapport resoumis"
     }
+  },
+  "orgSettings": {
+    "heading": "Paramètres de l'organisation",
+    "restricted": "Les paramètres sont disponibles pour les administrateurs de l'organisation.",
+    "profileLabel": "Profil",
+    "nameLabel": "Nom",
+    "regNumberLabel": "Numéro d'enregistrement",
+    "statusPrefix": "Statut :",
+    "verifiedOn": "vérifié le {date}",
+    "capabilitiesNote": "Les capacités sont accordées par le conseil de la plateforme.",
+    "loadingOrg": "Chargement de {name}…",
+    "restrictedError": "Les modifications du profil sont actuellement gérées par l'équipe de la plateforme (le libre-service ouvre en Vague 6).",
+    "toast": {
+      "saved": "Profil de l'organisation enregistré"
+    }
+  },
+  "orgHeader": {
+    "workspaceHome": "Accueil de l'espace de travail",
+    "backToPlatform": "Retour à la plateforme",
+    "platform": "Plateforme",
+    "switchOrganization": "Changer d'organisation"
   }
 }

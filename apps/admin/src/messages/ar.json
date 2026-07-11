@@ -1130,5 +1130,26 @@
       "submitted": "تم تقديم التقرير إلى المجلس",
       "resubmitted": "تمت إعادة تقديم التقرير"
     }
+  },
+  "orgSettings": {
+    "heading": "إعدادات المنظمة",
+    "restricted": "الإعدادات متاحة لمسؤولي المنظمة.",
+    "profileLabel": "الملف التعريفي",
+    "nameLabel": "الاسم",
+    "regNumberLabel": "رقم التسجيل",
+    "statusPrefix": "الحالة:",
+    "verifiedOn": "تم التحقق في {date}",
+    "capabilitiesNote": "يمنح المجلس على مستوى المنصة هذه الصلاحيات.",
+    "loadingOrg": "جار تحميل {name}…",
+    "restrictedError": "تغييرات الملف التعريفي تُدار حاليًا من قِبل فريق المنصة (الخدمة الذاتية تُفتح في الموجة 6).",
+    "toast": {
+      "saved": "تم حفظ ملف المنظمة"
+    }
+  },
+  "orgHeader": {
+    "workspaceHome": "الصفحة الرئيسية لمساحة العمل",
+    "backToPlatform": "العودة إلى المنصة",
+    "platform": "المنصة",
+    "switchOrganization": "تبديل المنظمة"
   }
 }

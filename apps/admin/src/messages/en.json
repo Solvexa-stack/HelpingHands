@@ -1130,5 +1130,26 @@
       "submitted": "Report submitted to the Board",
       "resubmitted": "Report resubmitted"
     }
+  },
+  "orgSettings": {
+    "heading": "Organization settings",
+    "restricted": "Settings are available to organization admins.",
+    "profileLabel": "Profile",
+    "nameLabel": "Name",
+    "regNumberLabel": "Registration number",
+    "statusPrefix": "Status:",
+    "verifiedOn": "verified {date}",
+    "capabilitiesNote": "Capabilities are granted by the platform Board.",
+    "loadingOrg": "Loading {name}…",
+    "restrictedError": "Profile changes are currently managed by the platform team (Wave 6 opens self-service).",
+    "toast": {
+      "saved": "Organization profile saved"
+    }
+  },
+  "orgHeader": {
+    "workspaceHome": "Workspace home",
+    "backToPlatform": "Back to platform",
+    "platform": "Platform",
+    "switchOrganization": "Switch organization"
   }
 }
