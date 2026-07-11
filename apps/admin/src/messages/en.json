@@ -887,5 +887,57 @@
       "roleGranted": "Role granted",
       "roleRevoked": "Role revoked"
     }
+  },
+  "organizations": {
+    "title": "Organizations",
+    "newOrganization": "New organization",
+    "colName": "Name",
+    "colType": "Type",
+    "colStatus": "Status",
+    "colMembers": "Members",
+    "colProjects": "Projects",
+    "namePlaceholder": "Name",
+    "regNumberPlaceholder": "Registration number (optional)",
+    "types": {
+      "ngo": "NGO",
+      "board": "Board",
+      "municipality": "Municipality",
+      "youth_team": "Youth team",
+      "initiative": "Initiative"
+    },
+    "statuses": {
+      "active": "Active",
+      "pending_verification": "Pending verification",
+      "suspended": "Suspended",
+      "archived": "Archived"
+    },
+    "verifiedOn": "verified {date}",
+    "activate": "Activate",
+    "suspend": "Suspend",
+    "workspaceLabel": "Workspace",
+    "openWorkspace": "Open Workspace",
+    "currentContext": "Current context",
+    "boardAccessNote": "Board access — the switch is audited",
+    "capabilitiesLabel": "Capabilities",
+    "capabilities": {
+      "canExecuteProjects": "Can execute projects",
+      "canReceivePublicFunds": "Can receive public funds",
+      "canOpenDonations": "Can open donations",
+      "isGovernmentEntity": "Government entity",
+      "requiresBoardOversight": "Requires Board oversight"
+    },
+    "addMemberLabel": "Add workspace member",
+    "canLoginNow": "They can log in right now with",
+    "requirementsNote": "Email and both names are required; password (optional) needs 8+ chars with uppercase, lowercase, number and special character.",
+    "membersLabel": "Members",
+    "userIdPlaceholder": "User id",
+    "add": "Add",
+    "toast": {
+      "orgCreated": "Organization created",
+      "memberAdded": "Member added",
+      "memberRemoved": "Member removed",
+      "orgActivated": "Organization activated",
+      "orgSuspended": "Organization suspended"
+    }
   }
 }

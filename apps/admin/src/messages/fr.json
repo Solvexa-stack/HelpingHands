@@ -887,5 +887,57 @@
       "roleGranted": "Rôle attribué",
       "roleRevoked": "Rôle révoqué"
     }
+  },
+  "organizations": {
+    "title": "Organisations",
+    "newOrganization": "Nouvelle organisation",
+    "colName": "Nom",
+    "colType": "Type",
+    "colStatus": "Statut",
+    "colMembers": "Membres",
+    "colProjects": "Projets",
+    "namePlaceholder": "Nom",
+    "regNumberPlaceholder": "Numéro d'enregistrement (facultatif)",
+    "types": {
+      "ngo": "ONG",
+      "board": "Conseil",
+      "municipality": "Municipalité",
+      "youth_team": "Équipe jeunesse",
+      "initiative": "Initiative"
+    },
+    "statuses": {
+      "active": "Actif",
+      "pending_verification": "Vérification en attente",
+      "suspended": "Suspendu",
+      "archived": "Archivé"
+    },
+    "verifiedOn": "vérifié le {date}",
+    "activate": "Activer",
+    "suspend": "Suspendre",
+    "workspaceLabel": "Espace de travail",
+    "openWorkspace": "Ouvrir l'espace de travail",
+    "currentContext": "Contexte actuel",
+    "boardAccessNote": "Accès du conseil — ce changement est audité",
+    "capabilitiesLabel": "Capacités",
+    "capabilities": {
+      "canExecuteProjects": "Peut exécuter des projets",
+      "canReceivePublicFunds": "Peut recevoir des fonds publics",
+      "canOpenDonations": "Peut ouvrir des dons",
+      "isGovernmentEntity": "Entité gouvernementale",
+      "requiresBoardOversight": "Nécessite la supervision du conseil"
+    },
+    "addMemberLabel": "Ajouter un membre à l'espace de travail",
+    "canLoginNow": "Il peut se connecter dès maintenant avec",
+    "requirementsNote": "L'e-mail et les deux noms sont requis ; le mot de passe (facultatif) doit comporter 8 caractères min. avec majuscule, minuscule, chiffre et caractère spécial.",
+    "membersLabel": "Membres",
+    "userIdPlaceholder": "ID utilisateur",
+    "add": "Ajouter",
+    "toast": {
+      "orgCreated": "Organisation créée",
+      "memberAdded": "Membre ajouté",
+      "memberRemoved": "Membre supprimé",
+      "orgActivated": "Organisation activée",
+      "orgSuspended": "Organisation suspendue"
+    }
   }
 }

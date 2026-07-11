@@ -6,7 +6,7 @@ import { ArrowRightCircle, Building2, CheckCircle2, PauseCircle, Plus, ShieldChe
 import { organizationsApi } from '@/lib/api';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/components/ui/toaster';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { useLanguage } from '@/contexts/language-context';
 
 const ORG_ROLES = ['org_admin', 'project_manager', 'staff', 'org_accountant', 'viewer'];
@@ -19,7 +19,7 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 export default function OrganizationsPage() {
-  const { locale } = useLanguage();
+  const { t, locale } = useLanguage();
   const { success, error: toastError } = useToast();
   const { contexts, activeOrgId, switchOrg } = useAuth();
   const qc = useQueryClient();
@@ -46,12 +46,12 @@ export default function OrganizationsPage() {
   const onError = (err: any) => {
     const data = err?.response?.data;
     const details = Array.isArray(data?.errors) ? `: ${data.errors.join('; ')}` : '';
-    toastError(`${data?.message || 'Failed'}${details}`);
+    toastError(`${data?.message || t('common.failed')}${details}`);
   };
 
   const createMutation = useMutation({
     mutationFn: () => organizationsApi.create(form),
-    onSuccess: () => { success('Organization created'); setCreateOpen(false); refresh(); },
+    onSuccess: () => { success(t('organizations.toast.orgCreated')); setCreateOpen(false); refresh(); },
     onError,
   });
   const inviteMutation = useMutation({
@@ -64,7 +64,7 @@ export default function OrganizationsPage() {
         ...(invite.password ? { password: invite.password } : {}),
       }),
     onSuccess: (data: any) => {
-      success(data?.message ?? 'Invitation sent');
+      success(data?.message ?? t('orgTeam.toast.inviteSent'));
       setCreatedLogin(invite.password ? invite.email : null);
       setActivationUrl(data?.activationUrl ?? null); // dev-only field (link mode)
       setInvite({ email: '', firstName: '', lastName: '', password: '', role: 'org_admin' });
@@ -74,28 +74,28 @@ export default function OrganizationsPage() {
   });
   const addMemberMutation = useMutation({
     mutationFn: () => organizationsApi.addMember(selected.id, Number(memberId)),
-    onSuccess: () => { success('Member added'); setMemberId(''); refresh(); },
+    onSuccess: () => { success(t('organizations.toast.memberAdded')); setMemberId(''); refresh(); },
     onError,
   });
   const grantMutation = useMutation({
     mutationFn: ({ userId, role }: any) => organizationsApi.grantRole(selected.id, userId, role),
-    onSuccess: () => { success('Role granted'); refresh(); },
+    onSuccess: () => { success(t('orgTeam.toast.roleGranted')); refresh(); },
     onError,
   });
   const revokeMutation = useMutation({
     mutationFn: ({ userId, role }: any) => organizationsApi.revokeRole(selected.id, userId, role),
-    onSuccess: () => { success('Role revoked'); refresh(); },
+    onSuccess: () => { success(t('orgTeam.toast.roleRevoked')); refresh(); },
     onError,
   });
   const removeMutation = useMutation({
     mutationFn: (userId: number) => organizationsApi.removeMember(selected.id, userId),
-    onSuccess: () => { success('Member removed'); refresh(); },
+    onSuccess: () => { success(t('organizations.toast.memberRemoved')); refresh(); },
     onError,
   });
   const statusMutation = useMutation({
     mutationFn: (status: string) => organizationsApi.update(selected.id, { status }),
     onSuccess: (updated: any) => {
-      success(`Organization ${updated.status === 'active' ? 'activated' : updated.status}`);
+      success(updated.status === 'active' ? t('organizations.toast.orgActivated') : t('organizations.toast.orgSuspended'));
       setSelected(updated);
       refresh();
     },
@@ -106,12 +106,12 @@ export default function OrganizationsPage() {
   // client-side mirror of the server rules — problems shown before submitting
   const inviteProblems: string[] = [];
   if (invite.email && !/^\S+@\S+\.\S+$/.test(invite.email))
-    inviteProblems.push('Email must be a full address like name@domain.com');
+    inviteProblems.push(t('orgTeam.emailInvalid'));
   if (
     invite.password &&
     !(invite.password.length >= 8 && /[a-z]/.test(invite.password) && /[A-Z]/.test(invite.password) && /\d/.test(invite.password) && /[^A-Za-z0-9]/.test(invite.password))
   )
-    inviteProblems.push('Password needs 8+ characters incl. uppercase, lowercase, a number and a special character');
+    inviteProblems.push(t('orgTeam.passwordHint'));
   const inviteReady =
     Boolean(invite.email.trim() && invite.firstName.trim() && invite.lastName.trim()) && inviteProblems.length === 0;
 
@@ -122,10 +122,10 @@ export default function OrganizationsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Building2 className="w-5 h-5 text-primary-600" />
-          <h1 className="text-lg font-semibold">Organizations</h1>
+          <h1 className="text-lg font-semibold">{t('organizations.title')}</h1>
         </div>
         <button onClick={() => setCreateOpen(true)} className="btn-primary btn-md gap-2">
-          <Plus className="w-4 h-4" /> New organization
+          <Plus className="w-4 h-4" /> {t('organizations.newOrganization')}
         </button>
       </div>
 
@@ -133,19 +133,19 @@ export default function OrganizationsPage() {
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="table-header">Name</th>
-              <th className="table-header">Type</th>
-              <th className="table-header">Status</th>
-              <th className="table-header">Members</th>
-              <th className="table-header">Projects</th>
+              <th className="table-header">{t('organizations.colName')}</th>
+              <th className="table-header">{t('organizations.colType')}</th>
+              <th className="table-header">{t('organizations.colStatus')}</th>
+              <th className="table-header">{t('organizations.colMembers')}</th>
+              <th className="table-header">{t('organizations.colProjects')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {organizations.map((org: any) => (
               <tr key={org.id} onClick={() => setSelected(org)} className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
                 <td className="table-cell font-medium">{org.name}</td>
-                <td className="table-cell">{org.type}</td>
-                <td className="table-cell"><span className={cn('badge', STATUS_BADGE[org.status] ?? 'bg-gray-100 text-gray-500')}>{org.status}</span></td>
+                <td className="table-cell">{t(`organizations.types.${org.type}`) || org.type}</td>
+                <td className="table-cell"><span className={cn('badge', STATUS_BADGE[org.status] ?? 'bg-gray-100 text-gray-500')}>{t(`organizations.statuses.${org.status}`) || org.status}</span></td>
                 <td className="table-cell">{org._count?.memberships ?? 0}</td>
                 <td className="table-cell">{org._count?.ownedProjects ?? 0}</td>
               </tr>
@@ -158,13 +158,13 @@ export default function OrganizationsPage() {
       {createOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setCreateOpen(false)}>
           <div className="card p-6 w-full max-w-md space-y-3" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-semibold">New organization</h2>
+            <h2 className="font-semibold">{t('organizations.newOrganization')}</h2>
             <select className="input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-              {['ngo', 'board', 'municipality', 'youth_team', 'initiative'].map((t) => <option key={t} value={t}>{t}</option>)}
+              {['ngo', 'board', 'municipality', 'youth_team', 'initiative'].map((ty) => <option key={ty} value={ty}>{t(`organizations.types.${ty}`)}</option>)}
             </select>
-            <input className="input" placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <input className="input" placeholder="Registration number (optional)" value={form.registrationNumber} onChange={(e) => setForm({ ...form, registrationNumber: e.target.value })} />
-            <button className="btn-primary btn-md w-full" disabled={!form.name} onClick={() => createMutation.mutate()}>Create</button>
+            <input className="input" placeholder={t('organizations.namePlaceholder')} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input className="input" placeholder={t('organizations.regNumberPlaceholder')} value={form.registrationNumber} onChange={(e) => setForm({ ...form, registrationNumber: e.target.value })} />
+            <button className="btn-primary btn-md w-full" disabled={!form.name} onClick={() => createMutation.mutate()}>{t('common.create')}</button>
           </div>
         </div>
       )}
@@ -180,11 +180,11 @@ export default function OrganizationsPage() {
 
             {/* Status lifecycle (W2-E6: manual activation; self-service verification lands in Wave 6) */}
             <div className="space-y-2">
-              <div className="text-xs font-semibold text-gray-500 uppercase">Status</div>
+              <div className="text-xs font-semibold text-gray-500 uppercase">{t('common.status')}</div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className={cn('badge', STATUS_BADGE[selected.status] ?? 'bg-gray-100 text-gray-500')}>{selected.status}</span>
+                <span className={cn('badge', STATUS_BADGE[selected.status] ?? 'bg-gray-100 text-gray-500')}>{t(`organizations.statuses.${selected.status}`) || selected.status}</span>
                 {selected.verifiedAt && (
-                  <span className="text-xs text-gray-400">verified {new Date(selected.verifiedAt).toLocaleDateString(locale)}</span>
+                  <span className="text-xs text-gray-400">{t('organizations.verifiedOn', { date: formatDate(selected.verifiedAt, locale) })}</span>
                 )}
                 {selected.status !== 'active' && selected.status !== 'archived' && (
                   <button
@@ -192,7 +192,7 @@ export default function OrganizationsPage() {
                     disabled={statusMutation.isPending}
                     onClick={() => statusMutation.mutate('active')}
                   >
-                    <CheckCircle2 className="w-3 h-3" /> Activate
+                    <CheckCircle2 className="w-3 h-3" /> {t('organizations.activate')}
                   </button>
                 )}
                 {selected.status === 'active' && (
@@ -201,7 +201,7 @@ export default function OrganizationsPage() {
                     disabled={statusMutation.isPending}
                     onClick={() => statusMutation.mutate('suspended')}
                   >
-                    <PauseCircle className="w-3 h-3" /> Suspend
+                    <PauseCircle className="w-3 h-3" /> {t('organizations.suspend')}
                   </button>
                 )}
               </div>
@@ -210,44 +210,44 @@ export default function OrganizationsPage() {
             {/* Workspace entry: platform admins enter any org workspace via
                 the audited switch-context (Board read-everywhere principle) */}
             <div className="space-y-2">
-              <div className="text-xs font-semibold text-gray-500 uppercase">Workspace</div>
+              <div className="text-xs font-semibold text-gray-500 uppercase">{t('organizations.workspaceLabel')}</div>
               <div className="flex items-center gap-2">
                 <button className="btn-primary btn-sm gap-1" onClick={() => switchOrg(selected.id, '/org/dashboard')}>
-                  <ArrowRightCircle className="w-3 h-3" /> Open Workspace
+                  <ArrowRightCircle className="w-3 h-3" /> {t('organizations.openWorkspace')}
                 </button>
-                {activeOrgId === selected.id && <span className="badge bg-primary-100 text-primary-800">Current context</span>}
+                {activeOrgId === selected.id && <span className="badge bg-primary-100 text-primary-800">{t('organizations.currentContext')}</span>}
                 {!contexts.some((c) => c.id === selected.id) && (
-                  <span className="text-xs text-gray-400">Board access — the switch is audited</span>
+                  <span className="text-xs text-gray-400">{t('organizations.boardAccessNote')}</span>
                 )}
               </div>
             </div>
 
             {/* Capability view (read-only) */}
             <div>
-              <div className="text-xs font-semibold text-gray-500 uppercase mb-2 flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Capabilities</div>
+              <div className="text-xs font-semibold text-gray-500 uppercase mb-2 flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> {t('organizations.capabilitiesLabel')}</div>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(selected.capabilities || {}).map(([key, on]) => (
-                  <span key={key} className={cn('badge', on ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500')}>{key}</span>
+                  <span key={key} className={cn('badge', on ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500')}>{t(`organizations.capabilities.${key}`) || key}</span>
                 ))}
               </div>
             </div>
 
             {/* Invite / create workspace member */}
             <div className="space-y-2">
-              <div className="text-xs font-semibold text-gray-500 uppercase">Add workspace member</div>
+              <div className="text-xs font-semibold text-gray-500 uppercase">{t('organizations.addMemberLabel')}</div>
               <div className="grid grid-cols-3 gap-2">
-                <input className="input" placeholder="Email" value={invite.email} onChange={(e) => setInvite({ ...invite, email: e.target.value })} />
-                <input className="input" placeholder="First name" value={invite.firstName} onChange={(e) => setInvite({ ...invite, firstName: e.target.value })} />
-                <input className="input" placeholder="Last name" value={invite.lastName} onChange={(e) => setInvite({ ...invite, lastName: e.target.value })} />
+                <input className="input" placeholder={t('orgTeam.emailPlaceholder')} value={invite.email} onChange={(e) => setInvite({ ...invite, email: e.target.value })} />
+                <input className="input" placeholder={t('orgTeam.firstNamePlaceholder')} value={invite.firstName} onChange={(e) => setInvite({ ...invite, firstName: e.target.value })} />
+                <input className="input" placeholder={t('orgTeam.lastNamePlaceholder')} value={invite.lastName} onChange={(e) => setInvite({ ...invite, lastName: e.target.value })} />
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <select className="input" value={invite.role} onChange={(e) => setInvite({ ...invite, role: e.target.value })} title="Workspace role">
-                  {ORG_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                <select className="input" value={invite.role} onChange={(e) => setInvite({ ...invite, role: e.target.value })} title={t('orgTeam.workspaceRoleTitle')}>
+                  {ORG_ROLES.map((r) => <option key={r} value={r}>{t(`orgTeam.roles.${r}`)}</option>)}
                 </select>
                 <input
                   className="input col-span-2"
                   type="password"
-                  placeholder="Password (optional — member can log in immediately)"
+                  placeholder={t('orgTeam.passwordPlaceholder')}
                   value={invite.password}
                   onChange={(e) => setInvite({ ...invite, password: e.target.value })}
                 />
@@ -257,29 +257,29 @@ export default function OrganizationsPage() {
                 disabled={!inviteReady || inviteMutation.isPending}
                 onClick={() => inviteMutation.mutate()}
               >
-                <UserPlus className="w-3 h-3" /> {invite.password ? 'Create member' : 'Send invite'}
+                <UserPlus className="w-3 h-3" /> {invite.password ? t('orgTeam.createMember') : t('orgTeam.sendInvite')}
               </button>
               {inviteProblems.map((msg) => (
                 <p key={msg} className="text-xs text-red-600">{msg}</p>
               ))}
               <p className="text-xs text-gray-400">
-                Email and both names are required; password (optional) needs 8+ chars with uppercase, lowercase, number and special character.
+                {t('organizations.requirementsNote')}
               </p>
               {createdLogin && !activationUrl && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-xs text-emerald-800">
-                  <span className="font-medium">Member created.</span> They can log in right now with <code>{createdLogin}</code> and the password you set.
+                  <span className="font-medium">{t('orgTeam.memberCreated')}</span> {t('organizations.canLoginNow')} <code>{createdLogin}</code> {t('orgTeam.canLoginSuffix')}
                 </div>
               )}
               {activationUrl && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-xs space-y-1">
-                  <p className="font-medium text-emerald-800">Dev activation link (no SMTP configured):</p>
+                  <p className="font-medium text-emerald-800">{t('orgTeam.devActivationLink')}</p>
                   <div className="flex items-center gap-1">
                     <code className="flex-1 truncate text-emerald-700">{activationUrl}</code>
                     <button
                       className="btn-secondary btn-sm"
-                      onClick={() => { navigator.clipboard.writeText(`${window.location.origin}${activationUrl}`); success('Link copied'); }}
+                      onClick={() => { navigator.clipboard.writeText(`${window.location.origin}${activationUrl}`); success(t('orgTeam.toast.linkCopied')); }}
                     >
-                      Copy
+                      {t('orgTeam.copy')}
                     </button>
                   </div>
                 </div>
@@ -288,10 +288,10 @@ export default function OrganizationsPage() {
 
             {/* Members */}
             <div className="space-y-2">
-              <div className="text-xs font-semibold text-gray-500 uppercase">Members</div>
+              <div className="text-xs font-semibold text-gray-500 uppercase">{t('organizations.membersLabel')}</div>
               <div className="flex gap-2">
-                <input className="input" placeholder="User id" value={memberId} onChange={(e) => setMemberId(e.target.value)} />
-                <button className="btn-secondary btn-sm" disabled={!memberId} onClick={() => addMemberMutation.mutate()}>Add</button>
+                <input className="input" placeholder={t('organizations.userIdPlaceholder')} value={memberId} onChange={(e) => setMemberId(e.target.value)} />
+                <button className="btn-secondary btn-sm" disabled={!memberId} onClick={() => addMemberMutation.mutate()}>{t('organizations.add')}</button>
               </div>
               {(members || []).map((m: any) => (
                 <div key={m.id} className="border border-gray-100 dark:border-gray-800 rounded-lg p-3 space-y-2">
@@ -302,7 +302,7 @@ export default function OrganizationsPage() {
                   <div className="flex flex-wrap items-center gap-1">
                     {(m.roles || []).map((role: string) => (
                       <span key={role} className="badge bg-primary-100 text-primary-800 gap-1">
-                        {role}
+                        {t(`orgTeam.roles.${role}`) || role}
                         <button onClick={() => revokeMutation.mutate({ userId: m.userId, role })}>×</button>
                       </span>
                     ))}
@@ -311,11 +311,11 @@ export default function OrganizationsPage() {
                       value={roleByUser[m.userId] ?? ''}
                       onChange={(e) => setRoleByUser({ ...roleByUser, [m.userId]: e.target.value })}
                     >
-                      <option value="">+ role…</option>
-                      {ORG_ROLES.filter((r) => !(m.roles || []).includes(r)).map((r) => <option key={r} value={r}>{r}</option>)}
+                      <option value="">{t('orgTeam.addRolePlaceholder')}</option>
+                      {ORG_ROLES.filter((r) => !(m.roles || []).includes(r)).map((r) => <option key={r} value={r}>{t(`orgTeam.roles.${r}`)}</option>)}
                     </select>
                     {roleByUser[m.userId] && (
-                      <button className="btn-secondary btn-sm" onClick={() => { grantMutation.mutate({ userId: m.userId, role: roleByUser[m.userId] }); setRoleByUser({ ...roleByUser, [m.userId]: '' }); }}>Grant</button>
+                      <button className="btn-secondary btn-sm" onClick={() => { grantMutation.mutate({ userId: m.userId, role: roleByUser[m.userId] }); setRoleByUser({ ...roleByUser, [m.userId]: '' }); }}>{t('orgTeam.grant')}</button>
                     )}
                   </div>
                 </div>

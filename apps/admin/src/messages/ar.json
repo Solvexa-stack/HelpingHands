@@ -887,5 +887,57 @@
       "roleGranted": "تم منح الدور",
       "roleRevoked": "تم سحب الدور"
     }
+  },
+  "organizations": {
+    "title": "المنظمات",
+    "newOrganization": "منظمة جديدة",
+    "colName": "الاسم",
+    "colType": "النوع",
+    "colStatus": "الحالة",
+    "colMembers": "الأعضاء",
+    "colProjects": "المشاريع",
+    "namePlaceholder": "الاسم",
+    "regNumberPlaceholder": "رقم التسجيل (اختياري)",
+    "types": {
+      "ngo": "منظمة غير حكومية",
+      "board": "مجلس",
+      "municipality": "بلدية",
+      "youth_team": "فريق شبابي",
+      "initiative": "مبادرة"
+    },
+    "statuses": {
+      "active": "نشط",
+      "pending_verification": "بانتظار التحقق",
+      "suspended": "موقوف",
+      "archived": "مؤرشف"
+    },
+    "verifiedOn": "تم التحقق في {date}",
+    "activate": "تفعيل",
+    "suspend": "إيقاف",
+    "workspaceLabel": "مساحة العمل",
+    "openWorkspace": "فتح مساحة العمل",
+    "currentContext": "السياق الحالي",
+    "boardAccessNote": "وصول المجلس — يتم تدقيق هذا التبديل",
+    "capabilitiesLabel": "الصلاحيات",
+    "capabilities": {
+      "canExecuteProjects": "يمكنه تنفيذ المشاريع",
+      "canReceivePublicFunds": "يمكنه استلام أموال عامة",
+      "canOpenDonations": "يمكنه فتح التبرعات",
+      "isGovernmentEntity": "جهة حكومية",
+      "requiresBoardOversight": "يتطلب إشراف المجلس"
+    },
+    "addMemberLabel": "إضافة عضو إلى مساحة العمل",
+    "canLoginNow": "يمكنه الدخول الآن باستخدام",
+    "requirementsNote": "البريد الإلكتروني والاسمان مطلوبان؛ كلمة المرور (اختيارية) تحتاج 8 أحرف على الأقل مع حرف كبير وصغير ورقم ورمز خاص.",
+    "membersLabel": "الأعضاء",
+    "userIdPlaceholder": "رقم المستخدم",
+    "add": "إضافة",
+    "toast": {
+      "orgCreated": "تم إنشاء المنظمة",
+      "memberAdded": "تمت إضافة العضو",
+      "memberRemoved": "تمت إزالة العضو",
+      "orgActivated": "تم تفعيل المنظمة",
+      "orgSuspended": "تم إيقاف المنظمة"
+    }
   }
 }
