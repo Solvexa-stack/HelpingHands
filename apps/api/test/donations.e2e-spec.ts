@@ -314,10 +314,7 @@ describe('Donation flows: QR physical + online webhooks (W0-E1-S3)', () => {
       });
       expect(log).toBeTruthy();
       expect(log!.error).toBeNull();
-      // Current behavior (BUG-3, backlog/BACKLOG_BUGS.md): markWebhookProcessed's
-      // Json shorthand filter throws and is swallowed, so processedAt is never
-      // set. Flip this to toBeTruthy() when BUG-3 is fixed.
-      expect(log!.processedAt).toBeNull();
+      expect(log!.processedAt).toBeTruthy();
     });
 
     it('a replayed Stripe event is deduplicated — no double-count', async () => {
@@ -383,8 +380,7 @@ describe('Donation flows: QR physical + online webhooks (W0-E1-S3)', () => {
         where: { provider: 'paypal', eventType: 'PAYMENT.CAPTURE.COMPLETED' },
       });
       expect(log).toBeTruthy();
-      // Current behavior (BUG-3): processedAt is never set — see stripe test above.
-      expect(log!.processedAt).toBeNull();
+      expect(log!.processedAt).toBeTruthy();
     });
 
     it('a replayed PayPal event is deduplicated — no double-count', async () => {

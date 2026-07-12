@@ -383,7 +383,7 @@ export class PaymentsService {
         where: {
           provider,
           eventType,
-          payload: parsedPayload,
+          payload: { equals: parsedPayload },
           processedAt: null,
           error: null,
         },
