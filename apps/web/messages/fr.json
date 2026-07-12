@@ -87,7 +87,17 @@
     "noAccount": "Vous n'avez pas de compte ?",
     "hasAccount": "Vous avez déjà un compte ?",
     "loginSuccess": "Bienvenue !",
-    "registerSuccess": "Compte créé avec succès !"
+    "registerSuccess": "Compte créé avec succès !",
+    "forgotPasswordSubtitle": "Entrez votre e-mail et nous vous enverrons un lien de réinitialisation",
+    "forgotPasswordSent": "Si un compte existe pour cet e-mail, un lien de réinitialisation a été envoyé.",
+    "sendResetLink": "Envoyer le lien",
+    "backToLogin": "Retour à la connexion",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "resetPasswordSubtitle": "Choisissez un nouveau mot de passe pour votre compte",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "resetSuccess": "Mot de passe réinitialisé avec succès ! Redirection...",
+    "invalidResetLink": "Ce lien de réinitialisation est invalide ou a expiré."
   },
   "dashboard": {
     "title": "Mon espace",

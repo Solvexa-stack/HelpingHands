@@ -87,7 +87,17 @@
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
     "loginSuccess": "Welcome back!",
-    "registerSuccess": "Account created successfully!"
+    "registerSuccess": "Account created successfully!",
+    "forgotPasswordSubtitle": "Enter your email and we'll send you a reset link",
+    "forgotPasswordSent": "If an account exists for that email, a reset link has been sent.",
+    "sendResetLink": "Send Reset Link",
+    "backToLogin": "Back to login",
+    "resetPassword": "Reset Password",
+    "resetPasswordSubtitle": "Choose a new password for your account",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "resetSuccess": "Password reset successfully! Redirecting to login...",
+    "invalidResetLink": "This reset link is invalid or has expired."
   },
   "dashboard": {
     "title": "My Dashboard",
