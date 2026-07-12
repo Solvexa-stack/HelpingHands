@@ -245,6 +245,17 @@
       "notesPlaceholder": "أضف أي ملاحظات حول التحقق من هذه الدفعة...",
       "reject": "رفض",
       "approve": "اعتماد"
+    },
+    "detail": {
+      "viewTitle": "عرض التفاصيل",
+      "donationNumber": "التبرع رقم {id}",
+      "notFound": "لم يتم العثور على التبرع",
+      "information": "معلومات التبرع",
+      "approvedBy": "اعتمده",
+      "notes": "ملاحظات",
+      "actionsHeading": "التحقق من الدفعة",
+      "pendingInstructions": "تأكد من استلام الدفعة النقدية قبل اعتماد أو رفض هذا التبرع.",
+      "finalized": "تمت معالجة هذا التبرع بالفعل ولم يعد بالإمكان تعديله."
     }
   },
   "projects": {

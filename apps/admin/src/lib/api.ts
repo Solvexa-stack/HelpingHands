@@ -83,6 +83,15 @@ export const donationsApi = {
   getByToken: (token: string) => api.get(`/donations/token/${token}`).then((r) => r.data.data),
   updateStatus: (id: number, data: { status: string; notes?: string }) =>
     api.patch(`/donations/${id}/status`, data).then((r) => r.data.data),
+  downloadQr: async (token: string) => {
+    const res = await api.get(`/donations/${token}/qr/download`, { responseType: 'blob' });
+    const url = URL.createObjectURL(res.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `qr-${token}.png`;
+    link.click();
+    URL.revokeObjectURL(url);
+  },
 };
 
 // ─── Admins ───────────────────────────────────────────────────────────────────

@@ -19,7 +19,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (loading) return;
-    if (!user) router.replace('/login');
+    if (!user) router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
     else if (workspaceType === 'organization') router.replace(orgPathFor(pathname));
   }, [user, loading, workspaceType, pathname, router]);
 

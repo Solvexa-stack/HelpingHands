@@ -16,8 +16,10 @@ export class QrService {
   }
 
   buildDonationUrl(token: string): string {
-    const appUrl = this.config.get('app.webUrl', 'http://localhost:3200');
-    return `${appUrl}/donations/${token}`;
+    // Scanned by employees in the Admin panel to open the donation and verify
+    // payment — not the public web app, which has its own /donations/:token page.
+    const adminUrl = this.config.get('app.adminUrl', 'http://localhost:3001');
+    return `${adminUrl}/donations/${token}`;
   }
 
   async generateQrDataUrl(token: string): Promise<string> {

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, ScanBarcode, CheckCircle, QrCode, Download } from 'lucide-react';
+import { Search, ScanBarcode, CheckCircle, QrCode, Download, Eye } from 'lucide-react';
 import { donationsApi } from '@/lib/api';
 import { formatCurrency, formatDate, getTranslation, STATUS_COLORS, cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/toaster';
@@ -11,7 +12,6 @@ import { DonationStatusModal } from '@/components/donations/donation-status-moda
 import { useLanguage } from '@/contexts/language-context';
 
 const statuses = ['', 'pending', 'approved', 'rejected', 'cancelled'];
-const API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:4000/api';
 
 function exportCsv(donations: any[]) {
   const headers = ['ID', 'Participant', 'Email', 'Project', 'Amount', 'Status', 'Date', 'Approved At'];
@@ -37,20 +37,6 @@ function exportCsv(donations: any[]) {
   a.download = `donations-${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-function downloadQr(token: string) {
-  const link = document.createElement('a');
-  link.href = `${API_URL}/v1/donations/${token}/qr/download`;
-  link.download = `qr-${token}.png`;
-  const accessToken = localStorage.getItem('admin_access_token') || '';
-  fetch(link.href, { headers: { Authorization: `Bearer ${accessToken}` } })
-    .then((r) => r.blob())
-    .then((blob) => {
-      link.href = URL.createObjectURL(blob);
-      link.click();
-      URL.revokeObjectURL(link.href);
-    });
 }
 
 export default function DonationsPage() {
@@ -180,6 +166,15 @@ export default function DonationsPage() {
                       <td className="table-cell text-gray-400">{formatDate(d.createdAt, locale)}</td>
                       <td className="table-cell">
                         <div className="flex gap-1.5">
+                          {d.qrToken && (
+                            <Link
+                              href={`/donations/${d.qrToken}`}
+                              className="btn btn-sm bg-gray-100 text-gray-600 hover:bg-gray-200 p-1.5 rounded-lg"
+                              title={t('donations.detail.viewTitle')}
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </Link>
+                          )}
                           {d.status === 'pending' && (
                             <button
                               onClick={() => setStatusModal({ donation: d })}
@@ -191,7 +186,7 @@ export default function DonationsPage() {
                           )}
                           {d.qrToken && (
                             <button
-                              onClick={() => downloadQr(d.qrToken)}
+                              onClick={() => donationsApi.downloadQr(d.qrToken)}
                               className="btn btn-sm bg-gray-100 text-gray-600 hover:bg-gray-200 p-1.5 rounded-lg"
                               title={t('donations.downloadQrTitle')}
                             >

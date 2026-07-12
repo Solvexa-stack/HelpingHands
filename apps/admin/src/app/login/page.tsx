@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,12 +18,19 @@ function createSchema(invalidEmail: string, passwordRequired: string) {
 
 type FormData = { email: string; password: string };
 
-export default function LoginPage() {
+function LoginForm() {
   const { t } = useLanguage();
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
+
+  // Only follow same-site relative paths — never an absolute/protocol-relative
+  // URL — so this can't be turned into an open redirect. Lets a deep link
+  // (e.g. a scanned donation QR code) land where it meant to after login.
+  const redirect = searchParams.get('redirect');
+  const redirectTo = redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/dashboard';
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(createSchema(t('loginPage.invalidEmail'), t('loginPage.passwordRequired'))),
@@ -33,7 +40,7 @@ export default function LoginPage() {
     setError('');
     try {
       await login(data.email, data.password);
-      router.push('/dashboard');
+      router.push(redirectTo);
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || t('loginPage.loginFailed'));
     }
@@ -92,5 +99,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

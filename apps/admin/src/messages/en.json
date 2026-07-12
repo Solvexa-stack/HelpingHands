@@ -245,6 +245,17 @@
       "notesPlaceholder": "Add any notes about this payment verification...",
       "reject": "Reject",
       "approve": "Approve"
+    },
+    "detail": {
+      "viewTitle": "View Details",
+      "donationNumber": "Donation #{id}",
+      "notFound": "Donation not found",
+      "information": "Donation Information",
+      "approvedBy": "Approved By",
+      "notes": "Notes",
+      "actionsHeading": "Verify Payment",
+      "pendingInstructions": "Confirm the physical payment was received before approving or rejecting this donation.",
+      "finalized": "This donation has already been processed and can no longer be modified."
     }
   },
   "projects": {

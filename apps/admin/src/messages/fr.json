@@ -245,6 +245,17 @@
       "notesPlaceholder": "Ajoutez des notes sur la vérification de ce paiement...",
       "reject": "Rejeter",
       "approve": "Approuver"
+    },
+    "detail": {
+      "viewTitle": "Voir les détails",
+      "donationNumber": "Don n°{id}",
+      "notFound": "Don introuvable",
+      "information": "Informations sur le don",
+      "approvedBy": "Approuvé par",
+      "notes": "Notes",
+      "actionsHeading": "Vérifier le paiement",
+      "pendingInstructions": "Confirmez que le paiement physique a bien été reçu avant d'approuver ou de rejeter ce don.",
+      "finalized": "Ce don a déjà été traité et ne peut plus être modifié."
     }
   },
   "projects": {

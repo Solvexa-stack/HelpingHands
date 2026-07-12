@@ -19,7 +19,7 @@ export default function OrgWorkspaceLayout({ children }: { children: React.React
 
   useEffect(() => {
     if (loading) return;
-    if (!user) router.replace('/login');
+    if (!user) router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
     // Platform users are allowed in: the Board enters any org workspace via
     // the audited switch-context. Only redirect when there is no org context
     // at all to render.
