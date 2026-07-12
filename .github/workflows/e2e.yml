@@ -7,7 +7,7 @@ name: API e2e tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, workspaceandcenterbox]
   pull_request:
 
 concurrency:

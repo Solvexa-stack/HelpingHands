@@ -1,0 +1,16 @@
+**/node_modules
+**/.next
+**/dist
+**/coverage
+**/.turbo
+.git
+.github
+.vscode
+
+# Never bake secrets into an image layer
+.env
+.env.*
+!.env.example
+
+*.log
+uploads/

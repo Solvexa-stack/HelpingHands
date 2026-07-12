@@ -5,10 +5,10 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: helping_hands
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -22,7 +22,7 @@ services:
     container_name: helping_hands_redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -30,17 +30,15 @@ services:
       retries: 5
 
   api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    image: ${IMAGE_PREFIX}-api:latest
     container_name: helping_hands_api
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/helping_hands?schema=public
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/helping_hands?schema=public
       REDIS_HOST: redis
     ports:
-      - "4000:4000"
+      - "127.0.0.1:4000:4000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,28 +46,24 @@ services:
       - uploads:/app/uploads
 
   web:
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
+    image: ${IMAGE_PREFIX}-web:latest
     container_name: helping_hands_web
     restart: unless-stopped
     env_file: .env
     environment:
       INTERNAL_API_URL: http://api:4000/api
     ports:
-      - "3200:3200"
+      - "127.0.0.1:3200:3200"
     depends_on:
       - api
 
   admin:
-    build:
-      context: .
-      dockerfile: apps/admin/Dockerfile
+    image: ${IMAGE_PREFIX}-admin:latest
     container_name: helping_hands_admin
     restart: unless-stopped
     env_file: .env
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     depends_on:
       - api
 
