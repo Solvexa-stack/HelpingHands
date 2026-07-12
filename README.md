@@ -2,7 +2,7 @@
 
 > A full-stack platform for managing donation-based projects where online payment gateways are unavailable. Participants create donation requests, physical money is delivered to employees who verify via QR code.
 
-
+dfdfsfdsf
 
 ## Tech Stack
 
