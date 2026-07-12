@@ -10,6 +10,7 @@ const ALLOWLIST = [
   /tenancy\.repository\.ts$/,
   /projects\.service\.ts$/, // routes list reads through enforcedProjectWhere
   /fk-consistency\.service\.ts$/,
+  /transparency-read\.service\.ts$/, // @Public() platform-wide aggregates — scoping would hide totals from visitors
   /\.spec\.ts$/,
 ];
 

@@ -3,6 +3,7 @@ import { Fund, Prisma } from '@prisma/client';
 import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TenancyRepository } from '../policy/tenancy.repository';
 import { TreasuryService } from '../treasury/treasury.service';
 
 export interface FundTreeNode extends Fund {
@@ -34,6 +35,7 @@ export class FundHierarchyService {
     private prisma: PrismaService,
     private eventBus: EventBusService,
     private treasury: TreasuryService,
+    private tenancy: TenancyRepository,
   ) {}
 
   /** The category's master fund, creating it (and any ancestor master funds) on first use. */
@@ -114,15 +116,16 @@ export class FundHierarchyService {
    */
   async tree(): Promise<{ roots: FundTreeNode[]; unattached: FundTreeNode[] }> {
     const funds = await this.prisma.fund.findMany({ where: { deletedAt: null }, orderBy: { id: 'asc' } });
-    const projects = await this.prisma.project.findMany({
-      where: { primaryFundId: { not: null }, deletedAt: null },
-      select: {
+    const projects = await this.tenancy.findProjects(
+      { primaryFundId: { not: null }, deletedAt: null },
+      {
         id: true,
         primaryFundId: true,
         value: true,
         block: { include: { translations: { take: 1 } } },
       },
-    });
+      'fund.tree',
+    );
 
     const withBalances = await Promise.all(
       funds.map(async (fund) => ({ ...fund, balance: await this.fundBalance(fund.id), children: [], projects: [] }) as FundTreeNode),

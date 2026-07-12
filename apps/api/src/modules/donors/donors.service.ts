@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TenancyRepository } from '../policy/tenancy.repository';
 import { CreateDonorDto, UpdateDonorDto } from './dto/donor.dto';
 
 @Injectable()
@@ -9,6 +10,7 @@ export class DonorsService {
   constructor(
     private prisma: PrismaService,
     private eventBus: EventBusService,
+    private tenancy: TenancyRepository,
   ) {}
 
   private async assertParticipantExists(participantId?: number) {
@@ -148,10 +150,11 @@ export class DonorsService {
     const fundedProjectIds = [...new Set(allocations.map((a) => a.projectId))];
 
     const projectOwners = fundedProjectIds.length
-      ? await this.prisma.project.findMany({
-          where: { id: { in: fundedProjectIds } },
-          select: { ownerOrganization: { select: { id: true, name: true } } },
-        })
+      ? await this.tenancy.findProjects(
+          { id: { in: fundedProjectIds } },
+          { ownerOrganization: { select: { id: true, name: true } } },
+          'donor.report',
+        )
       : [];
     const fundedOrganizations = [
       ...new Map(

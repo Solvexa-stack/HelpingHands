@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { ActorContextService } from '../../events/actor-context.storage';
 import { EventBusService } from '../../events/event-bus.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -116,6 +117,23 @@ export class TenancyRepository {
     }
     // Cross-org access reads as nonexistence — no information leak
     throw new NotFoundException(`Project #${projectId} not found`);
+  }
+
+  /**
+   * Scoped project list read for callers outside projects.service.ts — the
+   * only sanctioned way to reach `prisma.project.findMany` (W2-E3-S3 lint).
+   */
+  async findProjects<S extends Prisma.ProjectSelect>(
+    where: Prisma.ProjectWhereInput,
+    select: S,
+    auditSubject: string,
+  ): Promise<Array<Prisma.ProjectGetPayload<{ select: S }>>> {
+    return this.prisma.project.findMany({ where: await this.enforcedProjectWhere(where, auditSubject), select });
+  }
+
+  /** Scoped project count read — see findProjects. */
+  async countProjects(where: Prisma.ProjectWhereInput, auditSubject: string): Promise<number> {
+    return this.prisma.project.count({ where: await this.enforcedProjectWhere(where, auditSubject) });
   }
 
   /** Projects this user is individually admitted to (W6-E5 project-scope grants). */

@@ -10,6 +10,7 @@ import { ActorContext } from '../../events/actor-context';
 import { EventBusService } from '../../events/event-bus.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PolicyService } from '../policy/policy.service';
+import { TenancyRepository } from '../policy/tenancy.repository';
 import { TreasuryService } from '../treasury/treasury.service';
 import { WorkflowService } from '../workflow/workflow.service';
 import { ReportingObligationsService } from '../org-reporting/reporting-obligations.service';
@@ -37,6 +38,7 @@ export class FundsService {
     private reportingObligations: ReportingObligationsService,
     private fundHierarchy: FundHierarchyService,
     private policy: PolicyService,
+    private tenancy: TenancyRepository,
   ) {}
 
   // ─── Fund CRUD (Board) ───────────────────────────────────────────────────────
@@ -490,10 +492,11 @@ export class FundsService {
     // Fund → active projects"). Separate from `spendByProject` above, which
     // is allocation-derived and includes projects funded by co-financing
     // from OTHER funds too.
-    const defaultFundProjects = await this.prisma.project.findMany({
-      where: { primaryFundId: fundId, deletedAt: null },
-      select: { id: true, value: true, isCompleted: true, block: { include: { translations: { take: 1 } } } },
-    });
+    const defaultFundProjects = await this.tenancy.findProjects(
+      { primaryFundId: fundId, deletedAt: null },
+      { id: true, value: true, isCompleted: true, block: { include: { translations: { take: 1 } } } },
+      'fund.report',
+    );
 
     return {
       fund: { id: fund.id, name: fund.name, type: fund.type, status: fund.status, policy: fund.policy },
