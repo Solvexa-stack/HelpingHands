@@ -151,7 +151,7 @@ jobs:
             echo "Running migrations..."
 
             docker compose -f docker-compose.prod.yml exec -T api \
-              pnpm --dir packages/database db:migrate
+              ./apps/api/node_modules/.bin/prisma migrate deploy --schema packages/database/prisma/schema.prisma
 
 
 
