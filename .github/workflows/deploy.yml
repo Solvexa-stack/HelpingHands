@@ -66,9 +66,11 @@ jobs:
 
       - name: Build and Push
         uses: docker/build-push-action@v6
+
         with:
           context: .
           file: apps/${{ matrix.app }}/Dockerfile
+
           push: true
 
           build-args: ${{ matrix.build_args }}
@@ -79,6 +81,7 @@ jobs:
 
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
 
 
 
@@ -98,14 +101,18 @@ jobs:
         with:
 
           host: ${{ secrets.VPS_HOST }}
+
           username: ${{ secrets.VPS_USER }}
+
           key: ${{ secrets.VPS_SSH_KEY }}
+
           port: ${{ secrets.VPS_SSH_PORT || 22 }}
 
 
           script: |
 
             set -e
+
 
             cd /var/www/HelpingHands
 
@@ -115,29 +122,44 @@ jobs:
             docker compose -f docker-compose.prod.yml pull
 
 
-            echo "Apply database migrations"
 
-            docker compose -f docker-compose.prod.yml run --rm api \
+            echo "Running database migrations"
+
+            docker compose -f docker-compose.prod.yml exec -T api \
             ./apps/api/node_modules/.bin/prisma migrate deploy \
             --schema packages/database/prisma/schema.prisma
 
 
-            echo "Restart services"
+
+            echo "Restarting application services"
 
             docker compose -f docker-compose.prod.yml up -d \
             --remove-orphans
 
 
-            echo "Health check"
+
+            echo "Waiting for services"
 
             sleep 15
+
+
+
+            echo "Container status"
 
             docker ps
 
 
-            echo "Cleanup"
+
+            echo "API health check"
+
+            curl -f http://127.0.0.1:4000/api/health || exit 1
+
+
+
+            echo "Cleaning unused images"
 
             docker image prune -f
 
 
-            echo "Deployment completed"
+
+            echo "Deployment completed successfully"

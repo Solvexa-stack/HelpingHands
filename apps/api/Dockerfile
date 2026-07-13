@@ -41,6 +41,15 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
 COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
+# packages/database's own package.json + node_modules + tsconfig — not just
+# its prisma/ folder — so `pnpm --filter @helping-hands/database db:seed*`
+# (ts-node against the raw .ts seeds, e.g. for the demo-data seed) resolves
+# its devDependencies (ts-node, bcryptjs, @prisma/client) and compiler
+# options correctly when run inside this image; prisma/ alone is only
+# enough for `prisma migrate deploy`.
+COPY --from=builder /app/packages/database/package.json ./packages/database/package.json
+COPY --from=builder /app/packages/database/node_modules ./packages/database/node_modules
+COPY --from=builder /app/packages/database/tsconfig.json ./packages/database/tsconfig.json
 COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
 RUN mkdir -p uploads && chown -R nestjs:nodejs uploads
 COPY apps/api/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

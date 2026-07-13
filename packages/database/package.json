@@ -9,6 +9,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "ts-node prisma/seed.ts",
+    "db:seed:demo": "ts-node prisma/seed-demo.ts",
     "db:reset": "prisma migrate reset --force",
     "studio": "prisma studio",
     "build": "tsc",
