@@ -118,7 +118,7 @@ jobs:
             echo "Apply database migrations"
 
             docker compose -f docker-compose.prod.yml run --rm api \
-            pnpm prisma migrate deploy \
+            ./apps/api/node_modules/.bin/prisma migrate deploy \
             --schema packages/database/prisma/schema.prisma
 
 
