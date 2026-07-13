@@ -34,7 +34,7 @@ export default async function AboutPage({ params: { locale } }: Props) {
       {/* Hero */}
       <section className="bg-gradient-to-br from-brand to-brand-light text-white py-20">
         <div className="container max-w-3xl text-center">
-          <h1 className="text-5xl font-extrabold mb-6">{t('hero.title')}</h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-6">{t('hero.title')}</h1>
           <p className="text-blue-100 text-xl leading-relaxed">{t('hero.subtitle')}</p>
         </div>
       </section>

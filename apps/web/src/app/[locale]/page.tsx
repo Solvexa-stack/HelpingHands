@@ -49,7 +49,7 @@ export default async function HomePage({ params: { locale } }: { params: { local
               <Heart className="w-3.5 h-3.5 fill-current" />
               <span>Making the world a better place</span>
             </div>
-            <h1 className="text-5xl lg:text-6xl font-extrabold mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold mb-6 leading-tight">
               {t('hero.title')}
             </h1>
             <p className="text-xl text-blue-100 mb-8 leading-relaxed max-w-2xl">

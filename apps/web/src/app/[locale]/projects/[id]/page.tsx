@@ -125,17 +125,17 @@ export default async function ProjectDetailPage({ params: { locale, id } }: Prop
 
                 <ProgressBar value={progression} size="lg" showLabel />
 
-                <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4 pt-4 border-t border-gray-100">
                   <div className="text-center">
-                    <p className="text-2xl font-extrabold text-primary-600">{formatCurrency(project.collectedAmount || 0, undefined, locale)}</p>
+                    <p className="text-base sm:text-2xl font-extrabold text-primary-600 break-words">{formatCurrency(project.collectedAmount || 0, undefined, locale)}</p>
                     <p className="text-xs text-gray-400 mt-1">{t('collected')}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-extrabold text-gray-800">{formatCurrency(Number(project.value), undefined, locale)}</p>
+                    <p className="text-base sm:text-2xl font-extrabold text-gray-800 break-words">{formatCurrency(Number(project.value), undefined, locale)}</p>
                     <p className="text-xs text-gray-400 mt-1">{t('target')}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-extrabold text-gray-800">{project._count?.donations || 0}</p>
+                    <p className="text-base sm:text-2xl font-extrabold text-gray-800">{project._count?.donations || 0}</p>
                     <p className="text-xs text-gray-400 mt-1">{t('donationsCount')}</p>
                   </div>
                 </div>

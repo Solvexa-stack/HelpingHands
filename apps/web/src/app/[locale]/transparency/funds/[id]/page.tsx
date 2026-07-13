@@ -50,10 +50,10 @@ export default async function FundTransparencyPage({ params: { locale, id } }: P
         </nav>
 
         <div className="card p-6">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-extrabold text-gray-900 flex items-center gap-2">
-                <Banknote className="w-6 h-6 text-primary-600" /> {fund.name}
+                <Banknote className="w-6 h-6 text-primary-600 flex-shrink-0" /> {fund.name}
               </h1>
               {fund.purpose && <p className="text-gray-500 mt-1">{fund.purpose}</p>}
               <p className="text-xs text-gray-400 mt-1">
@@ -62,7 +62,7 @@ export default async function FundTransparencyPage({ params: { locale, id } }: P
             </div>
             <a
               href={`${apiBase}/v1/transparency/exports/funds/${fund.id}/statement.csv`}
-              className="btn-primary text-sm py-2 px-3 inline-flex items-center gap-1.5 whitespace-nowrap"
+              className="btn-primary text-sm py-2 px-3 inline-flex items-center gap-1.5 whitespace-nowrap self-start"
             >
               <Download className="w-4 h-4" /> {t('downloadStatement')}
             </a>

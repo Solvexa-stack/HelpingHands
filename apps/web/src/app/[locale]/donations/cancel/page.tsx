@@ -23,7 +23,7 @@ export default function PaymentCancelPage() {
           <p className="text-gray-500 mt-1 text-sm">{t('message')}</p>
         </div>
 
-        <div className="flex gap-3 justify-center pt-2">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
           {projectId ? (
             <Link
               href={`/${locale}/projects/${projectId}`}

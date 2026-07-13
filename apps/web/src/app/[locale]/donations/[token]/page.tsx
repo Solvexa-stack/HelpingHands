@@ -49,24 +49,26 @@ export default async function DonationVerifyPage({ params: { locale, token } }: 
         <div className="card p-6 space-y-4">
           <h2 className="font-bold text-gray-900 text-lg">{t('verify.detailsHeading')}</h2>
 
-          <table className="w-full text-sm">
-            <tbody className="divide-y divide-gray-100">
-              {[
-                [t('fields.participant'), `${donation.participant?.firstName} ${donation.participant?.lastName}`],
-                [t('fields.project'), translation?.name || tCommon('notAvailable')],
-                [t('fields.amount'), formatCurrency(Number(donation.amount), undefined, locale)],
-                [t('fields.date'), formatDate(donation.createdAt, locale)],
-                [t('fields.status'), donation.status],
-                ...(donation.approvedAt ? [[t('fields.approvedAt'), formatDate(donation.approvedAt, locale)]] : []),
-                ...(donation.notes ? [[t('fields.notes'), donation.notes]] : []),
-              ].map(([label, value]) => (
-                <tr key={label} className="py-2">
-                  <td className="py-2.5 text-gray-500 font-medium w-32">{label}</td>
-                  <td className="py-2.5 text-gray-900 font-semibold capitalize">{value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-gray-100">
+                {[
+                  [t('fields.participant'), `${donation.participant?.firstName} ${donation.participant?.lastName}`],
+                  [t('fields.project'), translation?.name || tCommon('notAvailable')],
+                  [t('fields.amount'), formatCurrency(Number(donation.amount), undefined, locale)],
+                  [t('fields.date'), formatDate(donation.createdAt, locale)],
+                  [t('fields.status'), donation.status],
+                  ...(donation.approvedAt ? [[t('fields.approvedAt'), formatDate(donation.approvedAt, locale)]] : []),
+                  ...(donation.notes ? [[t('fields.notes'), donation.notes]] : []),
+                ].map(([label, value]) => (
+                  <tr key={label} className="py-2">
+                    <td className="py-2.5 text-gray-500 font-medium w-28 sm:w-32 align-top">{label}</td>
+                    <td className="py-2.5 text-gray-900 font-semibold capitalize break-words">{value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {donation.status === 'pending' && (
             <div className="pt-4 space-y-3">

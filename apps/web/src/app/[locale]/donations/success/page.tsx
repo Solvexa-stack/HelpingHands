@@ -52,7 +52,7 @@ export default function PaymentSuccessPage() {
           <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto" />
           <h1 className="text-xl font-bold text-gray-900">{t('verifyFailedTitle')}</h1>
           <p className="text-gray-500 text-sm">{error || t('unknownStatus')}</p>
-          <div className="flex gap-3 justify-center pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
             <Link href={`/${locale}/dashboard`} className="btn-primary text-sm py-2 px-5">
               {t('viewDashboard')}
             </Link>
@@ -110,7 +110,7 @@ export default function PaymentSuccessPage() {
 
         <p className="text-xs text-gray-400">{t('emailSent')}</p>
 
-        <div className="flex gap-3 justify-center pt-2">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
           <Link href={`/${locale}/dashboard`} className="btn-primary text-sm py-2 px-5">
             {t('viewDonations')} →
           </Link>

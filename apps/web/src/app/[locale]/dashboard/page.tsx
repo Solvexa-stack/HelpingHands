@@ -85,7 +85,7 @@ function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute end-0 top-full mt-2 w-80 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden">
+        <div className="absolute end-0 top-full mt-2 w-[calc(100vw-2rem)] max-w-80 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <h3 className="font-semibold text-gray-900 text-sm">{tNotif('title')}</h3>
             {unread > 0 && <span className="badge bg-red-100 text-red-600 text-xs">{tNotif('newCount', { count: unread })}</span>}
@@ -237,12 +237,12 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container max-w-5xl">
         {/* Header */}
-        <div className="flex items-start justify-between mb-8 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-8 gap-4">
           <div>
             <h1 className="text-2xl font-extrabold text-gray-900">{t('welcome', { name })}</h1>
             <p className="text-gray-500 mt-1">{email}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center flex-wrap gap-2">
             <NotificationBell />
             <Link href={`/${locale}/dashboard/profile`} className="btn-secondary text-sm py-2 px-4 flex items-center gap-2">
               <User className="w-4 h-4" /> {t('profile')}
@@ -267,13 +267,13 @@ export default function DashboardPage() {
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 flex gap-1 mb-6">
+        <div className="border-b border-gray-200 flex gap-1 mb-6 overflow-x-auto">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
               className={cn(
-                'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-1.5',
+                'px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-1.5 whitespace-nowrap flex-shrink-0',
                 tab === id
                   ? 'border-primary-600 text-primary-700'
                   : 'border-transparent text-gray-500 hover:text-gray-800',

@@ -90,7 +90,7 @@ export default function ProfilePage() {
           <div className="card p-6 space-y-5">
             <h2 className="font-semibold text-gray-900">{t('profilePage.personalInfo')}</h2>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">{tAuth('firstName')}</label>
                 <input
