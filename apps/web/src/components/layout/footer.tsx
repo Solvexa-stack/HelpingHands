@@ -70,11 +70,12 @@ export function Footer() {
       <div className="border-t border-blue-800">
         <div className="container py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-blue-300 text-sm">
-            © {year} HelpingHands. All rights reserved.
+            © {year} HelpingHands. All rights reserved. 
           </p>
           <div className="flex gap-4">
             <Link href="/privacy" className="text-blue-300 hover:text-white text-sm transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="text-blue-300 hover:text-white text-sm transition-colors">Terms of Service</Link>
+            <Link href="/terms" className="text-blue-300 hover:text-white text-sm transition-colors">Created by : Tarek Zain Aldin Feras Masoud</Link>
           </div>
         </div>
       </div>
