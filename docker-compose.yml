@@ -33,6 +33,7 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+      target: dev
     container_name: helping_hands_api
     restart: unless-stopped
     env_file: .env
@@ -44,16 +45,33 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/api/health"]
+      interval: 15s
+      timeout: 5s
+      start_period: 40s
+      retries: 5
     volumes:
+      # Live source for hot reload (apps/api/Dockerfile `dev` stage runs
+      # `nest start --watch`). The anonymous volumes below sit on top of the
+      # bind mount so the container keeps its own installed node_modules /
+      # generated Prisma client instead of the host's (likely absent or
+      # stale) node_modules shadowing them.
+      - .:/app
+      - /app/node_modules
+      - /app/apps/api/node_modules
+      - /app/apps/web/node_modules
+      - /app/apps/admin/node_modules
+      - /app/packages/database/node_modules
       - uploads:/app/uploads
 
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      target: dev
     container_name: helping_hands_web
     restart: unless-stopped
     env_file: .env
@@ -62,22 +80,48 @@ services:
     ports:
       - "3200:3200"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3200/"]
+      interval: 15s
+      timeout: 5s
+      start_period: 40s
+      retries: 5
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/api/node_modules
+      - /app/apps/web/node_modules
+      - /app/apps/admin/node_modules
+      - /app/packages/database/node_modules
 
   admin:
     build:
       context: .
       dockerfile: apps/admin/Dockerfile
-      args:
-        NEXT_PUBLIC_ADMIN_API_URL: ${NEXT_PUBLIC_ADMIN_API_URL}
-        NEXT_PUBLIC_WEB_URL: ${NEXT_PUBLIC_WEB_URL}
+      target: dev
     container_name: helping_hands_admin
     restart: unless-stopped
     env_file: .env
     ports:
       - "3001:3001"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/"]
+      interval: 15s
+      timeout: 5s
+      start_period: 40s
+      retries: 5
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/api/node_modules
+      - /app/apps/web/node_modules
+      - /app/apps/admin/node_modules
+      - /app/packages/database/node_modules
 
 volumes:
   pgdata:

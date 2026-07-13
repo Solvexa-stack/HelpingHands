@@ -8,6 +8,18 @@ COPY apps/web/package.json ./apps/web/
 COPY packages/database/package.json ./packages/database/
 RUN pnpm install --frozen-lockfile
 
+# ── Development ───────────────────────────────────────────────────────────
+# Used by docker-compose.yml (build target: dev). Source is bind-mounted at
+# runtime; node_modules here come from the `deps` layer via anonymous
+# volumes in docker-compose.yml. `next dev` reads NEXT_PUBLIC_* from the
+# running process env, so no build-time ARGs are needed here (unlike
+# `builder` below, which inlines them into the static production bundle).
+FROM deps AS dev
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+EXPOSE 3200
+CMD ["pnpm", "--filter", "@helping-hands/web", "dev"]
+
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
@@ -35,4 +47,6 @@ USER nextjs
 EXPOSE 3200
 ENV PORT=3200
 ENV HOSTNAME=0.0.0.0
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:3200/ || exit 1
 CMD ["node", "apps/web/server.js"]

@@ -4,6 +4,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bull';
 import configuration from './config/configuration';
+import { HealthModule } from './health/health.module';
 import { EventsModule } from './events/events.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { PolicyModule } from './modules/policy/policy.module';
@@ -63,6 +64,7 @@ import { FundHierarchyModule } from './modules/fund-hierarchy/fund-hierarchy.mod
       }),
       inject: [ConfigService],
     }),
+    HealthModule,
     EventsModule,
     AuditModule,
     PolicyModule,
