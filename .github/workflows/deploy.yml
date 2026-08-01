@@ -129,7 +129,9 @@ jobs:
             ./apps/api/node_modules/.bin/prisma migrate deploy \
             --schema packages/database/prisma/schema.prisma
 
-
+          # IMPORTANT:
+          # Do NOT run db:seed or db:seed:demo here.
+          # Production deployment must never recreate demo data.
 
             echo "Restarting application services"
 
