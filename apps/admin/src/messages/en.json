@@ -184,7 +184,8 @@
     "retry": "Retry",
     "none": "None",
     "confirmDeleteGeneric": "Are you sure you want to delete this?",
-    "confirmAction": "Are you sure?"
+    "confirmAction": "Are you sure?",
+    "optional": "optional"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1151,7 +1152,11 @@
       "sizeHint": "PNG, JPG, WEBP up to 10MB",
       "pastePlaceholder": "Or paste an image URL...",
       "pastePlaceholderNoUpload": "Paste an image URL (file upload available after saving)",
-      "saveFirstHint": "Save the record first to enable drag & drop file upload."
+      "saveFirstHint": "Save the record first to enable drag & drop file upload.",
+      "tooLarge": "Image must be smaller than {size}MB",
+      "pendingUpload": "Pending — uploads when you save",
+      "replace": "Replace",
+      "remove": "Remove"
     }
   },
   "languagesPage": {
@@ -1271,7 +1276,11 @@
       "created": "Project created",
       "createFailed": "Failed to create project",
       "updated": "Project updated",
-      "updateFailed": "Failed to update project"
+      "updateFailed": "Failed to update project",
+      "imageUploadSkipped": "Project saved, but the cover image could not be uploaded. You can add it from the edit page.",
+      "englishRequired": "Fill in the English title, slug, brief and description before saving.",
+      "incompleteLang": "Complete or clear the {langs} tab — title, slug, brief and description are all required.",
+      "missingBasics": "Choose a category and enter a target amount."
     }
   },
   "categoryPicker": {

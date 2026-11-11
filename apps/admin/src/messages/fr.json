@@ -184,7 +184,8 @@
     "retry": "Réessayer",
     "none": "Aucun",
     "confirmDeleteGeneric": "Voulez-vous vraiment supprimer cet élément ?",
-    "confirmAction": "Êtes-vous sûr ?"
+    "confirmAction": "Êtes-vous sûr ?",
+    "optional": "optionnel"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -1151,7 +1152,11 @@
       "sizeHint": "PNG, JPG, WEBP jusqu'à 10 Mo",
       "pastePlaceholder": "Ou collez une URL d'image...",
       "pastePlaceholderNoUpload": "Collez une URL d'image (le téléversement de fichier sera disponible après l'enregistrement)",
-      "saveFirstHint": "Enregistrez d'abord la fiche pour activer le glisser-déposer de fichiers."
+      "saveFirstHint": "Enregistrez d'abord la fiche pour activer le glisser-déposer de fichiers.",
+      "tooLarge": "L'image doit faire moins de {size} Mo",
+      "pendingUpload": "En attente — sera téléversée à l'enregistrement",
+      "replace": "Remplacer",
+      "remove": "Supprimer"
     }
   },
   "languagesPage": {
@@ -1271,7 +1276,11 @@
       "created": "Projet créé",
       "createFailed": "Échec de la création du projet",
       "updated": "Projet mis à jour",
-      "updateFailed": "Échec de la mise à jour du projet"
+      "updateFailed": "Échec de la mise à jour du projet",
+      "imageUploadSkipped": "Projet enregistré, mais l'image de couverture n'a pas pu être téléversée. Vous pouvez l'ajouter depuis la page de modification.",
+      "englishRequired": "Renseignez le titre, le slug, le résumé et la description en anglais avant d'enregistrer.",
+      "incompleteLang": "Complétez ou videz l'onglet {langs} — titre, slug, résumé et description sont tous requis.",
+      "missingBasics": "Choisissez une catégorie et saisissez un montant cible."
     }
   },
   "categoryPicker": {

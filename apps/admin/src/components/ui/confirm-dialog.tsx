@@ -11,9 +11,11 @@ interface Props {
   onCancel: () => void;
   loading?: boolean;
   danger?: boolean;
+  /** Inline error (e.g. a 409 explaining why the action was refused). */
+  error?: string;
 }
 
-export function ConfirmDialog({ title, message, onConfirm, onCancel, loading, danger }: Props) {
+export function ConfirmDialog({ title, message, onConfirm, onCancel, loading, danger, error }: Props) {
   const { t } = useLanguage();
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -24,6 +26,11 @@ export function ConfirmDialog({ title, message, onConfirm, onCancel, loading, da
           </div>
           <h3 className="font-bold text-gray-900 text-lg mb-2">{title}</h3>
           <p className="text-gray-500 text-sm leading-relaxed">{message}</p>
+          {error && (
+            <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
         </div>
         <div className="flex gap-3 p-6 pt-0">
           <button onClick={onCancel} className="flex-1 btn-secondary btn-md">{t('common.cancel')}</button>

@@ -17,6 +17,11 @@ function slugify(text: string) {
   return text.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
+function isBlank(value?: string) {
+  if (!value) return true;
+  return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim().length === 0;
+}
+
 export default function EditProjectPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { t } = useLanguage();
@@ -84,7 +89,9 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
     mutationFn: async () => {
       if (blockId) {
         await blocksApi.update(blockId, {
-          translations: LANGS.map((l) => ({ languageCode: l.code, ...translations[l.code] })).filter((tr) => tr.name),
+          translations: LANGS
+            .map((l) => ({ languageCode: l.code, ...translations[l.code] }))
+            .filter((tr) => tr.name && tr.slug && !isBlank(tr.brief) && !isBlank(tr.description)),
         });
       }
       return projectsApi.update(Number(params.id), {
@@ -105,6 +112,26 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
       ...prev,
       [lang]: { ...prev[lang], [field]: value, ...(field === 'name' && lang === 'en' ? { slug: slugify(value) } : {}) },
     }));
+  };
+
+  const handleSubmit = () => {
+    const en = translations.en;
+    if (!en.name || !en.slug || isBlank(en.brief) || isBlank(en.description)) {
+      toastError(t('projectForm.toast.englishRequired'));
+      return;
+    }
+    const incomplete = LANGS.filter((l) => {
+      if (l.code === 'en') return false;
+      const tv = translations[l.code];
+      const started = tv.name || tv.slug || !isBlank(tv.brief) || !isBlank(tv.description);
+      const complete = tv.name && tv.slug && !isBlank(tv.brief) && !isBlank(tv.description);
+      return started && !complete;
+    });
+    if (incomplete.length) {
+      toastError(t('projectForm.toast.incompleteLang', { langs: incomplete.map((l) => l.label).join(', ') }));
+      return;
+    }
+    mutation.mutate();
   };
 
   if (!ready) return <div className="flex items-center justify-center py-20 text-gray-400">{t('common.loading')}</div>;
@@ -207,7 +234,7 @@ export default function EditProjectPage({ params }: { params: { id: string } }) 
 
       <div className="flex justify-end gap-3">
         <Link href="/projects" className="btn-secondary btn-md">{t('common.cancel')}</Link>
-        <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !translations.en.name || !project.value}
+        <button onClick={handleSubmit} disabled={mutation.isPending || !translations.en.name || !project.value}
           className="btn-primary btn-md gap-2">
           {mutation.isPending ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Save className="w-4 h-4" />}
           {t('common.save')}

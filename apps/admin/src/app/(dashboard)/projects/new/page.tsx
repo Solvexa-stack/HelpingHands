@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
-import { blocksApi, projectsApi, adminsApi } from '@/lib/api';
+import { blocksApi, projectsApi, adminsApi, filesApi } from '@/lib/api';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/components/ui/toaster';
 import { ImageUpload } from '@/components/ui/image-upload';
@@ -16,6 +16,14 @@ import { useLanguage } from '@/contexts/language-context';
 
 function slugify(text: string) {
   return text.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
+// The blocks API requires every submitted translation to have a non-empty
+// name, slug, brief AND description. Rich-text can be "visually empty"
+// (<p></p>), so strip markup/whitespace before judging emptiness.
+function isBlank(value?: string) {
+  if (!value) return true;
+  return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim().length === 0;
 }
 
 export default function NewProjectPage() {
@@ -47,6 +55,10 @@ export default function NewProjectPage() {
     imageUrl: '',
   });
 
+  // Cover image is OPTIONAL and the project record does not exist yet, so the
+  // picked file is held here and uploaded right after the block is created.
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+
   const { data: officers } = useQuery({
     queryKey: ['financial-officers'],
     queryFn: adminsApi.financialOfficers,
@@ -57,11 +69,34 @@ export default function NewProjectPage() {
 
   const mutation = useMutation({
     mutationFn: async () => {
+      // Only send fully-complete translations — a half-filled language is
+      // rejected by the API (name/slug/brief/description are all required).
+      const payloadTranslations = LANGS
+        .map((l) => ({ languageCode: l.code, ...translations[l.code] }))
+        .filter((tr) => tr.name && tr.slug && !isBlank(tr.brief) && !isBlank(tr.description));
+
       const block = await blocksApi.create({
         category: 'project',
-        imageUrl: project.imageUrl || undefined,
-        translations: LANGS.map((l) => ({ languageCode: l.code, ...translations[l.code] })).filter((tr) => tr.name),
+        translations: payloadTranslations,
       });
+
+      // Cover image is optional and uploaded only after the block exists.
+      // A failure here must not lose the project the user just created.
+      if (coverFile) {
+        try {
+          const form = new FormData();
+          form.append('file', coverFile);
+          form.append('referenceId', String(block.id));
+          form.append('referenceType', 'block');
+          form.append('fileType', 'image');
+          form.append('isCover', 'true');
+          const uploaded = await filesApi.upload(form);
+          await blocksApi.update(block.id, { imageUrl: uploaded.url });
+        } catch {
+          toastError(t('projectForm.toast.imageUploadSkipped'));
+        }
+      }
+
       return projectsApi.create({
         blockId: block.id,
         categoryId: Number(project.categoryId),
@@ -94,6 +129,31 @@ export default function NewProjectPage() {
     }));
   };
 
+  const handleSubmit = () => {
+    const en = translations.en;
+    if (!en.name || !en.slug || isBlank(en.brief) || isBlank(en.description)) {
+      toastError(t('projectForm.toast.englishRequired'));
+      return;
+    }
+    // A started-but-incomplete second language would 400 the whole request.
+    const incomplete = LANGS.filter((l) => {
+      if (l.code === 'en') return false;
+      const tv = translations[l.code];
+      const started = tv.name || tv.slug || !isBlank(tv.brief) || !isBlank(tv.description);
+      const complete = tv.name && tv.slug && !isBlank(tv.brief) && !isBlank(tv.description);
+      return started && !complete;
+    });
+    if (incomplete.length) {
+      toastError(t('projectForm.toast.incompleteLang', { langs: incomplete.map((l) => l.label).join(', ') }));
+      return;
+    }
+    if (!project.value || !project.categoryId) {
+      toastError(t('projectForm.toast.missingBasics'));
+      return;
+    }
+    mutation.mutate();
+  };
+
   return (
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center gap-3">
@@ -104,8 +164,13 @@ export default function NewProjectPage() {
       <div className="card p-6 space-y-6">
         <h2 className="font-semibold text-gray-900">{t('blockForm.contentTranslations')}</h2>
         <div>
-          <label className="label">{t('projectForm.coverImageLabel')}</label>
-          <ImageUpload value={project.imageUrl} onChange={(url) => setProject({ ...project, imageUrl: url })} referenceType="block" />
+          <label className="label">{t('projectForm.coverImageLabel')} <span className="text-gray-400 font-normal">({t('common.optional')})</span></label>
+          <ImageUpload
+            value={project.imageUrl}
+            onChange={(url) => setProject({ ...project, imageUrl: url })}
+            onFileSelect={setCoverFile}
+            referenceType="block"
+          />
         </div>
 
         {/* Lang tabs */}
@@ -201,7 +266,7 @@ export default function NewProjectPage() {
 
       <div className="flex justify-end gap-3">
         <Link href="/projects" className="btn-secondary btn-md">{t('common.cancel')}</Link>
-        <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !translations.en.name || !project.value || !project.categoryId}
+        <button onClick={handleSubmit} disabled={mutation.isPending || !translations.en.name || !project.value || !project.categoryId}
           className="btn-primary btn-md gap-2">
           {mutation.isPending ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Save className="w-4 h-4" />}
           {t('projectForm.createProject')}

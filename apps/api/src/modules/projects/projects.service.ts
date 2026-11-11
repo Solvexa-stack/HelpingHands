@@ -3,10 +3,11 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateProjectDto, UpdateProjectDto, ProjectQueryDto } from './dto/project.dto';
-import { AdminRole } from '@prisma/client';
+import { AdminRole, Prisma } from '@prisma/client';
 import { paginate, paginatedResponse } from '../../common/dto/pagination.dto';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ActorContext } from '../../events/actor-context';
@@ -376,17 +377,84 @@ export class ProjectsService {
 
   async remove(actor: ActorContext, id: number) {
     await this.tenancy.assertProjectVisible(id); // W2 isolation: writes are org-scoped too
-    const project = await this.prisma.project.findUnique({ where: { id } });
-    if (!project) throw new NotFoundException(`Project #${id} not found`);
-    // W4: the lifecycle instance is part of the aggregate
-    const instance = await this.prisma.workflowInstance.findUnique({
-      where: { subjectType_subjectId: { subjectType: 'project', subjectId: id } },
+
+    // Every relation below is onDelete: Restrict (studies, donations, fund
+    // allocations, expenses, participations, org reports, and the execution/
+    // budget ledger). Deleting a project that still has any of these used to
+    // raise a raw Prisma P2003 → a bare 500 for the client. We instead count
+    // the dependents up front and refuse with a readable 409 naming them, and
+    // we NEVER cascade-delete studies or financial records.
+    const project = await this.prisma.project.findUnique({
+      where: { id },
+      include: {
+        study: { select: { id: true } },
+        _count: {
+          select: {
+            donations: true,
+            onlineDonations: true,
+            allocations: true,
+            expenses: true,
+            participations: true,
+            orgReports: true,
+            stepsRef: true,
+            phasesRef: true,
+            tasksRef: true,
+            budgetsRef: true,
+            expensesRef: true,
+            transactionsRef: true,
+            milestonesRef: true,
+          },
+        },
+      },
     });
-    if (instance) {
-      await this.prisma.workflowStepLog.deleteMany({ where: { instanceId: instance.id } });
-      await this.prisma.workflowInstance.delete({ where: { id: instance.id } });
+    if (!project) throw new NotFoundException(`Project #${id} not found`);
+
+    const c = project._count;
+    const blockers: string[] = [];
+    if (project.study) blockers.push('a feasibility study');
+    if (c.donations) blockers.push(`${c.donations} cash donation(s)`);
+    if (c.onlineDonations) blockers.push(`${c.onlineDonations} online donation(s)`);
+    if (c.allocations) blockers.push(`${c.allocations} fund allocation(s)`);
+    if (c.expenses) blockers.push(`${c.expenses} expense(s)`);
+    if (c.participations) blockers.push(`${c.participations} partner participation(s)`);
+    if (c.orgReports) blockers.push(`${c.orgReports} organization report(s)`);
+    const executionCount =
+      c.stepsRef + c.phasesRef + c.tasksRef + c.budgetsRef + c.expensesRef + c.transactionsRef + c.milestonesRef;
+    if (executionCount) blockers.push(`${executionCount} execution/budget record(s)`);
+
+    if (blockers.length) {
+      throw new ConflictException(
+        `Project #${id} cannot be deleted because it still has ${blockers.join(', ')}. ` +
+          `Remove or reassign these records first — studies and financial records are never deleted automatically.`,
+      );
     }
-    await this.prisma.project.delete({ where: { id } });
+
+    // W4: the lifecycle instance is part of the aggregate. Delete it together
+    // with the project in ONE transaction so a failure rolls the workflow
+    // cleanup back (previously the workflow rows were deleted first, outside a
+    // transaction, and were lost whenever the project delete then failed).
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        const instance = await tx.workflowInstance.findUnique({
+          where: { subjectType_subjectId: { subjectType: 'project', subjectId: id } },
+        });
+        if (instance) {
+          await tx.workflowStepLog.deleteMany({ where: { instanceId: instance.id } });
+          await tx.workflowInstance.delete({ where: { id: instance.id } });
+        }
+        await tx.project.delete({ where: { id } });
+      });
+    } catch (e) {
+      // Defense in depth: any FK the explicit screen above didn't cover still
+      // surfaces as a 409, never a raw 500. The transaction guarantees the
+      // workflow rows are intact when we get here.
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') {
+        throw new ConflictException(
+          `Project #${id} cannot be deleted because other records still reference it.`,
+        );
+      }
+      throw e;
+    }
 
     this.eventBus.publish({
       event: 'project.deleted',

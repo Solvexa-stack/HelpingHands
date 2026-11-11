@@ -23,6 +23,7 @@ export default function ProjectsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState('');
   const [creatingStudyFor, setCreatingStudyFor] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -39,8 +40,13 @@ export default function ProjectsPage() {
       success(t('projects.toast.projectDeleted'));
       qc.invalidateQueries({ queryKey: ['admin-projects'] });
       setDeleteId(null);
+      setDeleteError('');
     },
-    onError: (err: any) => toastError(err?.response?.data?.message || t('projects.toast.deleteFailed')),
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message || t('projects.toast.deleteFailed');
+      setDeleteError(msg); // keep the dialog open and explain why
+      toastError(msg);
+    },
   });
 
   const createStudyMutation = useMutation({
@@ -157,7 +163,7 @@ export default function ProjectsPage() {
                             </Link>
                           )}
                           {role === 'administrator' && (
-                            <button onClick={() => setDeleteId(p.id)} className="btn btn-sm bg-red-50 text-red-500 hover:bg-red-100 p-1.5 rounded-lg">
+                            <button onClick={() => { setDeleteError(''); setDeleteId(p.id); }} className="btn btn-sm bg-red-50 text-red-500 hover:bg-red-100 p-1.5 rounded-lg">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           )}
@@ -188,8 +194,9 @@ export default function ProjectsPage() {
         <ConfirmDialog
           title={t('projects.deleteTitle')}
           message={t('projects.deleteMessage')}
+          error={deleteError}
           onConfirm={() => deleteMutation.mutate(deleteId)}
-          onCancel={() => setDeleteId(null)}
+          onCancel={() => { setDeleteId(null); setDeleteError(''); }}
           loading={deleteMutation.isPending}
           danger
         />
