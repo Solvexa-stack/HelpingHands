@@ -302,6 +302,20 @@
       "milestonesLabel": "Jalons",
       "milestonesDesc": "Calendrier du projet",
       "financialOfficer": "Responsable financier"
+    },
+    "deleteBlocked": "Ce projet ne peut pas être supprimé car il contient encore {blockers}. Supprimez-les ou réaffectez-les d'abord.",
+    "deleteBlockedGeneric": "Ce projet ne peut pas être supprimé car d'autres enregistrements y font encore référence. Supprimez-les ou réaffectez-les d'abord.",
+    "deleteBlockersJoin": ", ",
+    "deleteBlockers": {
+      "study": "une étude de faisabilité",
+      "donations": "{count} don(s) en espèces",
+      "onlineDonations": "{count} don(s) en ligne",
+      "allocations": "{count} allocation(s) de fonds",
+      "expenses": "{count} dépense(s)",
+      "participations": "{count} participation(s) de partenaire",
+      "orgReports": "{count} rapport(s) d'organisation",
+      "execution": "{count} enregistrement(s) d'exécution/budget",
+      "other": "{count} enregistrement(s) lié(s)"
     }
   },
   "employees": {

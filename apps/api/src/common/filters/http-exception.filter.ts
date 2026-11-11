@@ -20,6 +20,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string | string[] = 'Internal server error';
     let errors: any = null;
+    // Machine-readable code + structured payload for clients that localize
+    // their own messages (e.g. the admin's delete dialog).
+    let code: string | null = null;
+    let details: any = null;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -34,6 +38,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
           errors = res.message;
           message = 'Validation failed';
         }
+        if (res.code) code = res.code;
+        if (res.details) details = res.details;
       }
     } else if (exception instanceof Error) {
       message = exception.message;
@@ -47,8 +53,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     response.status(status).json({
       success: false,
       statusCode: status,
+      ...(code ? { code } : {}),
       message,
       errors,
+      ...(details ? { details } : {}),
       path: request.url,
       timestamp: new Date().toISOString(),
     });

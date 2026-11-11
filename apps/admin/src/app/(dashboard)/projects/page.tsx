@@ -24,6 +24,7 @@ export default function ProjectsPage() {
   const [page, setPage] = useState(1);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState('');
+  const [deleteBlocked, setDeleteBlocked] = useState(false);
   const [creatingStudyFor, setCreatingStudyFor] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -34,6 +35,22 @@ export default function ProjectsPage() {
   const projects = data?.data || [];
   const meta = data?.meta || {};
 
+  // Build the "can't delete" message from our own locale files, using the
+  // machine-readable blocker list the API returns — never the raw API string.
+  const blockerLabel = (type: string, count: number) => {
+    const key = `projects.deleteBlockers.${type}`;
+    const label = t(key, { count });
+    return label === key ? t('projects.deleteBlockers.other', { count }) : label;
+  };
+  const buildBlockedMessage = (data: any) => {
+    const blockers = data?.details?.blockers;
+    if (Array.isArray(blockers) && blockers.length) {
+      const list = blockers.map((b: any) => blockerLabel(b.type, b.count)).join(t('projects.deleteBlockersJoin'));
+      return t('projects.deleteBlocked', { blockers: list });
+    }
+    return t('projects.deleteBlockedGeneric');
+  };
+
   const deleteMutation = useMutation({
     mutationFn: (id: number) => projectsApi.delete(id),
     onSuccess: () => {
@@ -41,11 +58,18 @@ export default function ProjectsPage() {
       qc.invalidateQueries({ queryKey: ['admin-projects'] });
       setDeleteId(null);
       setDeleteError('');
+      setDeleteBlocked(false);
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.message || t('projects.toast.deleteFailed');
-      setDeleteError(msg); // keep the dialog open and explain why
-      toastError(msg);
+      const data = err?.response?.data;
+      // 409 = blocked by dependents: show it inline only (no toast), and stop
+      // the user hammering confirm — deleting again cannot succeed.
+      if (err?.response?.status === 409 && data?.code === 'PROJECT_HAS_DEPENDENTS') {
+        setDeleteError(buildBlockedMessage(data));
+        setDeleteBlocked(true);
+      } else {
+        setDeleteError(data?.message || t('projects.toast.deleteFailed'));
+      }
     },
   });
 
@@ -163,7 +187,7 @@ export default function ProjectsPage() {
                             </Link>
                           )}
                           {role === 'administrator' && (
-                            <button onClick={() => { setDeleteError(''); setDeleteId(p.id); }} className="btn btn-sm bg-red-50 text-red-500 hover:bg-red-100 p-1.5 rounded-lg">
+                            <button onClick={() => { setDeleteError(''); setDeleteBlocked(false); setDeleteId(p.id); }} className="btn btn-sm bg-red-50 text-red-500 hover:bg-red-100 p-1.5 rounded-lg">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           )}
@@ -195,8 +219,9 @@ export default function ProjectsPage() {
           title={t('projects.deleteTitle')}
           message={t('projects.deleteMessage')}
           error={deleteError}
+          confirmDisabled={deleteBlocked}
           onConfirm={() => deleteMutation.mutate(deleteId)}
-          onCancel={() => { setDeleteId(null); setDeleteError(''); }}
+          onCancel={() => { setDeleteId(null); setDeleteError(''); setDeleteBlocked(false); }}
           loading={deleteMutation.isPending}
           danger
         />

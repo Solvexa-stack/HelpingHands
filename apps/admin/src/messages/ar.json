@@ -302,6 +302,20 @@
       "milestonesLabel": "المعالم",
       "milestonesDesc": "الجدول الزمني للمشروع",
       "financialOfficer": "الموظف المالي"
+    },
+    "deleteBlocked": "لا يمكن حذف هذا المشروع لأنه لا يزال يحتوي على {blockers}. يرجى إزالتها أو إعادة تعيينها أولاً.",
+    "deleteBlockedGeneric": "لا يمكن حذف هذا المشروع لأن سجلات أخرى لا تزال مرتبطة به. يرجى إزالتها أو إعادة تعيينها أولاً.",
+    "deleteBlockersJoin": "، ",
+    "deleteBlockers": {
+      "study": "دراسة جدوى",
+      "donations": "{count} تبرع نقدي",
+      "onlineDonations": "{count} تبرع إلكتروني",
+      "allocations": "{count} تخصيص تمويل",
+      "expenses": "{count} مصروف",
+      "participations": "{count} مشاركة شريك",
+      "orgReports": "{count} تقرير مؤسسة",
+      "execution": "{count} سجل تنفيذ/موازنة",
+      "other": "{count} سجل مرتبط"
     }
   },
   "employees": {

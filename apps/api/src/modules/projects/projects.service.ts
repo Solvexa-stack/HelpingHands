@@ -410,23 +410,42 @@ export class ProjectsService {
     if (!project) throw new NotFoundException(`Project #${id} not found`);
 
     const c = project._count;
-    const blockers: string[] = [];
-    if (project.study) blockers.push('a feasibility study');
-    if (c.donations) blockers.push(`${c.donations} cash donation(s)`);
-    if (c.onlineDonations) blockers.push(`${c.onlineDonations} online donation(s)`);
-    if (c.allocations) blockers.push(`${c.allocations} fund allocation(s)`);
-    if (c.expenses) blockers.push(`${c.expenses} expense(s)`);
-    if (c.participations) blockers.push(`${c.participations} partner participation(s)`);
-    if (c.orgReports) blockers.push(`${c.orgReports} organization report(s)`);
+    // Machine-readable blocker list: each entry is a stable `type` + `count`,
+    // so the client (admin) can build a localized message from its own locale
+    // files instead of displaying this English string.
+    const blockers: { type: string; count: number }[] = [];
+    if (project.study) blockers.push({ type: 'study', count: 1 });
+    if (c.donations) blockers.push({ type: 'donations', count: c.donations });
+    if (c.onlineDonations) blockers.push({ type: 'onlineDonations', count: c.onlineDonations });
+    if (c.allocations) blockers.push({ type: 'allocations', count: c.allocations });
+    if (c.expenses) blockers.push({ type: 'expenses', count: c.expenses });
+    if (c.participations) blockers.push({ type: 'participations', count: c.participations });
+    if (c.orgReports) blockers.push({ type: 'orgReports', count: c.orgReports });
     const executionCount =
       c.stepsRef + c.phasesRef + c.tasksRef + c.budgetsRef + c.expensesRef + c.transactionsRef + c.milestonesRef;
-    if (executionCount) blockers.push(`${executionCount} execution/budget record(s)`);
+    if (executionCount) blockers.push({ type: 'execution', count: executionCount });
 
     if (blockers.length) {
-      throw new ConflictException(
-        `Project #${id} cannot be deleted because it still has ${blockers.join(', ')}. ` +
+      // English fallback for non-admin API consumers and logs; the admin
+      // ignores this and localizes from `code` + `details.blockers`.
+      const englishLabels: Record<string, (n: number) => string> = {
+        study: () => 'a feasibility study',
+        donations: (n) => `${n} cash donation(s)`,
+        onlineDonations: (n) => `${n} online donation(s)`,
+        allocations: (n) => `${n} fund allocation(s)`,
+        expenses: (n) => `${n} expense(s)`,
+        participations: (n) => `${n} partner participation(s)`,
+        orgReports: (n) => `${n} organization report(s)`,
+        execution: (n) => `${n} execution/budget record(s)`,
+      };
+      const summary = blockers.map((b) => englishLabels[b.type](b.count)).join(', ');
+      throw new ConflictException({
+        code: 'PROJECT_HAS_DEPENDENTS',
+        message:
+          `Project #${id} cannot be deleted because it still has ${summary}. ` +
           `Remove or reassign these records first — studies and financial records are never deleted automatically.`,
-      );
+        details: { blockers },
+      });
     }
 
     // W4: the lifecycle instance is part of the aggregate. Delete it together
@@ -449,9 +468,11 @@ export class ProjectsService {
       // surfaces as a 409, never a raw 500. The transaction guarantees the
       // workflow rows are intact when we get here.
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') {
-        throw new ConflictException(
-          `Project #${id} cannot be deleted because other records still reference it.`,
-        );
+        throw new ConflictException({
+          code: 'PROJECT_HAS_DEPENDENTS',
+          message: `Project #${id} cannot be deleted because other records still reference it.`,
+          details: { blockers: [] },
+        });
       }
       throw e;
     }

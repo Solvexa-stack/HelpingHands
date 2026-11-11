@@ -111,8 +111,13 @@ describe('Projects CRUD + delete dependency guard', () => {
       .delete(`/api/v1/projects/${projectId}`)
       .set('Authorization', admin)
       .expect(409);
+    // Machine-readable code + structured blockers so the client localizes itself.
+    expect(res.body.code).toBe('PROJECT_HAS_DEPENDENTS');
+    expect(res.body.details.blockers).toEqual(
+      expect.arrayContaining([{ type: 'study', count: 1 }]),
+    );
+    // English fallback message still present for non-admin consumers.
     expect(res.body.message).toMatch(/cannot be deleted/i);
-    expect(res.body.message).toMatch(/study/i);
 
     // The project survives.
     expect(await prisma.project.findUnique({ where: { id: projectId } })).not.toBeNull();

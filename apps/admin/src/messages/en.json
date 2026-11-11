@@ -302,6 +302,20 @@
       "milestonesLabel": "Milestones",
       "milestonesDesc": "Project Timeline",
       "financialOfficer": "Financial Officer"
+    },
+    "deleteBlocked": "This project can't be deleted because it still has {blockers}. Remove or reassign them first.",
+    "deleteBlockedGeneric": "This project can't be deleted because other records still reference it. Remove or reassign them first.",
+    "deleteBlockersJoin": ", ",
+    "deleteBlockers": {
+      "study": "a feasibility study",
+      "donations": "{count} cash donation(s)",
+      "onlineDonations": "{count} online donation(s)",
+      "allocations": "{count} fund allocation(s)",
+      "expenses": "{count} expense(s)",
+      "participations": "{count} partner participation(s)",
+      "orgReports": "{count} organization report(s)",
+      "execution": "{count} execution/budget record(s)",
+      "other": "{count} related record(s)"
     }
   },
   "employees": {

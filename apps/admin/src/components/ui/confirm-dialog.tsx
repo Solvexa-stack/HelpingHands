@@ -13,9 +13,11 @@ interface Props {
   danger?: boolean;
   /** Inline error (e.g. a 409 explaining why the action was refused). */
   error?: string;
+  /** Disable the confirm button (e.g. once the action is known to be impossible). */
+  confirmDisabled?: boolean;
 }
 
-export function ConfirmDialog({ title, message, onConfirm, onCancel, loading, danger, error }: Props) {
+export function ConfirmDialog({ title, message, onConfirm, onCancel, loading, danger, error, confirmDisabled }: Props) {
   const { t } = useLanguage();
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -36,8 +38,8 @@ export function ConfirmDialog({ title, message, onConfirm, onCancel, loading, da
           <button onClick={onCancel} className="flex-1 btn-secondary btn-md">{t('common.cancel')}</button>
           <button
             onClick={onConfirm}
-            disabled={loading}
-            className={cn('flex-1 btn btn-md', danger ? 'bg-red-600 text-white hover:bg-red-700' : 'btn-primary')}
+            disabled={loading || confirmDisabled}
+            className={cn('flex-1 btn btn-md disabled:opacity-50 disabled:cursor-not-allowed', danger ? 'bg-red-600 text-white hover:bg-red-700' : 'btn-primary')}
           >
             {loading ? <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : t('common.confirm')}
           </button>
