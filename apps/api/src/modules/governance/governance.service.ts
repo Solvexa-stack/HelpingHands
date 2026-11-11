@@ -439,7 +439,11 @@ export class GovernanceService {
   /** Cross-org Board inbox: studies awaiting review, in voting, or awaiting decision. */
   async reviewQueue() {
     const studies = await this.prisma.projectStudy.findMany({
-      where: { status: { in: [StudyStatus.in_review, StudyStatus.voting_open, StudyStatus.voting_closed] } },
+      where: {
+        status: { in: [StudyStatus.in_review, StudyStatus.voting_open, StudyStatus.voting_closed] },
+        deletedAt: null, // drop studies of soft-deleted projects from the board queue
+        project: { deletedAt: null },
+      },
       orderBy: { updatedAt: 'asc' },
       include: {
         project: {

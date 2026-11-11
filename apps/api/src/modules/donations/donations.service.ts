@@ -53,6 +53,10 @@ export class DonationsService {
       where.participantId = query.participantId;
     }
 
+    // Hide donations whose project was soft-deleted (they would otherwise link
+    // to a 404 project detail).
+    where.project = { ...(where.project ?? {}), deletedAt: null };
+
     // W2 isolation: donations are visible through their project's owner org
     const scopedWhere = await this.tenancy.enforcedProjectRelationWhere(where, 'donation.list');
 

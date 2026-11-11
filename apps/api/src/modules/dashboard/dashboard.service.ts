@@ -14,8 +14,8 @@ export class DashboardService {
 
   async getStats(role: string, adminId?: number) {
     const projectWhere: any = { deletedAt: null }; // exclude soft-deleted projects
-    const donationWhere: any = {};
-    const studyWhere: any = {};
+    const donationWhere: any = { project: { deletedAt: null } }; // and their donations
+    const studyWhere: any = { deletedAt: null }; // and their studies
 
     if (role === AdminRole.financial_officer && adminId) {
       projectWhere.financialOfficerId = adminId;
@@ -103,9 +103,9 @@ export class DashboardService {
   }
 
   async getRecentDonations(role: string, adminId?: number, limit = 10) {
-    let where: any = {};
+    let where: any = { project: { deletedAt: null } }; // skip soft-deleted projects' donations
     if (role === AdminRole.financial_officer && adminId) {
-      where.project = { financialOfficerId: adminId };
+      where.project = { ...where.project, financialOfficerId: adminId };
     }
     where = await this.tenancy.enforcedProjectRelationWhere(where, 'dashboard.recent_donations'); // W2 isolation
 

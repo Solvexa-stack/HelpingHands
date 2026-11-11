@@ -394,15 +394,21 @@ export class ProjectsService {
     // it is shown on the public transparency trail. Everything else (studies,
     // execution records, participations, pending donations, allocations) is
     // kept and simply hidden along with the project.
-    const [confirmedDonations, completedOnline, approvedExpenses] = await Promise.all([
+    const [confirmedDonations, completedOnline, approvedExpenses, liveAllocations] = await Promise.all([
       this.prisma.projectDonation.count({ where: { projectId: id, status: 'approved' } }),
       this.prisma.onlineDonation.count({ where: { projectId: id, status: 'completed' } }),
       this.prisma.expense.count({ where: { projectId: id, status: 'approved' } }),
+      // Any allocation that is not rejected still ties fund money/commitment to
+      // the project: it is counted in the fund's `allocated` total and, once
+      // disbursed, has moved real money on the ledger. Hiding the project would
+      // leave that amount committed to a record no one can see.
+      this.prisma.fundAllocation.count({ where: { projectId: id, status: { not: 'rejected' } } }),
     ]);
     const blockers: { type: string; count: number }[] = [];
     if (confirmedDonations) blockers.push({ type: 'confirmedDonations', count: confirmedDonations });
     if (completedOnline) blockers.push({ type: 'completedOnlineDonations', count: completedOnline });
     if (approvedExpenses) blockers.push({ type: 'approvedExpenses', count: approvedExpenses });
+    if (liveAllocations) blockers.push({ type: 'fundAllocations', count: liveAllocations });
 
     if (blockers.length) {
       // English fallback for non-admin API consumers and logs; the admin
@@ -411,6 +417,7 @@ export class ProjectsService {
         confirmedDonations: (n) => `${n} confirmed cash donation(s)`,
         completedOnlineDonations: (n) => `${n} completed online donation(s)`,
         approvedExpenses: (n) => `${n} approved expense(s)`,
+        fundAllocations: (n) => `${n} active fund allocation(s)`,
       };
       const summary = blockers.map((b) => englishLabels[b.type](b.count)).join(', ');
       throw new ConflictException({

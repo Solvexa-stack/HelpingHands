@@ -31,7 +31,8 @@ export class ParticipationsService {
   async list(projectId: number) {
     await this.tenancy.assertProjectVisible(projectId);
     return this.prisma.projectParticipation.findMany({
-      where: { projectId, deletedAt: null },
+      // `project: { deletedAt: null }` → empty for a soft-deleted project
+      where: { projectId, deletedAt: null, project: { deletedAt: null } },
       orderBy: { id: 'asc' },
       include: { organization: { select: { id: true, name: true, type: true, status: true } } },
     });

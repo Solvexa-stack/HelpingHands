@@ -178,4 +178,46 @@ describe('Projects CRUD + delete dependency guard', () => {
       .send({ category: 'project', translations: [{ languageCode: 'en', name: 'Reuse', slug, brief: 'b', description: 'd' }] })
       .expect(201);
   });
+
+  it('refuses to soft-delete a project with a live fund allocation (409), so committed fund money is never hidden', async () => {
+    const { projectId } = await createProjectViaApi(app, admin, 'allocated');
+    const p = await prisma.project.findUnique({ where: { id: projectId } });
+    const fundId = p!.primaryFundId ?? (await prisma.fund.findFirst())!.id;
+    await prisma.fundAllocation.create({
+      data: { fundId, projectId, amount: 500, status: 'board_approved' },
+    });
+
+    const res = await http()
+      .delete(`/api/v1/projects/${projectId}`)
+      .set('Authorization', admin)
+      .expect(409);
+    expect(res.body.code).toBe('PROJECT_HAS_DEPENDENTS');
+    expect(res.body.details.blockers).toEqual(
+      expect.arrayContaining([{ type: 'fundAllocations', count: 1 }]),
+    );
+    expect((await prisma.project.findUnique({ where: { id: projectId } }))!.deletedAt).toBeNull();
+  });
+
+  it("hides a soft-deleted project's study and donations from the admin lists", async () => {
+    const { projectId } = await createProjectViaApi(app, admin, 'orphans');
+    const studyRes = await http().post('/api/v1/study').set('Authorization', admin).send({ projectId }).expect(201);
+    const studyId = studyRes.body.data.id;
+
+    // A pending donation survives the soft delete (only confirmed money blocks it).
+    const participant = await prisma.participant.create({ data: { firstName: 'Pend', lastName: 'Donor' } });
+    await prisma.projectDonation.create({
+      data: { projectId, participantId: participant.id, amount: 50, status: 'pending', qrToken: 'ProjectsCrudPendingDonationToken001' },
+    });
+
+    await http().delete(`/api/v1/projects/${projectId}`).set('Authorization', admin).expect(200);
+
+    // Study: detail 404s and it is gone from the list.
+    await http().get(`/api/v1/study/${studyId}`).set('Authorization', admin).expect(404);
+    const studies = await http().get('/api/v1/study?limit=100').set('Authorization', admin).expect(200);
+    expect((studies.body.data.data as any[]).some((s) => s.id === studyId)).toBe(false);
+
+    // Donations: the pending donation is gone from the list (no 404 link).
+    const donations = await http().get('/api/v1/donations?limit=100').set('Authorization', admin).expect(200);
+    expect((donations.body.data.data as any[]).some((d) => d.projectId === projectId)).toBe(false);
+  });
 });

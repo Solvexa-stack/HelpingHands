@@ -318,7 +318,8 @@
       "other": "{count} سجل مرتبط",
       "confirmedDonations": "{count} تبرع نقدي مؤكد",
       "completedOnlineDonations": "{count} تبرع إلكتروني مكتمل",
-      "approvedExpenses": "{count} مصروف معتمد"
+      "approvedExpenses": "{count} مصروف معتمد",
+      "fundAllocations": "{count} تخصيص تمويل نشط"
     }
   },
   "employees": {

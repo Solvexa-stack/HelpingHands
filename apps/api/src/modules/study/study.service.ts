@@ -155,8 +155,8 @@ export class StudyService {
   // ─── Read ─────────────────────────────────────────────────────────────────────
 
   async getStudy(studyId: number) {
-    const study = await this.prisma.projectStudy.findUnique({
-      where: { id: studyId },
+    const study = await this.prisma.projectStudy.findFirst({
+      where: { id: studyId, deletedAt: null }, // soft-deleted studies read as not found
       include: {
         sections: {
           orderBy: { order: 'asc' },
@@ -186,6 +186,7 @@ export class StudyService {
     const study = await this.prisma.projectStudy.findFirst({
       where: {
         projectId,
+        deletedAt: null, // never serve a soft-deleted project's study
         status: {
           in: [
             StudyStatus.published,
@@ -245,7 +246,7 @@ export class StudyService {
     const { status, projectId, page = 1, limit = 15 } = filters;
     const { skip, take } = paginate(page, limit);
 
-    const where: any = {};
+    const where: any = { deletedAt: null }; // hide studies of soft-deleted projects
     if (status) where.status = status;
     if (projectId) where.projectId = projectId;
 

@@ -318,7 +318,8 @@
       "other": "{count} enregistrement(s) lié(s)",
       "confirmedDonations": "{count} don(s) en espèces confirmé(s)",
       "completedOnlineDonations": "{count} don(s) en ligne finalisé(s)",
-      "approvedExpenses": "{count} dépense(s) approuvée(s)"
+      "approvedExpenses": "{count} dépense(s) approuvée(s)",
+      "fundAllocations": "{count} allocation(s) de fonds active(s)"
     }
   },
   "employees": {
