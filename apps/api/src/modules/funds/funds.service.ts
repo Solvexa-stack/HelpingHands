@@ -259,7 +259,7 @@ export class FundsService {
     if (!Number.isInteger(dto.projectId) || dto.projectId <= 0) {
       throw new BadRequestException('projectId must be a positive integer');
     }
-    const project = await this.prisma.project.findUnique({ where: { id: dto.projectId } });
+    const project = await this.prisma.project.findFirst({ where: { id: dto.projectId, deletedAt: null } }); // no allocating to a soft-deleted project
     if (!project) throw new NotFoundException(`Project #${dto.projectId} not found`);
     if (!Number.isFinite(dto.amount) || dto.amount <= 0) throw new BadRequestException('Allocation amount must be positive');
 

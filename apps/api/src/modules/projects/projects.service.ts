@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateProjectDto, UpdateProjectDto, ProjectQueryDto } from './dto/project.dto';
-import { AdminRole, Prisma } from '@prisma/client';
+import { AdminRole } from '@prisma/client';
 import { paginate, paginatedResponse } from '../../common/dto/pagination.dto';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ActorContext } from '../../events/actor-context';
@@ -47,7 +47,7 @@ export class ProjectsService {
     const { page = 1, limit = 15, category, categoryKey, location, organizationId, search, isCompleted, lang, sortBy = 'createdAt', sortOrder = 'desc' } = query;
     const { skip, take } = paginate(page, limit);
 
-    const where: any = {};
+    const where: any = { deletedAt: null }; // exclude soft-deleted projects from every list
     // W6-E2: category filters resolve through the taxonomy — a node matches
     // itself and its descendants; the legacy enum param maps to its node.
     if (categoryKey) {
@@ -142,8 +142,8 @@ export class ProjectsService {
 
   async findById(id: number, lang?: string) {
     await this.tenancy.assertProjectVisible(id); // W2-E3-S1
-    const project = await this.prisma.project.findUnique({
-      where: { id },
+    const project = await this.prisma.project.findFirst({
+      where: { id, deletedAt: null }, // soft-deleted projects read as not found
       include: {
         block: {
           include: {
@@ -191,7 +191,7 @@ export class ProjectsService {
     const block = await this.prisma.block.findUnique({ where: { id: dto.blockId } });
     if (!block) throw new NotFoundException(`Block #${dto.blockId} not found`);
 
-    const existing = await this.prisma.project.findUnique({ where: { blockId: dto.blockId } });
+    const existing = await this.prisma.project.findFirst({ where: { blockId: dto.blockId, deletedAt: null } });
     if (existing) throw new BadRequestException('This block already has a project');
 
     if (dto.financialOfficerId) {
@@ -317,7 +317,7 @@ export class ProjectsService {
 
   async update(actor: ActorContext, id: number, dto: UpdateProjectDto) {
     await this.tenancy.assertProjectVisible(id); // W2 isolation: writes are org-scoped too
-    const project = await this.prisma.project.findUnique({ where: { id } });
+    const project = await this.prisma.project.findFirst({ where: { id, deletedAt: null } });
     if (!project) throw new NotFoundException(`Project #${id} not found`);
     if (project.isCompleted) throw new BadRequestException('Completed projects cannot be modified');
 
@@ -378,104 +378,62 @@ export class ProjectsService {
   async remove(actor: ActorContext, id: number) {
     await this.tenancy.assertProjectVisible(id); // W2 isolation: writes are org-scoped too
 
-    // Every relation below is onDelete: Restrict (studies, donations, fund
-    // allocations, expenses, participations, org reports, and the execution/
-    // budget ledger). Deleting a project that still has any of these used to
-    // raise a raw Prisma P2003 → a bare 500 for the client. We instead count
-    // the dependents up front and refuse with a readable 409 naming them, and
-    // we NEVER cascade-delete studies or financial records.
-    const project = await this.prisma.project.findUnique({
-      where: { id },
-      include: {
-        study: { select: { id: true } },
-        _count: {
-          select: {
-            donations: true,
-            onlineDonations: true,
-            allocations: true,
-            expenses: true,
-            participations: true,
-            orgReports: true,
-            stepsRef: true,
-            phasesRef: true,
-            tasksRef: true,
-            budgetsRef: true,
-            expensesRef: true,
-            transactionsRef: true,
-            milestonesRef: true,
-          },
-        },
-      },
+    // Project deletion is a SOFT delete (W0-E4 convention: Project, ProjectStudy
+    // and Block all carry deleted_at/deleted_by). A feasibility study is part of
+    // every project's aggregate and auto-created, so a hard dependency guard on
+    // studies/steps/etc. made projects undeletable. Soft delete hides the
+    // project without destroying anything — the workflow instance and all
+    // related records are deliberately kept.
+    const project = await this.prisma.project.findFirst({
+      where: { id, deletedAt: null },
+      include: { study: { where: { deletedAt: null }, select: { id: true } } },
     });
     if (!project) throw new NotFoundException(`Project #${id} not found`);
 
-    const c = project._count;
-    // Machine-readable blocker list: each entry is a stable `type` + `count`,
-    // so the client (admin) can build a localized message from its own locale
-    // files instead of displaying this English string.
+    // Hard stop: confirmed money must never be hidden by a soft delete, because
+    // it is shown on the public transparency trail. Everything else (studies,
+    // execution records, participations, pending donations, allocations) is
+    // kept and simply hidden along with the project.
+    const [confirmedDonations, completedOnline, approvedExpenses] = await Promise.all([
+      this.prisma.projectDonation.count({ where: { projectId: id, status: 'approved' } }),
+      this.prisma.onlineDonation.count({ where: { projectId: id, status: 'completed' } }),
+      this.prisma.expense.count({ where: { projectId: id, status: 'approved' } }),
+    ]);
     const blockers: { type: string; count: number }[] = [];
-    if (project.study) blockers.push({ type: 'study', count: 1 });
-    if (c.donations) blockers.push({ type: 'donations', count: c.donations });
-    if (c.onlineDonations) blockers.push({ type: 'onlineDonations', count: c.onlineDonations });
-    if (c.allocations) blockers.push({ type: 'allocations', count: c.allocations });
-    if (c.expenses) blockers.push({ type: 'expenses', count: c.expenses });
-    if (c.participations) blockers.push({ type: 'participations', count: c.participations });
-    if (c.orgReports) blockers.push({ type: 'orgReports', count: c.orgReports });
-    const executionCount =
-      c.stepsRef + c.phasesRef + c.tasksRef + c.budgetsRef + c.expensesRef + c.transactionsRef + c.milestonesRef;
-    if (executionCount) blockers.push({ type: 'execution', count: executionCount });
+    if (confirmedDonations) blockers.push({ type: 'confirmedDonations', count: confirmedDonations });
+    if (completedOnline) blockers.push({ type: 'completedOnlineDonations', count: completedOnline });
+    if (approvedExpenses) blockers.push({ type: 'approvedExpenses', count: approvedExpenses });
 
     if (blockers.length) {
       // English fallback for non-admin API consumers and logs; the admin
       // ignores this and localizes from `code` + `details.blockers`.
       const englishLabels: Record<string, (n: number) => string> = {
-        study: () => 'a feasibility study',
-        donations: (n) => `${n} cash donation(s)`,
-        onlineDonations: (n) => `${n} online donation(s)`,
-        allocations: (n) => `${n} fund allocation(s)`,
-        expenses: (n) => `${n} expense(s)`,
-        participations: (n) => `${n} partner participation(s)`,
-        orgReports: (n) => `${n} organization report(s)`,
-        execution: (n) => `${n} execution/budget record(s)`,
+        confirmedDonations: (n) => `${n} confirmed cash donation(s)`,
+        completedOnlineDonations: (n) => `${n} completed online donation(s)`,
+        approvedExpenses: (n) => `${n} approved expense(s)`,
       };
       const summary = blockers.map((b) => englishLabels[b.type](b.count)).join(', ');
       throw new ConflictException({
         code: 'PROJECT_HAS_DEPENDENTS',
         message:
           `Project #${id} cannot be deleted because it still has ${summary}. ` +
-          `Remove or reassign these records first — studies and financial records are never deleted automatically.`,
+          `Confirmed financial records are kept on the public transparency trail and cannot be hidden.`,
         details: { blockers },
       });
     }
 
-    // W4: the lifecycle instance is part of the aggregate. Delete it together
-    // with the project in ONE transaction so a failure rolls the workflow
-    // cleanup back (previously the workflow rows were deleted first, outside a
-    // transaction, and were lost whenever the project delete then failed).
-    try {
-      await this.prisma.$transaction(async (tx) => {
-        const instance = await tx.workflowInstance.findUnique({
-          where: { subjectType_subjectId: { subjectType: 'project', subjectId: id } },
-        });
-        if (instance) {
-          await tx.workflowStepLog.deleteMany({ where: { instanceId: instance.id } });
-          await tx.workflowInstance.delete({ where: { id: instance.id } });
-        }
-        await tx.project.delete({ where: { id } });
-      });
-    } catch (e) {
-      // Defense in depth: any FK the explicit screen above didn't cover still
-      // surfaces as a 409, never a raw 500. The transaction guarantees the
-      // workflow rows are intact when we get here.
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') {
-        throw new ConflictException({
-          code: 'PROJECT_HAS_DEPENDENTS',
-          message: `Project #${id} cannot be deleted because other records still reference it.`,
-          details: { blockers: [] },
-        });
+    // Soft-delete the project together with its study and its content block in
+    // one transaction, stamping who removed it and when. The workflow instance
+    // and every other related record are intentionally left untouched.
+    const deletedAt = new Date();
+    const deletedBy = actor.userId ?? null;
+    await this.prisma.$transaction(async (tx) => {
+      await tx.project.update({ where: { id }, data: { deletedAt, deletedBy } });
+      if (project.study) {
+        await tx.projectStudy.update({ where: { id: project.study.id }, data: { deletedAt, deletedBy } });
       }
-      throw e;
-    }
+      await tx.block.update({ where: { id: project.blockId }, data: { deletedAt, deletedBy } });
+    });
 
     this.eventBus.publish({
       event: 'project.deleted',

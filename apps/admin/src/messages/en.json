@@ -273,7 +273,7 @@
     "unnamedFallback": "Unnamed",
     "createStudy": "Create Study",
     "deleteTitle": "Delete Project",
-    "deleteMessage": "Are you sure you want to delete this project? This action cannot be undone.",
+    "deleteMessage": "The project will be hidden from the website, dashboards and reports. Nothing is permanently deleted.",
     "totalCount": "{count} total",
     "toast": {
       "projectDeleted": "Project deleted",
@@ -315,7 +315,10 @@
       "participations": "{count} partner participation(s)",
       "orgReports": "{count} organization report(s)",
       "execution": "{count} execution/budget record(s)",
-      "other": "{count} related record(s)"
+      "other": "{count} related record(s)",
+      "confirmedDonations": "{count} confirmed cash donation(s)",
+      "completedOnlineDonations": "{count} completed online donation(s)",
+      "approvedExpenses": "{count} approved expense(s)"
     }
   },
   "employees": {

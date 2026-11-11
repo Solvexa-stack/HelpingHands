@@ -86,46 +86,96 @@ describe('Projects CRUD + delete dependency guard', () => {
     expect(cover!.url).toMatch(/\/uploads\//);
   });
 
-  it('deletes a project with no dependents and removes its workflow instance', async () => {
-    const { projectId } = await createProjectViaApi(app, admin, 'deletable');
-
-    const before = await prisma.workflowInstance.findUnique({ where: subjectKey(projectId) });
-    expect(before).not.toBeNull();
-
-    await http().delete(`/api/v1/projects/${projectId}`).set('Authorization', admin).expect(200);
-
-    expect(await prisma.project.findUnique({ where: { id: projectId } })).toBeNull();
-    expect(await prisma.workflowInstance.findUnique({ where: subjectKey(projectId) })).toBeNull();
-  });
-
-  it('refuses to delete a project with dependents (409) and leaves it AND its workflow instance intact', async () => {
-    const { projectId } = await createProjectViaApi(app, admin, 'guarded');
-
-    // A ProjectStudy is an onDelete: Restrict dependent.
+  it('soft-deletes a project (a study no longer blocks it), hiding it while keeping the workflow instance', async () => {
+    const { projectId, blockId } = await createProjectViaApi(app, admin, 'deletable');
+    // A feasibility study used to make deletion impossible; it must not now.
     await http().post('/api/v1/study').set('Authorization', admin).send({ projectId }).expect(201);
 
     const instanceBefore = await prisma.workflowInstance.findUnique({ where: subjectKey(projectId) });
     expect(instanceBefore).not.toBeNull();
 
+    await http().delete(`/api/v1/projects/${projectId}`).set('Authorization', admin).expect(200);
+
+    // Row is kept but stamped deleted (reads below use raw prisma; the
+    // soft-delete middleware is dark in the test baseline).
+    const row = await prisma.project.findUnique({ where: { id: projectId } });
+    expect(row).not.toBeNull();
+    expect(row!.deletedAt).not.toBeNull();
+
+    // Its study and content block are soft-deleted too.
+    expect((await prisma.projectStudy.findUnique({ where: { projectId } }))!.deletedAt).not.toBeNull();
+    expect((await prisma.block.findUnique({ where: { id: blockId } }))!.deletedAt).not.toBeNull();
+
+    // The workflow instance and its logs are kept.
+    const instanceAfter = await prisma.workflowInstance.findUnique({ where: subjectKey(projectId) });
+    expect(instanceAfter).not.toBeNull();
+    expect(instanceAfter!.id).toBe(instanceBefore!.id);
+
+    // Hidden from the detail endpoint and the public list.
+    await http().get(`/api/v1/projects/${projectId}`).expect(404);
+    const list = await http().get('/api/v1/projects?limit=100').expect(200);
+    expect((list.body.data.data as any[]).some((p) => p.id === projectId)).toBe(false);
+  });
+
+  it('refuses to soft-delete a project with a confirmed donation (409) and leaves it visible', async () => {
+    const { projectId } = await createProjectViaApi(app, admin, 'guarded');
+
+    const participant = await prisma.participant.create({ data: { firstName: 'Conf', lastName: 'Donor' } });
+    await prisma.projectDonation.create({
+      data: {
+        projectId,
+        participantId: participant.id,
+        amount: 100,
+        status: 'approved',
+        qrToken: 'ProjectsCrudConfirmedDonationToken01',
+      },
+    });
+
     const res = await http()
       .delete(`/api/v1/projects/${projectId}`)
       .set('Authorization', admin)
       .expect(409);
-    // Machine-readable code + structured blockers so the client localizes itself.
     expect(res.body.code).toBe('PROJECT_HAS_DEPENDENTS');
     expect(res.body.details.blockers).toEqual(
-      expect.arrayContaining([{ type: 'study', count: 1 }]),
+      expect.arrayContaining([{ type: 'confirmedDonations', count: 1 }]),
     );
-    // English fallback message still present for non-admin consumers.
-    expect(res.body.message).toMatch(/cannot be deleted/i);
 
-    // The project survives.
-    expect(await prisma.project.findUnique({ where: { id: projectId } })).not.toBeNull();
-    // The study survives (never cascade-deleted).
-    expect(await prisma.projectStudy.findUnique({ where: { projectId } })).not.toBeNull();
-    // The workflow instance survives — the bug this test guards against.
-    const instanceAfter = await prisma.workflowInstance.findUnique({ where: subjectKey(projectId) });
-    expect(instanceAfter).not.toBeNull();
-    expect(instanceAfter!.id).toBe(instanceBefore!.id);
+    // Still present and NOT soft-deleted.
+    const row = await prisma.project.findUnique({ where: { id: projectId } });
+    expect(row!.deletedAt).toBeNull();
+    await http().get(`/api/v1/projects/${projectId}`).expect(200);
+  });
+
+  it('frees the slug of a soft-deleted project so a new project can reuse it', async () => {
+    const slug = 'reusable-slug-crud-spec';
+    const firstBlock = await http()
+      .post('/api/v1/blocks')
+      .set('Authorization', admin)
+      .send({
+        category: 'project',
+        translations: [{ languageCode: 'en', name: 'Reusable', slug, brief: 'b', description: 'd' }],
+      })
+      .expect(201);
+    const firstProject = await http()
+      .post('/api/v1/projects')
+      .set('Authorization', admin)
+      .send({ blockId: firstBlock.body.data.id, value: 1000, category: 'agricultural' })
+      .expect(201);
+
+    // Before deletion the slug is taken.
+    await http()
+      .post('/api/v1/blocks')
+      .set('Authorization', admin)
+      .send({ category: 'project', translations: [{ languageCode: 'en', name: 'Dup', slug, brief: 'b', description: 'd' }] })
+      .expect(409);
+
+    await http().delete(`/api/v1/projects/${firstProject.body.data.id}`).set('Authorization', admin).expect(200);
+
+    // After the soft delete the slug is free again.
+    await http()
+      .post('/api/v1/blocks')
+      .set('Authorization', admin)
+      .send({ category: 'project', translations: [{ languageCode: 'en', name: 'Reuse', slug, brief: 'b', description: 'd' }] })
+      .expect(201);
   });
 });

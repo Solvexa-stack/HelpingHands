@@ -64,7 +64,7 @@ export class TransparencyReadService {
     return this.cached('platform-stats', async () => {
       const [categoryGroups, categories, instances, orgGroups, cashIntake, onlineProject, onlineFund, manualFund] =
         await Promise.all([
-          this.prisma.project.groupBy({ by: ['categoryId'], _count: { id: true }, _sum: { value: true } }),
+          this.prisma.project.groupBy({ by: ['categoryId'], where: { deletedAt: null }, _count: { id: true }, _sum: { value: true } }),
           this.prisma.projectCategoryNode.findMany({
             select: { id: true, key: true, name: true, nameAr: true, nameFr: true },
           }),

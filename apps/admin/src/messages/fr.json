@@ -273,7 +273,7 @@
     "unnamedFallback": "Sans nom",
     "createStudy": "Créer une étude",
     "deleteTitle": "Supprimer le projet",
-    "deleteMessage": "Êtes-vous sûr de vouloir supprimer ce projet ? Cette action est irréversible.",
+    "deleteMessage": "Le projet sera masqué du site, des tableaux de bord et des rapports. Rien n'est supprimé définitivement.",
     "totalCount": "{count} au total",
     "toast": {
       "projectDeleted": "Projet supprimé",
@@ -315,7 +315,10 @@
       "participations": "{count} participation(s) de partenaire",
       "orgReports": "{count} rapport(s) d'organisation",
       "execution": "{count} enregistrement(s) d'exécution/budget",
-      "other": "{count} enregistrement(s) lié(s)"
+      "other": "{count} enregistrement(s) lié(s)",
+      "confirmedDonations": "{count} don(s) en espèces confirmé(s)",
+      "completedOnlineDonations": "{count} don(s) en ligne finalisé(s)",
+      "approvedExpenses": "{count} dépense(s) approuvée(s)"
     }
   },
   "employees": {

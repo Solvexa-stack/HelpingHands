@@ -62,8 +62,33 @@ export class BlocksService {
         },
       },
     });
-    if (!translation) throw new NotFoundException(`Content with slug '${slug}' not found`);
+    // A soft-deleted block (e.g. a deleted project's content) must read as
+    // nonexistent — nested includes bypass the soft-delete middleware.
+    if (!translation || translation.block.deletedAt) {
+      throw new NotFoundException(`Content with slug '${slug}' not found`);
+    }
     return translation.block;
+  }
+
+  /**
+   * Slugs are globally unique on block_translations. A slug still held by a
+   * SOFT-DELETED block is logically free: release it (rename the stale row so
+   * the DB unique constraint is satisfied) so the caller can reuse the slug.
+   * `ownBlockId` lets a block keep its own slugs while being updated.
+   */
+  private async ensureSlugAvailable(slug: string, ownBlockId?: number) {
+    const existing = await this.prisma.blockTranslation.findUnique({
+      where: { slug },
+      include: { block: { select: { id: true, deletedAt: true } } },
+    });
+    if (!existing) return;
+    if (ownBlockId != null && existing.blockId === ownBlockId) return;
+    if (existing.block.deletedAt) {
+      const freed = `del-${existing.id}:${existing.slug}`.slice(0, 500);
+      await this.prisma.blockTranslation.update({ where: { id: existing.id }, data: { slug: freed } });
+      return;
+    }
+    throw new ConflictException(`Slug '${slug}' already exists`);
   }
 
   async findById(id: number) {
@@ -83,10 +108,9 @@ export class BlocksService {
   async create(dto: CreateBlockDto) {
     const { translations, ...blockData } = dto;
 
-    // Check slug uniqueness
+    // Check slug uniqueness (soft-deleted blocks release their slugs)
     for (const t of translations) {
-      const existing = await this.prisma.blockTranslation.findUnique({ where: { slug: t.slug } });
-      if (existing) throw new ConflictException(`Slug '${t.slug}' already exists`);
+      await this.ensureSlugAvailable(t.slug);
     }
 
     return this.prisma.block.create({
@@ -105,8 +129,7 @@ export class BlocksService {
 
     if (translations?.length) {
       for (const t of translations) {
-        const existing = await this.prisma.blockTranslation.findUnique({ where: { slug: t.slug } });
-        if (existing && existing.blockId !== id) throw new ConflictException(`Slug '${t.slug}' already exists`);
+        await this.ensureSlugAvailable(t.slug, id);
       }
 
       await this.prisma.blockTranslation.deleteMany({ where: { blockId: id } });

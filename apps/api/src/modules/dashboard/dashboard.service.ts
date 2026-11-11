@@ -13,7 +13,7 @@ export class DashboardService {
   ) {}
 
   async getStats(role: string, adminId?: number) {
-    const projectWhere: any = {};
+    const projectWhere: any = { deletedAt: null }; // exclude soft-deleted projects
     const donationWhere: any = {};
     const studyWhere: any = {};
 
@@ -121,7 +121,7 @@ export class DashboardService {
   }
 
   async getRecentProjects(role: string, adminId?: number, limit = 6) {
-    let where: any = {};
+    let where: any = { deletedAt: null }; // exclude soft-deleted projects
     if (role === AdminRole.financial_officer && adminId) {
       where.financialOfficerId = adminId;
     }

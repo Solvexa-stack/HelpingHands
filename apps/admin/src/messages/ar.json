@@ -273,7 +273,7 @@
     "unnamedFallback": "بدون اسم",
     "createStudy": "إنشاء دراسة",
     "deleteTitle": "حذف المشروع",
-    "deleteMessage": "هل أنت متأكد من حذف هذا المشروع؟ لا يمكن التراجع عن هذا الإجراء.",
+    "deleteMessage": "سيتم إخفاء المشروع من الموقع ولوحات المعلومات والتقارير. لن يتم حذف أي شيء نهائيًا.",
     "totalCount": "{count} إجمالي",
     "toast": {
       "projectDeleted": "تم حذف المشروع",
@@ -315,7 +315,10 @@
       "participations": "{count} مشاركة شريك",
       "orgReports": "{count} تقرير مؤسسة",
       "execution": "{count} سجل تنفيذ/موازنة",
-      "other": "{count} سجل مرتبط"
+      "other": "{count} سجل مرتبط",
+      "confirmedDonations": "{count} تبرع نقدي مؤكد",
+      "completedOnlineDonations": "{count} تبرع إلكتروني مكتمل",
+      "approvedExpenses": "{count} مصروف معتمد"
     }
   },
   "employees": {

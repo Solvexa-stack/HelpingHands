@@ -15,8 +15,8 @@ export class ReportsService {
   /** Single chokepoint for every report: cross-org projects read as nonexistence. */
   private async getProject(projectId: number) {
     await this.tenancy.assertProjectVisible(projectId); // W2 isolation
-    const project = await this.prisma.project.findUnique({
-      where: { id: projectId },
+    const project = await this.prisma.project.findFirst({
+      where: { id: projectId, deletedAt: null }, // soft-deleted projects read as nonexistent
       include: {
         block: { include: { translations: true, files: { where: { isCover: true }, take: 1 } } },
         financialOfficer: { select: { firstName: true, lastName: true } },
