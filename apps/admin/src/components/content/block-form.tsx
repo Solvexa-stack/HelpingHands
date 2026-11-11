@@ -15,6 +15,17 @@ function slugify(text: string) {
   return text.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
+// The API requires brief + description to be non-empty strings (class-validator @IsNotEmpty).
+// The rich-text editor can hold "visually empty" markup like <p></p> or <p><br></p>, so
+// strip tags/entities/whitespace before deciding whether a field actually has content.
+function isBlank(value?: string) {
+  if (!value) return true;
+  return value
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .trim().length === 0;
+}
+
 interface BlockFormProps {
   category: string;
   backHref: string;
@@ -92,7 +103,19 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
         classification: meta.classification || undefined,
         orderId: Number(meta.orderId) || 0,
         isActive: meta.isActive,
-        translations: LANGS.map((l) => ({ languageCode: l.code, ...translations[l.code] })).filter((t) => t.name && t.slug),
+        // Only send translations where EVERY required field (name, slug, brief, description)
+        // has real content. A partially-filled language would be rejected by the API with a
+        // 400 "... should not be empty", so we drop it instead of sending it.
+        translations: LANGS.map((l) => {
+          const tv = translations[l.code];
+          return {
+            languageCode: l.code,
+            name: (tv.name || '').trim(),
+            slug: (tv.slug || '').trim(),
+            brief: (tv.brief || '').trim(),
+            description: tv.description || '',
+          };
+        }).filter((t) => t.name && t.slug && !isBlank(t.brief) && !isBlank(t.description)),
       };
       return editId ? blocksApi.update(editId, payload) : blocksApi.create(payload);
     },
@@ -104,9 +127,20 @@ export function BlockForm({ category, backHref, backLabel, title, editId, showDa
   });
 
   const handleSubmit = () => {
+    // English is the primary language and must be fully filled in.
+    const en = translations.en;
+    if (!en.name || !en.slug || isBlank(en.brief) || isBlank(en.description)) {
+      toastError(t('blockForm.toast.briefDescRequired', { langs: LANGS[0].label }));
+      return;
+    }
+    // Any other language that was started (has a title) must also be fully filled in,
+    // otherwise the API rejects the whole request with a 400.
     const incomplete = LANGS.filter((l) => {
+      if (l.code === 'en') return false;
       const tv = translations[l.code];
-      return tv.name && tv.slug && (!tv.brief || !tv.description);
+      const started = tv.name || tv.slug || !isBlank(tv.brief) || !isBlank(tv.description);
+      const complete = tv.name && tv.slug && !isBlank(tv.brief) && !isBlank(tv.description);
+      return started && !complete;
     });
     if (incomplete.length) {
       toastError(t('blockForm.toast.briefDescRequired', { langs: incomplete.map((l) => l.label).join(', ') }));
